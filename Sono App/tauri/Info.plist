@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Icône au format macOS 26 (Assets.car) : versions claire, sombre et teintée. L’icône classique reste pour les anciens macOS. -->
+	<key>CFBundleIconName</key>
+	<string>Sono</string>
+</dict>
+</plist>

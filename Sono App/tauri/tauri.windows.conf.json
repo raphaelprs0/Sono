@@ -1,0 +1,1 @@
+{ "bundle": { "resources": { "../dist/": "dist/", "../packaging/bin/win32-x64/sono-deezer-bridge.exe": "bin/sono-deezer-bridge.exe" } } }

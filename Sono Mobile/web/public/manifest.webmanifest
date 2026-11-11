@@ -1,0 +1,13 @@
+{
+  "name": "Sono",
+  "short_name": "Sono",
+  "description": "La file musicale collaborative pour vos soirées.",
+  "display": "standalone",
+  "background_color": "#0f0f0d",
+  "theme_color": "#0f0f0d",
+  "lang": "fr",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

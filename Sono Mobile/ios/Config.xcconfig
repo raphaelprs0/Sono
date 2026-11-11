@@ -1,0 +1,7 @@
+// Réglages de l’app iPhone.
+// Adresse du service en ligne de Sono (cloud/), écrite par deploy.sh.
+SONO_SERVER_URL = https:/$()/sono-mobile.c22fyvnnds.workers.dev
+// Identifiant de l’app (à remplacer dans Local.xcconfig s’il est déjà pris par un autre compte Apple).
+SONO_BUNDLE_ID = app.sono.mobile
+// Réglages propres à ce Mac (équipe Apple, identifiant), jamais partagés : voir Local.xcconfig.exemple.
+#include? "Local.xcconfig"

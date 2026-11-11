@@ -1,0 +1,5 @@
+// Copiez ce fichier en « Local.xcconfig » (même dossier) et mettez vos réglages : il n’est jamais partagé.
+// Votre équipe Apple : Xcode > Réglages > Comptes, ou developer.apple.com > Membership (10 caractères).
+DEVELOPMENT_TEAM = ABCDE12345
+// Un identifiant à vous si « app.sono.mobile » est refusé par Xcode.
+// SONO_BUNDLE_ID = com.votrenom.sono

@@ -1,0 +1,1 @@
+{ "bundle": { "resources": { "../dist/": "dist/", "../packaging/bin/sono-deezer-bridge": "bin/sono-deezer-bridge" } } }

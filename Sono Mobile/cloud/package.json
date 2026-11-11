@@ -1,0 +1,1 @@
+{ "name": "sono-mobile-cloud", "private": true, "type": "module", "scripts": { "dev": "npm --prefix ../web install --silent && npm --prefix ../web run build && wrangler dev --port 8787 --ip 0.0.0.0", "deploy": "wrangler deploy" }, "devDependencies": { "wrangler": "4.156.0" } }

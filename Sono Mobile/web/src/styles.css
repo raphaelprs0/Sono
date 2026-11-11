@@ -1,0 +1,804 @@
+/* Polices intégrées à l’app (DM Sans et Manrope, licence OFL) : pas de téléchargement au lancement, et elles s’affichent même hors ligne. */
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url('./assets/fonts/dm-sans-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'DM Sans'; font-style: normal; font-weight: 400 700; font-display: swap; src: url('./assets/fonts/dm-sans-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500 800; font-display: swap; src: url('./assets/fonts/manrope-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Manrope'; font-style: normal; font-weight: 500 800; font-display: swap; src: url('./assets/fonts/manrope-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+/* ───────────── Tokens ───────────── */ :root {
+  --bg: #0f0f0d;
+  --bg-raised: #131311;
+  --surface: #181815;
+  --surface-2: #1f1f1b;
+  --surface-3: #282823;
+  --line: #2a2a25;
+  --line-strong: #3a3a33;
+  --text: #f4f2eb;
+  --text-2: #cfcec4;
+  --muted: #9c9b91;
+  --faint: #8f8e85;
+  --accent-rgb: 215, 247, 91;
+  --lime: #d7f75b;
+  --lime-hover: #e4ff7a;
+  --lime-ink: #171a08;
+  --lime-text: var(--lime); /* accent utilisé comme couleur de texte, éclairci pour les accents sombres */
+  --lime-soft: rgba(var(--accent-rgb), .1);
+  --lime-line: rgba(var(--accent-rgb), .28);
+  --peach: #eba97f;
+  --peach-soft: rgba(235, 169, 127, .12);
+  --violet: #b99bff;
+  --violet-soft: rgba(185, 155, 255, .12);
+  --danger: #ff8278;
+  --danger-soft: rgba(255, 130, 120, .1);
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 24px;
+  --shadow: 0 24px 80px rgba(0, 0, 0, .45);
+  --font-display: 'Manrope', system-ui, sans-serif;
+  --font-body: 'DM Sans', system-ui, sans-serif;
+
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--text);
+  background: var(--bg);
+  color-scheme: dark;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ───────────── Base ───────────── */ * { box-sizing: border-box; }
+/* Le fond de page est porté par :root ; body reste transparent pour laisser voir les fonds fixes posés derrière. */ html { scrollbar-gutter: stable; }
+body { margin: 0; min-width: 320px; }
+/* Pas de sélection de texte dans l’app (sauf dans les champs de saisie) : elle se comporte comme une application. */ body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; }
+body.modal-open { overflow: hidden; }
+button, input, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { opacity: .35; cursor: not-allowed; }
+:focus-visible { outline: 2px solid var(--lime); outline-offset: 2px; }
+h1, h2, h3, p { margin: 0; }
+h1, h2, h3, .brand { font-family: var(--font-display); }
+ul, ol { list-style: none; margin: 0; padding: 0; }
+::selection { background: var(--lime); color: var(--lime-ink); }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes slide-up { from { opacity: 0; transform: translateY(14px) scale(.98); } }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 14px); } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+/* ───────────── Brand ───────────── */ .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-size: 27px; font-weight: 800; letter-spacing: -1.4px; line-height: 1; }
+.brand-dot { color: var(--lime-text); }
+.brand-mark { display: flex; gap: .11em; align-items: center; height: 1.04em; }
+.brand-mark i { width: .15em; border-radius: .15em; background: var(--lime); transform: rotate(-8deg); }
+.brand-mark i:nth-child(1) { height: .44em; }
+.brand-mark i:nth-child(2) { height: .96em; }
+.brand-mark i:nth-child(3) { height: .7em; }
+.brand-mark i:nth-child(4) { height: .33em; }
+
+/* ───────────── Primitives ───────────── */ .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); display: inline-block; flex-shrink: 0; }
+.live-dot.offline { background: var(--peach); animation: none; }
+
+.avatar { font-style: normal; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: hsl(var(--hue, 40) 28% 26%); color: hsl(var(--hue, 40) 75% 84%); font-size: 11px; font-weight: 700; font-family: var(--font-display); }
+
+.button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 16px; border-radius: 99px; border: 1px solid transparent; font-size: 14px; font-weight: 600; white-space: nowrap; transition: background .15s, border-color .15s, transform .15s; }
+.button:not(:disabled):active { transform: scale(.98); }
+.button.primary { background: var(--lime); color: var(--lime-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); }
+/* Boutons pleine largeur (formulaires, fenêtres) : même hauteur que sur l’iPhone */ .join-button, .modal-actions .button, .public-access-button { min-height: 42px; }
+.button.primary:not(:disabled):hover { background: var(--lime-hover); }
+.button.secondary { background: var(--surface-2); border-color: var(--line-strong); color: var(--text-2); }
+.button.secondary:not(:disabled):hover { background: var(--surface-3); color: var(--text); }
+.danger-button { background: var(--danger); color: #2c1210; }
+.danger-button:hover { background: #ff958c; }
+
+.icon-button { border: 0; background: transparent; width: 36px; height: 36px; padding: 0; display: inline-grid; place-items: center; border-radius: 50%; color: var(--muted); transition: background .15s, color .15s; flex-shrink: 0; }
+.icon-button:not(:disabled):hover { background: rgba(255, 255, 255, .07); color: var(--text); }
+
+.text-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 500; padding: 6px 8px; }
+.text-button:hover { color: var(--lime-text); }
+
+.count-pill { font-family: var(--font-body); font-size: 12px; font-weight: 600; background: var(--surface-3); color: var(--text-2); padding: 2px 8px; border-radius: 99px; margin-left: 6px; vertical-align: 2px; }
+
+.cover-empty { display: grid; place-items: center; background: var(--surface-3); color: var(--faint); }
+
+.equalizer { height: 13px; display: inline-flex; align-items: flex-end; gap: 2px; }
+/* Animation « par paliers » (5 images par seconde environ) : l’égaliseur ne force plus 60 rendus par seconde,
+   ce qui évite de recalculer à chaque fois le flou du verre qui se trouve dessous. */ .equalizer i { display: block; width: 3px; height: 13px; border-radius: 2px; background: var(--lime); transform-origin: bottom; animation: equalize .7s ease-in-out infinite alternate; will-change: transform; }
+.equalizer i:nth-child(2) { animation-delay: -.4s; }
+.equalizer i:nth-child(3) { animation-delay: -.2s; }
+.equalizer.paused i { animation: none; transform: scaleY(.23); }
+
+.provider-logo { display: block; flex-shrink: 0; object-fit: cover; }
+.provider-logo.deezer { border-radius: 22%; }
+.logo-pair { display: inline-flex; gap: 6px; flex-shrink: 0; }
+.search-source-label { display: flex; align-items: center; gap: 7px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.search-source-label strong { color: var(--text-2); font-weight: 600; }
+
+.search-empty.no-source { gap: 8px; }
+.search-empty.no-source .button { margin-top: 10px; }
+.form-note { font-size: 12.5px; color: var(--faint); margin: -8px 0 4px; text-align: left; }
+
+.view { animation: fade-in .2s; }
+
+.now-backdrop { position: absolute; inset: -60px; z-index: -1; background-size: cover; background-position: center; filter: blur(60px) saturate(1.5); opacity: .4; }
+/* Miniature déjà floutée : agrandie telle quelle, sans filtre à recalculer */ .now-backdrop.soft, .app-backdrop.blurred img.soft { filter: none; }
+ .guest-now::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(15, 15, 13, .55), rgba(15, 15, 13, .35)); pointer-events: none; }
+
+/* Bouton lecture « verre » : disque translucide cerclé de clair, icône blanche (lisible sur tous les fonds). */ .play-button, .tv-player-buttons .icon-button.tv-play { width: 58px; height: 58px; background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .34); transition: transform .15s, background .15s; }
+.play-button:not(:disabled):hover, .tv-player-buttons .icon-button.tv-play:not(:disabled):hover { background: rgba(255, 255, 255, .24); color: #fff; transform: scale(1.05); }
+.play-button:not(:disabled):active, .tv-player-buttons .icon-button.tv-play:not(:disabled):active { transform: scale(.96); }
+.skip-button { width: 46px; height: 46px; color: var(--text-2); background: rgba(255, 255, 255, .06); }
+
+.queue-list { --cols: 16px 26px 44px minmax(0, 2fr) minmax(0, 1.2fr) minmax(90px, 140px) 46px 108px; display: flex; flex-direction: column; gap: 2px; }
+.queue-list.is-guest { --cols: 48px minmax(0, 1fr) auto auto; }
+.queue-item { display: grid; grid-template-columns: var(--cols); align-items: center; gap: 14px; }
+.queue-item { position: relative; padding: 9px 12px; border-radius: 10px; transition: background .15s, opacity .15s; min-width: 0; }
+.queue-item:hover { background: var(--surface); }
+.queue-item.dragging { opacity: .4; }
+.queue-item.drop-before::before, .queue-item.drop-after::after { content: ''; position: absolute; left: 12px; right: 12px; height: 2px; border-radius: 2px; background: var(--lime); }
+.queue-item.drop-before::before { top: -2px; }
+.queue-item.drop-after::after { bottom: -2px; }
+.drag-handle { color: var(--faint); display: flex; cursor: grab; opacity: .6; }
+.queue-item:hover .drag-handle { opacity: 1; }
+.track-number { color: var(--faint); font-size: 13px; text-align: center; font-variant-numeric: tabular-nums; }
+.queue-item.is-next .track-number { color: var(--lime-text); font-weight: 700; }
+.track-cover { width: 44px; height: 44px; object-fit: cover; border-radius: 7px; flex-shrink: 0; }
+.track-main { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.track-main strong { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-main span { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-album { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.added-by { display: flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 13px; min-width: 0; }
+.added-by > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.track-duration { font-size: 13px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.track-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0; opacity: 0; transition: opacity .15s; }
+.queue-item:hover .track-actions, .track-actions:focus-within { opacity: 1; }
+.track-actions .icon-button { width: 32px; height: 32px; }
+.track-actions .remove-action:hover { color: var(--danger); background: var(--danger-soft); }
+@media (hover: none) { .track-actions { opacity: 1; } }
+
+.is-guest .queue-item { padding: 10px 6px; }
+.is-guest .added-by > span { display: none; }
+
+.empty-state { padding: 48px 24px; text-align: center; border: 1px dashed var(--line-strong); border-radius: var(--radius-lg); color: var(--muted); }
+.empty-state > span { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%; background: var(--lime-soft); color: var(--lime-text); margin: 0 auto 16px; }
+.empty-state h3 { font-size: 17px; color: var(--text); margin-bottom: 6px; }
+.empty-state p { font-size: 14px; line-height: 1.6; max-width: 340px; margin: 0 auto; }
+.empty-state .button { margin-top: 18px; }
+
+.participants { border-top: 1px solid var(--line); padding-top: 20px; }
+.participants ul { display: flex; flex-direction: column; gap: 10px; }
+.participants li { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.participants .avatar { width: 30px; height: 30px; font-size: 12px; }
+
+.participants small { font-size: 12px; color: var(--faint); white-space: nowrap; }
+
+ .inline-error { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 12px; background: var(--danger-soft); border: 1px solid rgba(255, 130, 120, .25); border-radius: var(--radius-sm); color: #ffb0a8; font-size: 13.5px; line-height: 1.5; }
+ .inline-error svg { flex-shrink: 0; margin-top: 1px; }
+
+input::placeholder { color: var(--faint); }
+
+.field-error { color: #ffa198; font-size: 13px; }
+
+/* ───────────── Modals ───────────── */ .modal-backdrop { position: fixed; inset: 0; background: rgba(8, 8, 7, .78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 100; display: grid; place-items: center; padding: 20px; animation: fade-in .18s; }
+.modal { position: relative; width: 100%; max-width: 480px; max-height: calc(100dvh - 40px); overflow: auto; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); padding: 30px; box-shadow: var(--shadow); animation: slide-up .22s cubic-bezier(.2, .8, .2, 1); }
+.modal-close { position: absolute; right: 14px; top: 14px; }
+.modal h2 { font-size: 22px; letter-spacing: -.5px; margin: 16px 0 6px; }
+.modal > p { font-size: 14px; line-height: 1.6; color: var(--muted); }
+.modal-symbol { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; flex-shrink: 0; }
+.modal-symbol.lime { background: var(--lime-soft); color: var(--lime-text); }
+.modal-symbol.danger { background: var(--danger-soft); color: var(--danger); }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+.confirm-modal { max-width: 420px; }
+.confirm-track { display: flex; align-items: center; gap: 12px; margin-top: 16px; padding: 10px; border-radius: var(--radius); background: var(--bg); border: 1px solid var(--line); }
+.confirm-track > div { display: flex; flex-direction: column; min-width: 0; }
+.confirm-track strong { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.confirm-track span { font-size: 13px; color: var(--muted); }
+
+.search-title { display: flex; align-items: center; gap: 14px; padding-right: 36px; }
+.search-title h2 { margin: 0 0 2px; }
+.search-title p { font-size: 13.5px; color: var(--muted); }
+.search-input { height: 50px; display: flex; align-items: center; gap: 10px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 12px; padding: 0 14px; margin-top: 22px; color: var(--muted); transition: border-color .15s, box-shadow .15s; }
+.search-input:focus-within { border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
+.search-input input { background: transparent; border: 0; outline: 0; color: var(--text); min-width: 0; flex: 1; font-size: 15.5px; }
+.search-input button { border: 0; background: transparent; color: var(--muted); padding: 4px; display: grid; place-items: center; border-radius: 50%; }
+.search-input button:hover { color: var(--text); background: var(--surface-3); }
+.search-results { display: flex; flex-direction: column; gap: 2px; max-height: 380px; overflow: auto; margin: 14px -8px 0; }
+.search-result, .search-skeleton { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 10px; }
+.search-result:hover { background: var(--surface-2); }
+.search-result > div { display: flex; flex-direction: column; gap: 2px; flex: 1; min-width: 0; }
+.search-result strong { font-size: 14.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.search-result > div > span { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.result-duration { font-size: 13px; color: var(--faint); font-variant-numeric: tabular-nums; }
+.search-result button { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; border: 1px solid var(--line-strong); background: transparent; color: var(--lime-text); transition: .15s; }
+.search-result button:not(:disabled):hover { background: var(--lime); border-color: var(--lime); color: var(--lime-ink); }
+.search-result button.added, .search-result button.added:disabled { opacity: 1; background: var(--lime-soft); border-color: transparent; cursor: default; }
+.search-skeleton i, .search-skeleton b { display: block; border-radius: 6px; background: linear-gradient(90deg, var(--surface-2) 0%, var(--surface-3) 50%, var(--surface-2) 100%); background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+.search-skeleton i { width: 44px; height: 44px; flex-shrink: 0; }
+.search-skeleton span { flex: 1; display: flex; flex-direction: column; gap: 7px; }
+.search-skeleton b { height: 11px; width: 60%; }
+.search-skeleton b + b { width: 38%; }
+.search-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 36px 16px 20px; color: var(--faint); }
+.search-empty strong { color: var(--text-2); font-size: 15px; margin-top: 4px; }
+.search-empty span { font-size: 13.5px; color: var(--muted); }
+
+/* ───────────── Toast ───────────── */ .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 200; display: flex; align-items: center; gap: 10px; width: max-content; max-width: calc(100vw - 32px); padding: 12px 12px 12px 14px; background: #f1f0e6; color: #1f1f19; border-radius: 12px; box-shadow: 0 14px 44px rgba(0, 0, 0, .5); animation: toast-in .25s; }
+.toast > span { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: #dfeeb0; color: #3f5a0c; flex-shrink: 0; }
+.toast.error > span { background: #fbd6d1; color: #a23a31; }
+.toast p { font-size: 14px; font-weight: 600; }
+.toast button { border: 0; background: transparent; color: #6b6b60; padding: 4px; display: grid; place-items: center; border-radius: 50%; }
+.toast button:hover { background: rgba(0, 0, 0, .07); }
+
+/* ───────────── Guest ───────────── */ .guest-shell { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+/* Fond fixe : il ne défile pas avec la page, même sur mobile (où background-attachment: fixed est ignoré). */ .guest-shell::before { content: ''; position: fixed; top: 0; left: 0; right: 0; height: 100vh; height: 100lvh; z-index: -1; background: radial-gradient(ellipse at 50% -10%, rgba(var(--accent-rgb), .1) 0, transparent 55%), var(--bg); pointer-events: none; }
+:root[data-custom-bg] .guest-shell::before { display: none; }
+/* Bords haut et bas : une bande unie (que Safari reprend pour teinter ses barres) qui se fond dans le fond de page. */ .edge-tint { display: none; position: fixed; left: 0; right: 0; z-index: -1; pointer-events: none; }
+@media (hover: none), (max-width: 900px) { .edge-tint { display: block; } }
+.edge-tint.top { top: 0; height: calc(env(safe-area-inset-top) + 4px); background-color: var(--edge-top); }
+.edge-tint.bottom { bottom: -8px; height: calc(env(safe-area-inset-bottom) + 20px); background-color: var(--edge-bottom); }
+.edge-tint i { position: absolute; left: 0; right: 0; height: 64px; }
+.edge-tint.top i { top: 100%; background: linear-gradient(var(--edge-top), transparent); }
+.edge-tint.bottom i { bottom: 100%; background: linear-gradient(transparent, var(--edge-bottom)); }
+.guest-header { width: 100%; max-width: 680px; margin: 0 auto; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; }
+.guest-header .brand { font-size: 24px; }
+.guest-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); background: rgba(255, 255, 255, .04); border: 1px solid var(--line-strong); padding: 6px 12px; border-radius: 99px; }
+.guest-badge.offline { color: var(--peach); border-color: rgba(235, 169, 127, .35); }
+.guest-main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 16px 20px 48px; }
+.guest-welcome { text-align: center; margin-bottom: 20px; }
+.guest-kicker { color: var(--lime-text); font-size: 12px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; }
+.guest-welcome h1 { font-size: 30px; line-height: 1.15; letter-spacing: -1px; margin: 0 0 10px; overflow-wrap: anywhere; }
+.guest-welcome p { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; font-size: 14px; color: var(--muted); }
+.guest-welcome p > span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guest-welcome p strong { color: var(--text); }
+.guest-welcome .avatar { width: 26px; height: 26px; font-size: 11px; }
+.guest-header-actions { display: flex; align-items: center; gap: 8px; }
+
+.guest-now { position: relative; isolation: isolate; overflow: hidden; clip-path: inset(0 round var(--radius-lg)); display: flex; align-items: center; gap: 14px; padding: 14px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius-lg); margin-bottom: 14px; }
+.guest-now.idle { border-style: dashed; }
+.guest-now .track-cover { width: 60px; height: 60px; border-radius: 10px; }
+.guest-now > div:not(.now-backdrop) { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.guest-now-label { display: flex; align-items: center; gap: 5px; color: var(--lime-text); font-size: 11.5px; font-weight: 700; letter-spacing: 1px; margin-bottom: 2px; }
+.guest-now.idle .guest-now-label { color: var(--muted); }
+.guest-now strong { font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guest-now p { font-size: 14px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guest-now > .equalizer { margin-right: 8px; }
+
+.guest-name { display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; margin-bottom: 18px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); font-size: 13.5px; color: var(--muted); cursor: text; }
+.guest-name > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.guest-name strong { color: var(--text); }
+div.guest-name { padding: 10px 12px; cursor: default; }
+.waiting-identity { justify-content: center; margin: 22px 0 0; background: var(--bg); }
+.guest-name input { flex: 1; min-width: 0; height: 34px; padding: 0 10px; border: 1px solid transparent; border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14.5px; font-weight: 600; }
+.guest-name input:focus { outline: 0; border-color: var(--lime-line); }
+
+.guest-tabs { position: sticky; top: 8px; z-index: 10; display: flex; background: rgba(24, 24, 21, .9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); padding: 4px; border-radius: 12px; margin-bottom: 18px; }
+.guest-tabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border: 0; background: transparent; color: var(--muted); font-size: 14.5px; font-weight: 600; border-radius: 9px; transition: .15s; }
+.guest-tabs button.active { background: var(--surface-3); color: var(--text); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
+.guest-tabs button span { font-size: 12px; background: var(--surface-3); padding: 1px 8px; border-radius: 99px; }
+.guest-tabs button.active span { background: var(--lime); color: var(--lime-ink); }
+.boot-screen { align-items: center; justify-content: center; gap: 18px; color: var(--muted); }
+.home-main { flex: 1; width: 100%; max-width: 560px; margin: 0 auto; padding: 24px 20px 56px; }
+.home-hero { text-align: center; margin: 48px 0 28px; }
+.home-hero h1 { display: flex; justify-content: center; }
+.home-hero .brand { font-size: 64px; gap: .3em; letter-spacing: -.05em; }
+.home-hero p { font-size: 15.5px; color: var(--muted); margin-top: 18px; }
+
+.home-panel { padding: 22px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: var(--shadow); }
+.home-form { display: flex; flex-direction: column; }
+.home-form > label:not(.code-input):not(.switch-row), .waiting-name { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-2); margin-bottom: 16px; text-align: left; }
+.home-form > label:not(.code-input):not(.switch-row) input, .waiting-name input { width: 100%; height: 46px; padding: 0 14px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; color: var(--text); font-size: 15px; }
+.home-form > label:not(.code-input):not(.switch-row) input:focus, .waiting-name input:focus { outline: 0; border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
+.home-form .code-input { margin-top: 8px; }
+.form-label { font-size: 13.5px; font-weight: 500; color: var(--text-2); }
+.home-form .join-button { margin-top: 18px; }
+.home-form > .field-error { margin-top: 10px; }
+
+.waiting-card .modal-symbol.danger { margin: 0 auto 18px; }
+.waiting-name { margin: 22px 0 0; }
+.join-requests { margin-bottom: 22px; padding: 14px 16px; border: 1px solid var(--lime-line); border-radius: var(--radius-lg); background: linear-gradient(120deg, rgba(var(--accent-rgb), .08), var(--surface)); animation: slide-up .25s; }
+.join-requests-head { display: flex; align-items: center; gap: 8px; color: var(--lime-text); font-size: 14px; margin-bottom: 10px; }
+.join-requests ul { display: flex; flex-direction: column; gap: 8px; }
+.join-requests li { display: flex; align-items: center; gap: 12px; }
+.join-requests li .avatar { width: 34px; height: 34px; font-size: 13px; }
+.join-requests li > div { flex: 1; min-width: 0; }
+.join-requests li strong { display: block; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.join-requests li small { font-size: 12.5px; color: var(--muted); }
+.join-requests .button { min-height: 36px; padding: 0 12px; }
+
+.join-main { flex: 1; display: grid; place-items: center; padding: 24px 20px 64px; }
+.join-card { width: 100%; max-width: 400px; padding: 32px 28px; text-align: center; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 22px; box-shadow: var(--shadow); }
+.join-card .modal-symbol { margin: 0 auto 18px; }
+.join-card h1 { font-size: 26px; letter-spacing: -.8px; }
+.join-card > p { font-size: 14.5px; color: var(--muted); margin-top: 8px; }
+.code-input { display: flex; align-items: center; justify-content: center; margin-top: 24px; height: 64px; padding: 0 18px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 14px; font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 3px; cursor: text; transition: border-color .15s, box-shadow .15s; }
+.code-input:focus-within { border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
+.code-input.invalid { border-color: rgba(255, 130, 120, .6); }
+.code-input span { color: var(--muted); }
+.code-input input { width: calc(4ch + 16px); border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; letter-spacing: inherit; padding: 0; }
+.code-input input::placeholder { color: var(--surface-3); }
+.join-card > .field-error { display: block; margin-top: 10px; color: #ffa198; font-size: 13.5px; }
+.join-button { width: 100%; margin-top: 18px; }
+.join-hint { display: flex; align-items: flex-start; justify-content: center; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: left; }
+.join-hint svg { flex-shrink: 0; margin-top: 1px; }
+
+.search-panel.compact .search-input { margin-top: 0; }
+.search-panel.compact .search-results { max-height: none; overflow: visible; margin: 12px -6px 0; }
+.search-panel.compact .search-result { padding: 10px 6px; }
+.search-panel.compact .track-cover { width: 50px; height: 50px; }
+
+/* ───────────── Responsive ───────────── */ @media (max-width: 1280px) {
+
+  .queue-list { --cols: 16px 24px 44px minmax(0, 2fr) minmax(0, 1fr) 46px 104px; }
+  .is-host .added-by { display: none; }
+}
+
+@media (max-width: 1100px) {
+
+  .queue-list { --cols: 16px 24px 44px minmax(0, 2fr) minmax(0, 1fr) minmax(80px, 130px) 46px 104px; }
+  .is-host .added-by { display: flex; }
+}
+
+@media (max-width: 900px) {
+
+  .queue-list { --cols: 16px 24px 44px minmax(0, 1fr) 46px 104px; }
+  .is-host .track-album, .is-host .added-by { display: none; }
+
+}
+
+@media (max-width: 680px) {
+
+  .play-button { width: 52px; height: 52px; }
+
+  .queue-list { --cols: 44px minmax(0, 1fr) auto auto; }
+  .drag-handle, .track-number { display: none; }
+  .queue-item { gap: 12px; padding: 9px 4px; }
+  .track-actions { opacity: 1; }
+  .track-actions .icon-button { width: 34px; height: 34px; }
+
+  .home-hero { margin-top: 28px; }
+  .home-hero .brand { font-size: 48px; }
+
+  .home-panel { padding: 18px; }
+  .join-requests li { flex-wrap: wrap; }
+  .join-requests li > div { flex-basis: calc(100% - 46px); }
+  .join-requests .button { flex: 1; }
+
+  .modal-backdrop { place-items: end center; padding: 0; }
+  .modal { max-width: none; border-radius: 22px 22px 0 0; padding: 26px 20px calc(24px + env(safe-area-inset-bottom)); max-height: 92dvh; animation-name: sheet-up; }
+  .search-results { max-height: 50dvh; }
+  .modal-actions .button { flex: 1; }
+  .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
+  .guest-shell .toast { bottom: 20px; }
+}
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
+
+@media (max-width: 420px) {
+  .track-duration, .result-duration { display: none; }
+  .queue-list { --cols: 44px minmax(0, 1fr) auto; }
+  .queue-list.is-guest { --cols: 44px minmax(0, 1fr) auto; }
+
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
+
+.danger-button svg { flex: none; }
+.guest-leave:hover { color: var(--danger); }
+a.button { text-decoration: none; }
+
+.fallback-badge { width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--lime-soft); color: var(--lime-text); }
+
+/* File : titres proposés au-dessus, musique de fond en dessous */ .queue-group { display: flex; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 12.5px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); }
+.queue-group.fallback { margin-top: 22px; color: var(--lime-text); }
+.queue-empty-inline { padding: 14px 12px; font-size: 13.5px; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 10px; }
+.fallback-list { margin-top: 8px; }
+.queue-item.is-fallback .track-main strong { color: var(--text-2, var(--text)); font-weight: 500; }
+.queue-item.is-fallback .track-cover, .queue-item.is-fallback .cover { opacity: .85; }
+.fallback-by { color: var(--lime-text); }
+.fallback-by .fallback-badge { width: 24px; height: 24px; }
+.fallback-more { display: flex; justify-content: center; gap: 18px; margin-top: 8px; }
+.guest-queue { display: flex; flex-direction: column; }
+
+/* ───────────── Mode TV ───────────── */ .tv-view { position: fixed; inset: 0; z-index: 50; overflow: hidden; isolation: isolate; background: var(--bg); will-change: transform; backface-visibility: hidden; }
+.tv-view.idle { cursor: none; }
+.tv-view::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .2)); }
+.tv-exit { position: absolute; top: 24px; right: 24px; display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border: 1px solid var(--line-strong); border-radius: 99px; background: rgba(15, 15, 13, .6); color: var(--text-2); font-size: 13.5px; font-weight: 600; transition: opacity .3s; }
+.tv-exit:hover { color: var(--text); }
+.tv-view.idle .tv-exit { opacity: 0; pointer-events: none; }
+.tv-label { display: inline-flex; align-items: center; gap: 10px; color: var(--lime-text); font-size: clamp(14px, 1.4vw, 22px); font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.tv-label .equalizer { height: 18px; }
+.tv-info h1 { margin-top: 1.6vh; padding-bottom: .08em; line-height: 1.12; letter-spacing: -.025em; font-weight: 800; }
+.tv-info p { margin-top: 1.4vh; font-size: clamp(20px, 2.4vw, 44px); color: var(--text-2); }
+.tv-info small { display: block; margin-top: 1.2vh; font-size: clamp(14px, 1.3vw, 22px); color: var(--muted); }
+.tv-qr { padding: 18px; border-radius: 22px; background: #f7f5ef; line-height: 0; }
+
+.tv-alerts { position: absolute; top: 24px; left: 50%; z-index: 2; width: min(560px, calc(100vw - 48px)); transform: translateX(-50%); }
+.tv-alerts .join-requests { margin-bottom: 10px; background: rgba(24, 24, 21, .94); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
+
+/* ───────────── Apparence personnalisée ───────────── */
+/* Sa couleur unie (cachée sous le dégradé ou l’image) est celle du bord bas : Safari (iPhone) en teinte sa barre du bas. */ .app-backdrop { position: fixed; top: 0; left: 0; right: 0; height: 100vh; height: 100lvh; z-index: -1; background-color: var(--edge-bottom, var(--bg)); overflow: hidden; pointer-events: none; }
+.app-backdrop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.app-backdrop.blurred img { inset: -8%; width: 116%; height: 116%; filter: blur(70px) saturate(1.4); }
+.app-backdrop.has-image::after { content: ''; position: absolute; inset: 0; background: rgba(8, 8, 7, var(--shade, .5)); transition: background .6s; }
+/* Sur un fond personnalisé, les textes secondaires s’éclaircissent pour rester lisibles sur toutes les teintes. */ :root[data-custom-bg], :root[data-glass], .tv-view { --text-2: #dedcd2; --muted: #c4c3b9; --faint: #b0afa5; }
+
+:root[data-custom-bg] body { background: transparent; }
+
+input[type="range"] { width: 100%; accent-color: var(--lime); }
+
+/* ───────────── Liquid Glass ───────────── */ :root[data-glass] { --glass-fill: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .48); --glass-fill-solid: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .68); --glass-edge: rgba(255, 255, 255, .2); --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 -1px 0 rgba(255, 255, 255, .06), inset 1px 0 0 rgba(255, 255, 255, .08), 0 18px 50px rgba(0, 0, 0, .3); }
+
+ :root[data-glass] .join-requests, :root[data-glass] .modal, :root[data-glass] .empty-state, :root[data-glass] .home-panel, :root[data-glass] .tv-exit, :root[data-glass] .tv-alerts .join-requests, :root[data-glass] .guest-now, :root[data-glass] .join-card {
+  background: var(--glass-fill); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%);
+}
+ :root[data-glass] .modal { border-radius: 26px; }
+
+:root[data-glass] .button.secondary, :root[data-glass] .search-input, :root[data-glass] .icon-button.skip-button {
+  background: linear-gradient(rgba(255, 255, 255, .08), rgba(255, 255, 255, .08)), rgba(14, 14, 12, .3); border-color: rgba(255, 255, 255, .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
+  backdrop-filter: blur(16px) saturate(170%); -webkit-backdrop-filter: blur(16px) saturate(170%);
+}
+:root[data-glass] .button { border-radius: 99px; }
+
+:root[data-glass] .button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); }
+
+:root[data-glass] .queue-item:hover { background: rgba(255, 255, 255, .06); }
+:root[data-glass] .modal-backdrop { background: rgba(0, 0, 0, .58); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+/* Fenêtres (QR code, recherche…) : le reflet du verre reste, mais le fond est presque opaque pour bien lire. */ :root[data-glass] .modal { background: linear-gradient(135deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(16, 16, 14, .88); }
+
+:root[data-glass] .toast { background: rgba(28, 28, 26, .62); color: var(--text); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%); }
+:root[data-glass] .toast > span { background: rgba(var(--accent-rgb), .22); color: var(--lime-text); }
+:root[data-glass] .toast.error > span { background: var(--danger-soft); color: var(--danger); }
+:root[data-glass] .toast button { color: var(--text-2); }
+:root[data-glass] .toast button:hover { background: rgba(255, 255, 255, .1); }
+
+/* Barre de progression (tableau de bord et mode TV) */ .progress { --rail: 4px; display: grid; grid-template-columns: 3.2em minmax(0, 1fr) 3.2em; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
+.progress-time:first-child { text-align: right; }
+.progress-track { position: relative; height: 18px; display: flex; align-items: center; cursor: pointer; touch-action: none; outline: none; }
+.progress.disabled .progress-track { cursor: default; }
+.progress-rail, .progress-fill { position: absolute; left: 0; height: var(--rail); border-radius: 99px; transition: height .15s ease; }
+.progress-fill { right: 0; transform: scaleX(0); transform-origin: left; transition: height .15s ease; }
+.progress.dragging .progress-fill, .progress.dragging .progress-thumb, .progress.dragging .progress-thumb-track { transition: none; }
+/* Le curseur suit la barre par translation de toute la largeur de la piste. */ .progress-thumb-track { position: absolute; left: 0; right: 0; top: 50%; height: 0; pointer-events: none; }
+.progress-rail { right: 0; background: rgba(255, 255, 255, .14); }
+.progress-fill { background: var(--lime); }
+.progress-thumb { position: absolute; left: 0; top: -6.5px; width: 13px; height: 13px; margin-left: -6.5px; border-radius: 50%; background: #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, .45); opacity: 0; transform: scale(.5); transition: opacity .15s ease, transform .15s ease; }
+.progress-track:hover, .progress.dragging .progress-track, .progress-track:focus-visible { --rail: 6px; }
+.progress:not(.disabled) .progress-track:hover .progress-thumb, .progress.dragging .progress-thumb, .progress-track:focus-visible .progress-thumb { opacity: 1; transform: scale(1); }
+.progress-track:focus-visible .progress-rail { box-shadow: 0 0 0 2px var(--lime-line); }
+.progress-tip { position: absolute; bottom: 20px; transform: translateX(-50%); padding: 3px 7px; border-radius: 6px; background: rgba(10, 10, 9, .9); color: #fff; font-size: 11.5px; font-weight: 600; pointer-events: none; white-space: nowrap; }
+
+/* Barre de progression : infobulle toujours présente, affichée au survol ou pendant le glissement */ .progress-tip { opacity: 0; transition: opacity .12s ease; }
+.progress.show-tip .progress-tip { opacity: 1; }
+
+/* ───────────── Mode TV : grille de placement ─────────────
+   Seules les rangées et colonnes occupées prennent de la place (gabarit calculé dans TvView).
+   Chaque zone est un conteneur : la pochette et le QR remplissent l’espace restant, en carré,
+   sans jamais dépasser leur zone — donc sans chevaucher un autre élément. */ .tv-grid { position: absolute; inset: 8vh 4vw 6vh; display: grid; gap: 3vh 3vw; }
+.tv-zone { --zone-align: center; --zone-justify: center; display: flex; flex-direction: column; gap: 2.2vh; min-width: 0; min-height: 0; container-type: size; }
+
+.tv-zone-left, .tv-zone-center, .tv-zone-right { justify-content: center; }
+.tv-zone-bottom-left, .tv-zone-bottom, .tv-zone-bottom-right { --zone-justify: flex-end; justify-content: flex-end; }
+ .tv-zone-left, .tv-zone-bottom-left { --zone-align: flex-start; align-items: flex-start; text-align: left; }
+ .tv-zone-center, .tv-zone-bottom { --zone-align: center; align-items: center; text-align: center; }
+ .tv-zone-right, .tv-zone-bottom-right { --zone-align: flex-end; align-items: flex-end; text-align: right; }
+.tv-zone > * { max-width: 100%; flex: none; }
+/* Espace « à remplir » (pochette, QR) : prend toute la hauteur libre de la zone. */ .tv-zone > .tv-fill { flex: 1 1 0; min-height: 60px; width: 100%; container-type: size; display: flex; align-items: var(--zone-justify); justify-content: var(--zone-align); }
+.tv-cover { width: calc(min(100cqw, 100cqh) * var(--tv-cover-scale, 1)); height: calc(min(100cqw, 100cqh) * var(--tv-cover-scale, 1)); flex: none; border-radius: 20px; object-fit: cover; box-shadow: 0 30px 80px rgba(0, 0, 0, .55); }
+span.tv-cover { display: grid; place-items: center; background: var(--surface-2); color: var(--faint); }
+.tv-info { min-width: 0; }
+.tv-info h1 { margin-top: 1.2vh; padding-bottom: .08em; line-height: 1.12; letter-spacing: -.025em; font-weight: 800; overflow-wrap: normal; }
+.tv-info p { margin-top: 1vh; font-size: clamp(16px, min(2.2vw, 7cqw), 40px); color: var(--text-2); }
+.tv-info small { display: block; margin-top: .8vh; font-size: clamp(13px, 1.2vw, 20px); color: var(--muted); }
+.tv-next { font-size: clamp(13px, 1.3vw, 22px); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-next span { margin-right: 12px; color: var(--faint); font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; }
+/* Lecture : la barre reste au centre, les boutons à sa gauche (colonnes symétriques). */ .tv-player { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(0, 640px) minmax(150px, 1fr); align-items: center; column-gap: 16px; row-gap: 8px; width: 100%; }
+.tv-player-buttons { grid-column: 1; justify-self: end; display: flex; align-items: center; gap: 4px; transition: opacity .3s; }
+.tv-player .tv-progress { grid-column: 2; min-width: 0; }
+@container (max-width: 620px) {
+  /* Zone étroite : boutons au-dessus de la barre, tous deux centrés. */ .tv-player { grid-template-columns: minmax(0, 1fr); }
+  .tv-player-buttons, .tv-player .tv-progress { grid-column: 1; justify-self: stretch; }
+  .tv-player-buttons { justify-content: center; }
+}
+.tv-player-buttons .icon-button { width: 44px; height: 44px; color: var(--text); }
+.tv-player-buttons .icon-button:not(:disabled):hover { background: rgba(255, 255, 255, .1); }
+.tv-view.idle .tv-player-buttons { opacity: 0; pointer-events: none; }
+.tv-progress { --rail: 6px; font-size: clamp(12px, 1.1vw, 19px); color: var(--text-2); }
+.tv-progress .progress-track { height: 26px; }
+.tv-progress .progress-track:hover, .tv-progress.dragging .progress-track { --rail: 9px; }
+.tv-progress .progress-thumb { top: -9px; width: 18px; height: 18px; margin-left: -9px; }
+/* Code QR : carré dans l’espace libre, le texte collé juste en dessous. */ .tv-zone > .tv-invite { --text-h: calc(clamp(15px, 1.6vw, 30px) * 1.3 + clamp(12px, 1.2vw, 22px) * 1.3 + 2.4vh); flex-direction: column; align-items: var(--zone-align); justify-content: var(--zone-justify); gap: 1.2vh; }
+.tv-zone > .tv-invite.no-text { --text-h: 0px; }
+.tv-zone > .tv-invite { min-height: calc(var(--text-h) + 60px); }
+.tv-qr { --qr-size: max(48px, calc(min(100cqw, 100cqh - var(--text-h)) * var(--tv-qr-scale, .7))); width: var(--qr-size); height: var(--qr-size); flex: none; padding: calc(var(--qr-size) * .06); box-sizing: border-box; border-radius: calc(var(--qr-size) * .07); background: #f7f5ef; line-height: 0; }
+.tv-qr svg { width: 100%; height: 100%; }
+.tv-invite-text { display: flex; flex-direction: column; gap: .5vh; flex: none; }
+.tv-invite-text strong { font-family: var(--font-display); font-size: clamp(15px, 1.6vw, 30px); }
+.tv-invite-text span { font-family: var(--font-display); font-size: clamp(12px, 1.2vw, 22px); font-weight: 700; color: var(--lime-text); letter-spacing: .5px; }
+/* Réglages des tailles en direct (mode TV ouvert depuis l’aperçu). */ .tv-tools { position: absolute; top: 24px; left: 24px; z-index: 4; display: flex; gap: 18px; padding: 10px 16px; border: 1px solid var(--line-strong); border-radius: 99px; background: rgba(15, 15, 13, .7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: opacity .3s; }
+.tv-tools label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
+.tv-tools input { width: 120px; accent-color: var(--lime); }
+.tv-view.idle .tv-tools { opacity: 0; pointer-events: none; }
+
+/* ───────────── Mode TV : fond animé tiré de la pochette en cours ───────────── */ .tv-ambient { position: absolute; inset: 0; z-index: -2; overflow: hidden; background: #050505; }
+.tv-ambient::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0), rgba(0, 0, 0, .3)); pointer-events: none; }
+.tv-ambient-layer { position: absolute; inset: 0; animation: tv-ambient-in 1.8s ease both; }
+.tv-drift { position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; max-width: none; object-fit: cover; will-change: transform; animation: tv-drift 90s steps(360, end) infinite alternate; }
+@keyframes tv-ambient-in { from { opacity: 0; } }
+@keyframes tv-drift { from { transform: translate3d(-3%, -2%, 0) scale(1); } to { transform: translate3d(3%, 2%, 0) scale(1.08); } }
+@media (prefers-reduced-motion: reduce) { .tv-drift { animation: none; } }
+.tv-view.tv-black { background: #000; }
+.tv-view.tv-black::after { display: none; }
+
+/* Mode TV ouvert : le tableau de bord reste dessiné dessous (prêt à réapparaître sans écran noir quand on glisse le lecteur vers le bas). */
+/* Voile posé sur le tableau de bord pendant que le mode TV s’agrandit ou se referme */ .tv-scrim { position: fixed; inset: 0; z-index: 49; background: rgba(0, 0, 0, .6); opacity: 0; pointer-events: none; }
+
+/* Admin : carte côté invité, bandeau et écran du relais, bouton « nommer admin » */ .admin-card { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 12px 14px; border: 1px solid var(--lime-line); border-radius: var(--radius-lg); background: linear-gradient(120deg, rgba(var(--accent-rgb), .08), var(--surface)); }
+.admin-card.alert { border-color: rgba(235, 169, 127, .5); background: linear-gradient(120deg, rgba(235, 169, 127, .12), var(--surface)); }
+.admin-card-icon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 50%; background: var(--lime-soft); color: var(--lime-text); }
+.admin-card.alert .admin-card-icon { background: var(--peach-soft); color: var(--peach); }
+.admin-card > div { flex: 1; min-width: 0; }
+.admin-card strong { display: block; font-size: 14.5px; }
+.admin-card p { margin-top: 2px; font-size: 13px; color: var(--muted); }
+.admin-card .button { flex: none; min-height: 36px; padding: 0 14px; }
+@media (max-width: 480px) { .admin-card { flex-wrap: wrap; } .admin-card .button { width: 100%; } }
+
+:root[data-glass] .admin-card { background: var(--glass-fill); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%); }
+
+/* Admin qui a la main : commandes de lecture sur sa page d’invité */ .guest-controls { display: flex; justify-content: center; align-items: center; gap: 14px; margin: -2px 0 16px; }
+.guest-controls .play-button { width: 56px; height: 56px; }
+.guest-controls .skip-button { width: 44px; height: 44px; }
+
+/* Fenêtre de l’app cachée ou réduite : plus aucune animation */ :root[data-window-hidden] *, :root[data-window-hidden] *::before, :root[data-window-hidden] *::after { animation-play-state: paused !important; }
+
+/* Performances du verre : un flou « en direct » est recalculé à chaque fois que quelque chose bouge dans sa zone.
+   La carte « En lecture » contient l’égaliseur et la barre de progression : elle garde le reflet et la teinte du verre,
+   sans flou en direct (le fond derrière elle est déjà flouté). Les fenêtres, presque opaques, n’ont pas besoin de flou. */  :root[data-glass] .guest-now { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--glass-fill-solid); }
+:root[data-glass] .modal { backdrop-filter: none; -webkit-backdrop-filter: none; }
+/* Une fenêtre ouverte : plus rien ne bouge dessous, pour que son fond flouté ne soit pas recalculé en continu. */ body.modal-open .equalizer i { animation-play-state: paused; }
+
+/* Mode TV : menu du clic droit (masquer le code QR) */ .tv-menu { position: fixed; z-index: 60; min-width: 220px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 10px; background: rgba(20, 20, 18, .94); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
+.tv-menu button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--text); font-size: 13.5px; text-align: left; }
+.tv-menu button:hover { background: rgba(255, 255, 255, .1); }
+
+/* App iPhone : pas de zoom dans les champs, appui immédiat, encoche et barre d’accueil respectées */ html { -webkit-text-size-adjust: 100%; }
+button, a, input { touch-action: manipulation; }
+input, select, textarea { font-size: 16px !important; }
+body { padding-top: env(safe-area-inset-top); }
+.tv-view { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+
+/* iPhone : la barre native remplace la barre web ; verre plus proche d’iOS 26 */ @media (max-width: 680px) {
+
+  :root[data-native-tabs] .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+:root[data-native-tabs][data-glass] {
+  --glass-fill: linear-gradient(145deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .03) 48%, rgba(255, 255, 255, .09)), rgba(16, 16, 14, .38);
+  --glass-edge: rgba(255, 255, 255, .22);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 14px 40px rgba(0, 0, 0, .3);
+}
+
+/* Mode TV sur téléphone : deux pages à faire glisser */ .tv-pager { position: absolute; inset: 0; z-index: 1; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior: contain; }
+.tv-pager::-webkit-scrollbar { display: none; }
+.tv-page { flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; box-sizing: border-box; padding: calc(env(safe-area-inset-top) + 62px) 22px calc(env(safe-area-inset-bottom) + 76px); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3vh; }
+.tv-page .tv-fill { flex: 0 0 auto; width: auto; height: auto; display: block; }
+.tv-page-player .tv-cover { display: block; width: min(86vw, 46vh); height: min(86vw, 46vh); max-width: none; max-height: none; border-radius: 22px; object-fit: cover; box-shadow: 0 24px 60px rgba(0, 0, 0, .5); }
+.tv-page-player span.tv-cover { display: grid; place-items: center; background: var(--surface-2); color: var(--faint); }
+.tv-page-controls { display: flex; flex-direction: column; align-items: center; gap: 2vh; width: 100%; max-width: 520px; min-width: 0; }
+.tv-page .tv-info { width: 100%; text-align: center; min-width: 0; }
+.tv-page .tv-label { justify-content: center; font-size: 12px; }
+.tv-page .tv-info h1 { margin: 6px 0 2px; font-size: clamp(23px, 6.6vw, 32px) !important; line-height: 1.15; white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+.tv-page .tv-info p { margin: 0; font-size: 16px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.tv-page .tv-info small { display: block; margin-top: 4px; font-size: 13px; }
+.tv-page .tv-player { display: flex; flex-direction: column-reverse; gap: 10px; width: 100%; }
+.tv-page .tv-player-buttons, .tv-view.idle .tv-page .tv-player-buttons { justify-content: center; opacity: 1; pointer-events: auto; gap: 14px; }
+.tv-page .tv-player-buttons .icon-button { width: 50px; height: 50px; }
+.tv-page .tv-player-buttons .icon-button.tv-play { width: 70px; height: 70px; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .4), inset 0 0 0 1px rgba(255, 255, 255, .28), 0 10px 30px rgba(0, 0, 0, .3); }
+.tv-page .tv-progress { width: 100%; max-width: none; margin: 0; font-size: 12.5px; }
+.tv-page .tv-next { max-width: 100%; margin: 0; font-size: 13px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; text-align: center; }
+.tv-page-qr .tv-invite { display: flex; flex-direction: column; align-items: center; gap: 20px; text-align: center; max-width: 100%; }
+.tv-page-qr .tv-qr { padding: 18px; border-radius: 28px; background: #f7f5ef; box-shadow: 0 24px 60px rgba(0, 0, 0, .45); line-height: 0; }
+.tv-page-qr .tv-qr svg { width: min(74vw, 58vh); height: min(74vw, 58vh); }
+.tv-page-qr .tv-invite-text { display: flex; flex-direction: column; gap: 6px; }
+.tv-page-qr .tv-invite-text strong { font-size: 22px; }
+.tv-page-qr .tv-invite-text span { font-size: 15px; color: var(--lime-text); overflow-wrap: anywhere; }
+.tv-page-nav { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 14px); z-index: 3; display: flex; gap: 4px; padding: 4px; transform: translateX(-50%); border: 1px solid rgba(255, 255, 255, .22); border-radius: 99px; background: rgba(20, 20, 18, .42); -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 10px 28px rgba(0, 0, 0, .35); }
+.tv-page-nav button { display: grid; place-items: center; width: 44px; height: 34px; border: 0; border-radius: 99px; background: transparent; color: rgba(255, 255, 255, .72); transition: background .2s, color .2s; }
+.tv-page-nav button.active { background: rgba(255, 255, 255, .22); color: #fff; }
+@media (max-width: 900px) {
+  .tv-view .tv-exit, .tv-view.idle .tv-exit { top: calc(env(safe-area-inset-top) + 10px); right: 14px; opacity: 1; pointer-events: auto; -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); background: rgba(20, 20, 18, .42); border: 1px solid rgba(255, 255, 255, .22); }
+  .tv-view { padding: 0; }
+}
+/* Téléphone à l’horizontale : pochette à gauche, lecteur à droite */ @media (max-width: 900px) and (orientation: landscape) {
+  .tv-page-player { flex-direction: row; gap: 5vw; padding: 14px calc(env(safe-area-inset-right) + 24px) 14px calc(env(safe-area-inset-left) + 24px); }
+  .tv-page-player .tv-cover { width: 62vh; height: 62vh; }
+  .tv-page-controls { flex: 1; }
+  .tv-page-qr { flex-direction: row; padding: 12px; }
+  .tv-page-qr .tv-invite { flex-direction: row; gap: 5vw; text-align: left; }
+  .tv-page-qr .tv-qr svg { width: 56vh; height: 56vh; }
+  .tv-page-qr .tv-qr { padding: 12px; border-radius: 20px; }
+  .tv-page-nav { bottom: 8px; }
+}
+
+/* Quitter le mode TV sur téléphone : poignée pour glisser vers le bas */ .tv-grabber { position: absolute; top: calc(env(safe-area-inset-top) + 8px); left: 50%; z-index: 4; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: rgba(255, 255, 255, .45); }
+@media (max-width: 900px) {
+  .tv-view { touch-action: pan-x; }
+}
+
+/* iPhone : la page qui défile s’efface sous l’heure et la batterie, pour qu’elles restent lisibles */ :root[data-native-tabs] body::before { content: ''; position: fixed; inset: 0 0 auto; z-index: 40; height: calc(env(safe-area-inset-top) + 10px); pointer-events: none; background: linear-gradient(rgba(10, 10, 9, .92) 60%, rgba(10, 10, 9, 0)); }
+
+/* Changement de titre : texte et pochette en fondu */ .swap-text { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; min-width: 0; overflow: hidden; }
+.swap-layer { min-width: 0; }
+.swap-ghost { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; pointer-events: none; }
+.fade-cover { position: relative; display: block; overflow: hidden; }
+.fade-cover img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; animation: cover-swap .5s ease both; }
+@keyframes cover-swap { from { opacity: 0; transform: scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .fade-cover img { animation: none; } }
+
+/* Reclasser au doigt */ .queue-list.is-reordering { touch-action: none; }
+.queue-list.is-reordering .queue-item { transition: transform .18s cubic-bezier(.32, .72, 0, 1); }
+.queue-list .queue-item.touch-lifted { position: relative; z-index: 5; transition: none; border-radius: 16px; background: #2e2e2a; box-shadow: 0 8px 20px rgba(0, 0, 0, .45); }
+.queue-list .queue-item.touch-settling { position: relative; z-index: 5; border-radius: 16px; transition: transform .2s cubic-bezier(.32, .72, 0, 1), background .2s ease, box-shadow .2s ease; background: transparent; box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+/* Les lignes restent sur leur propre couche : le texte ne change pas de rendu au moment de les déposer. */ :root[data-native-tabs] .queue-list.is-host .queue-item { will-change: transform; }
+
+:root[data-native-tabs][data-glass] { --glass-fill: linear-gradient(145deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .04) 48%, rgba(255, 255, 255, .09)), rgba(22, 22, 20, .62); }
+:root[data-native-tabs] .modal-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .68); }
+/* Réponse immédiate au doigt, et pages qui apparaissent en douceur */ * { -webkit-tap-highlight-color: transparent; }
+:root[data-native-tabs] button { transition: transform .12s ease, background .15s, color .15s, opacity .15s; }
+:root[data-native-tabs] button:not(:disabled):active { transform: scale(.96); }
+
+@keyframes page-in { from { opacity: 0; transform: translate3d(0, 6px, 0); } }
+/* Le rebond de fin de page reste actif, sauf sous le mode TV et les fenêtres */ html:has(.tv-view), html:has(.tv-view) body, body.modal-open { overscroll-behavior: none; }
+
+/* Mode TV sur téléphone : un titre sur une ou deux lignes ne déplace ni la pochette ni les boutons */ .tv-page .tv-info { --tv-title: clamp(23px, 6.6vw, 32px); }
+.tv-page .tv-info .swap-text { min-height: calc(var(--tv-title) * 2.3 + 54px); }
+.tv-page .tv-info.with-by .swap-text { min-height: calc(var(--tv-title) * 2.3 + 76px); }
+/* Sur toute la largeur de l’écran : le texte glisse jusqu’au bord au lieu d’être coupé avant */ .tv-page .swap-text { margin-inline: -22px; padding-inline: 22px; }
+.tv-page .swap-ghost { left: 22px; right: 22px; }
+.tv-page .tv-next-swap { width: calc(100% + 44px); }
+
+/* Page principale sur téléphone : l’essentiel seulement */ @media (max-width: 680px) {
+
+  .queue-list.is-host { --cols: 44px minmax(0, 1fr) auto; }
+  .queue-list.is-host .track-album, .queue-list.is-host .added-by, .queue-list.is-host .track-duration { display: none; }
+  .queue-list.is-host .track-actions .icon-button:not(.remove-action) { display: none; }
+  .queue-list.is-host .remove-action { color: var(--faint); }
+  .queue-item { padding: 7px 2px; }
+  /* Au doigt, le survol resterait collé sur la ligne qu’on vient de déposer */ .queue-list .queue-item:not(.touch-lifted):hover { background: transparent; }
+}
+
+/* Mode TV sur téléphone : la pochette laisse la place au texte, aux boutons et à la barre du bas, même sur un petit écran */ @media (max-width: 900px) and (orientation: portrait) {
+  .tv-page { padding-top: calc(env(safe-area-inset-top) + 34px); }
+  .tv-page-player .tv-cover { width: min(86vw, 46vh, calc(100dvh - 442px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); height: min(86vw, 46vh, calc(100dvh - 442px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); }
+}
+/* Écrans hauts : la pochette (même taille) descend sous la poignée et le bouton AirPlay ;
+   la page part du haut et les espaces sous la pochette se resserrent pour que tout tienne. */ @media (max-width: 900px) and (orientation: portrait) and (min-height: 700px) {
+  .tv-page-player { justify-content: flex-start; padding-top: calc(env(safe-area-inset-top) + 50px); gap: 14px; }
+  .tv-page-player .tv-page-controls { gap: 9px; }
+  .tv-page-player .tv-player { gap: 6px; }
+  .tv-page-nav { bottom: calc(env(safe-area-inset-bottom) + 6px); }
+}
+
+/* Petites animations d’interaction : uniquement transparence et déplacement, jamais plus de 220 ms */ .queue-list { position: relative; }
+.row-ghost { position: absolute; left: 0; right: 0; margin: 0; pointer-events: none; z-index: 0; }
+@keyframes item-in { from { opacity: 0; transform: translate3d(0, 8px, 0); } }
+@keyframes pop { from { transform: scale(.7); opacity: .4; } 60% { transform: scale(1.1); opacity: 1; } }
+.icon-swap { display: grid; place-items: center; animation: pop .18s ease-out; }
+
+.search-result, .search-skeleton { animation: item-in .18s ease-out both; }
+.search-result button.added svg { animation: pop .22s ease-out; }
+
+.queue-list .queue-item.touch-lifted { animation: lift .14s ease-out; }
+@keyframes lift { from { background: transparent; box-shadow: 0 0 0 rgba(0, 0, 0, 0); } }
+
+@media (hover: none) {
+  button { transition: transform .12s ease, background .15s, color .15s, opacity .15s; }
+  button:not(:disabled):active { transform: scale(.96); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .icon-swap, .search-result, .search-skeleton, .search-result button.added svg, .queue-list .queue-item.touch-lifted { animation: none; }
+}
+
+/* Barres de lecture : des images clés sans variable, que la carte graphique anime seule */ .equalizer:not(.paused) i:nth-child(1) { animation-name: equalize-1; }
+.equalizer:not(.paused) i:nth-child(2) { animation-name: equalize-2; }
+.equalizer:not(.paused) i:nth-child(3) { animation-name: equalize-3; }
+@keyframes equalize-1 { from { transform: scaleY(.54); } to { transform: scaleY(.23); } }
+@keyframes equalize-2 { from { transform: scaleY(1); } to { transform: scaleY(.23); } }
+@keyframes equalize-3 { from { transform: scaleY(.7); } to { transform: scaleY(.23); } }
+
+html { touch-action: manipulation; }
+
+/* Mode TV : à la pause, la pochette recule ; à la reprise, elle revient avec un léger rebond */ .tv-view .tv-cover { transition: transform .5s cubic-bezier(.3, 1.35, .5, 1); will-change: transform; }
+.tv-view.is-paused .tv-cover { transform: scale(.8); transition: transform .4s cubic-bezier(.3, .9, .4, 1); }
+@media (prefers-reduced-motion: reduce) { .tv-view .tv-cover, .tv-view.is-paused .tv-cover { transition: none; } }
+
+/* Barre de progression : fine au repos, elle s’épaissit sous le doigt ; le temps est dessous, comme dans les apps de musique */ .progress, .tv-progress { --rail: 5px; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 0; align-items: center; font-size: 11.5px; font-weight: 500; color: var(--muted); }
+.progress .progress-track { grid-column: 1 / -1; grid-row: 1; height: 22px; }
+.progress .progress-time { grid-row: 2; min-width: 0; text-align: left; transition: color .2s; }
+.progress .progress-time:last-child { text-align: right; }
+.progress .progress-rail { position: absolute; left: 0; right: 0; height: var(--rail); border-radius: 99px; overflow: hidden; background: rgba(255, 255, 255, .15); transition: height .24s cubic-bezier(.3, 1.5, .5, 1); }
+.progress .progress-fill { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 0 99px 99px 0; background: linear-gradient(90deg, color-mix(in srgb, var(--lime) 62%, transparent), var(--lime)); transform: translate3d(-100%, 0, 0); will-change: transform; }
+.progress.dragging, .tv-progress.dragging, .progress .progress-track:hover { --rail: 5px; }
+.progress.dragging { --rail: 11px; color: var(--text-2); }
+.progress .progress-thumb-track { display: none; }
+.progress .progress-tip { display: none; }
+.tv-progress { font-size: 12px; }
+
+/* Rejoindre une session hébergée ailleurs */ .join-link { display: block; margin-top: 14px; font-size: 13px; color: var(--muted); }
+.join-link input { display: block; width: 100%; margin-top: 6px; }
+
+/* Fonds tirés de la pochette : l’ancien reste dessous pendant que le nouveau apparaît, sans trou ni saut */
+@keyframes fade-only { from { opacity: 0; } }
+.now-backdrop { transition: opacity .6s ease; }
+.now-backdrop .fade-cover { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.now-backdrop .fade-cover img, .app-backdrop .fade-cover img { animation: fade-only .8s ease both; }
+.app-backdrop.blurred .fade-cover { position: absolute; inset: -8%; width: 116%; height: 116%; overflow: visible; }
+.app-backdrop.blurred .fade-cover img { inset: 0; width: 100%; height: 100%; }
+.app-backdrop.blurred .fade-cover:not(.soft) img { filter: blur(70px) saturate(1.4); }
+.app-backdrop.blurred .fade-cover.soft img { filter: none; }
+
+/* Mode TV : l’album, sous l’artiste */ .tv-info .tv-album { margin-top: .3em; font-size: clamp(14px, 1.5vw, 28px); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tv-page .tv-info .tv-album { margin: 2px 0 0; font-size: 14px; }
+
+/* Fenêtres sur téléphone : une poignée en haut, on les ferme en glissant vers le bas (la croix disparaît) */ .sheet-grabber { display: none; }
+@media (max-width: 680px) {
+  .modal .sheet-grabber { display: block; position: absolute; top: 8px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: rgba(255, 255, 255, .32); }
+  .modal .modal-close { display: none; }
+  .modal { will-change: transform; overscroll-behavior: contain; }
+}
+
+:root[data-glass] .code-input input { background: transparent; border: 0; box-shadow: none; }
+
+.tv-airplay { position: absolute; top: calc(env(safe-area-inset-top) - 8px); right: 14px; z-index: 4; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(255, 255, 255, .22); border-radius: 99px; background: rgba(20, 20, 18, .45); color: #fff; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+
+/* Écran de la TV (recopie depuis l’iPhone) : seulement l’affichage, sans boutons */ .tv-display .tv-exit, .tv-display .tv-player-buttons, .tv-display .tv-grabber, .tv-display .tv-page-nav, .tv-display .tv-menu { display: none !important; }
+.tv-display, .tv-display * { cursor: none !important; }
+.tv-display-idle { min-height: 100vh; display: grid; place-content: center; gap: 22px; text-align: center; background: radial-gradient(90% 70% at 50% 30%, #262d10, #0f0f0d 70%); color: var(--muted); font-size: 26px; }
+.tv-display-idle .brand { font-size: 96px; justify-content: center; }
+
+/* Mode TV glissé vers le bas : le fond animé s’arrête le temps du geste. */
+.tv-view.is-dragging .tv-drift, .tv-view.is-dragging .tv-ambient-layer { animation-play-state: paused; }
+
+/* Fenêtres : sur ordinateur, comme avant (centrées). Sur téléphone, la fenêtre est dans une zone qui défile
+   (défilement d’iOS) : arrêt « ouverte » en bas, arrêt « fermée » en haut de la zone. */
+.sheet-scroller { display: contents; }
+.sheet-gap, .sheet-dim { display: none; }
+@media (max-width: 680px) {
+  .modal-backdrop, :root[data-glass] .modal-backdrop, :root[data-native-tabs] .modal-backdrop { display: block; background: transparent; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .sheet-dim { display: block; position: absolute; inset: 0; background: rgba(0, 0, 0, .68); pointer-events: none; }
+  .sheet-scroller { display: block; position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .sheet-scroller::-webkit-scrollbar { display: none; }
+  .sheet-gap { display: block; height: 100%; scroll-snap-align: start; }
+  /* Une seule zone qui défile : la fenêtre n’a plus son propre défilement. Courte, elle est posée en bas ; longue, elle
+     s’ouvre à 8 % du haut et son contenu défile avec elle. Un lancer s’arrête d’abord sur la position ouverte. */
+  .sheet-scroller > .modal { margin: 0; max-height: none; overflow: visible; scroll-snap-align: end; scroll-snap-stop: always; will-change: auto; animation: none; }
+  .sheet-scroller > .modal.is-tall { scroll-snap-align: start; min-height: 92dvh; }
+  .sheet-scroller.has-tall { scroll-padding-top: 8dvh; }
+}
+
+/* Mode TV sur téléphone : dans une zone qui défile (défilement d’iOS) ; arrêt « affiché » en bas, « fermé » en haut. */
+.tv-sheet { position: fixed; inset: 0; z-index: 50; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.tv-sheet::-webkit-scrollbar { display: none; }
+.tv-sheet-gap { height: 100%; scroll-snap-align: start; }
+.tv-sheet > .tv-view { position: relative; inset: auto; width: 100%; height: 100%; touch-action: auto; border-radius: 32px 32px 0 0; overflow: clip; }
+/* Position « ouverte » portée par un repère fixe (le zoom d’ouverture du lecteur ne la déplace pas). */
+.tv-sheet-open { display: block; height: 1px; margin-top: -1px; scroll-snap-align: end; }
+
+/* Le défilement horizontal (pages Lecture / QR code) laisse passer les gestes verticaux jusqu’au glisser du mode TV. */
+.tv-sheet .tv-pager { overscroll-behavior-x: contain; overscroll-behavior-y: auto; }
+
+/* Cran intermédiaire à 40 % de la descente : comme le lecteur d’Apple Music, un petit glissement ou un lancer suffit
+   pour fermer (sans lui, il fallait dépasser la moitié de l’écran). */
+.tv-sheet-gap { position: relative; }
+.tv-sheet-catch { position: absolute; left: 0; top: 60%; width: 1px; height: 1px; scroll-snap-align: start; }
+.tv-sheet-catch.is-hold { top: 88%; }
+
+/* Téléphone : le lecteur se déplace d’un bloc sous le doigt. Pas de flou en direct sur ses boutons (il serait recalculé
+   à chaque image du glissement) : des fonds presque opaques donnent le même rendu sur la pochette déjà floutée. */
+.tv-sheet .tv-view :is(.tv-play, .tv-page-nav, .tv-exit, .tv-airplay, .icon-button) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+.tv-sheet .tv-view .tv-page-nav, .tv-sheet .tv-view .tv-airplay { background: rgba(28, 28, 26, .72); }
+.tv-sheet .tv-view .tv-player-buttons .icon-button.tv-play { background: rgba(255, 255, 255, .16); }
+
