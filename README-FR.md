@@ -115,6 +115,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **Langue** : français ou anglais (Réglages → Apparence → Langue). Par défaut, celle de l’appareil ; les invités et l’écran TV suivent la langue de l’hôte.
 - **Mode TV** : un écran plein format pour la TV, avec la pochette, le titre, la barre de lecture, le titre suivant et le QR code (leur disposition se règle sur l’app ordinateur).
 - **Vider le cache** : ferme la session en cours et l’app, pour repartir de zéro (après confirmation).
+- **Version de l’app** : affichée en bas des Réglages (ordinateur et iPhone).
 - **Reprise sans surprise** : relancer l’app ne relance pas la musique toute seule ; déconnecter l’app de musique remet la session à zéro (titre en cours, file, historique, musique de fond).
 
 ### 💻 En plus sur l’app ordinateur
@@ -443,7 +444,7 @@ Le script :
 La première fois prend quelques minutes, les suivantes sont plus rapides. En cas d’erreur, le script affiche seulement
 les lignes `error:` de la compilation.
 
-La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.0**). Elle n’a **aucune
+La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.5.4**). Elle n’a **aucune
 signature** et ne contient aucune information personnelle : elle doit être signée avec votre propre compte Apple
 pour s’installer.
 
@@ -459,7 +460,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. L’IPA : le dossier Payload/ compressé
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.0-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.5.4-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

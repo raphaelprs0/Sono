@@ -128,6 +128,7 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 - **TV mode**: a full-screen view for the TV, with the cover, the title, the progress bar, the next track and the QR
   code (their layout is set in the desktop app).
 - **Clear the cache**: closes the current session and the app, to start from scratch (after confirmation).
+- **App version**: shown at the bottom of the settings (computer and iPhone).
 - **No surprise restarts**: relaunching the app doesn’t restart the music on its own; disconnecting the music app resets
   the session (current track, queue, history, background music).
 
@@ -465,7 +466,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.0**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.5.4**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -480,7 +481,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.0-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.5.4-iPhone-a-signer.ipa Payload)
 ```
 
 </details>
