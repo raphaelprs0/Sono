@@ -471,11 +471,11 @@ function SettingsView({ session, hostToken, notify, inviteUrl, joinUrl, onCopy, 
       <label>{tx("Nom de la session")}<input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} /></label>
       <div className="form-actions"><button className="button primary" type="submit" disabled={nameUnchanged || saving === 'name'}>{saving === 'name' && <LoaderCircle className="spin" size={16} />}{tx("Enregistrer")}</button></div>
     </form>
-    <SoundCard sessionCode={session.code} hostToken={hostToken} source={session.source} notify={notify} />
     <div className="settings-card">
       <h2>{tx("Accès à la session")}</h2>
       <ApprovalSwitch checked={Boolean(session.requireApproval)} onChange={(value) => onSave({ requireApproval: value }, value ? tx("Vous validerez désormais chaque nouvel invité.") : tx("Tout le monde peut rejoindre avec le code."))} description={tx("Chaque personne qui rejoint doit être acceptée par vous. Les invités déjà présents restent dans la session.")} />
     </div>
+    <SoundCard sessionCode={session.code} hostToken={hostToken} source={session.source} notify={notify} />
     <div className="settings-card">
       <h2>{tx("Lien d’invitation")}</h2>
       <p className="field-help">{tx("Partagez ce lien avec les invités qui ne peuvent pas scanner le code QR.")}</p>

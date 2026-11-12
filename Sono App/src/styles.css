@@ -733,8 +733,8 @@ a.button { text-decoration: none; }
 .swatch-preview { position: relative; display: grid; place-items: center; height: 58px; border-radius: 8px; overflow: hidden; background-size: cover; background-position: center; color: rgba(255, 255, 255, .85); box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), .12); }
 .swatch input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 .accent-dots { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; align-items: center; }
-.accent-dot { position: relative; width: 36px; height: 36px; border-radius: 50%; border: 2px solid transparent; padding: 0; background: var(--dot); box-shadow: inset 0 0 0 2px rgba(0, 0, 0, .25); }
-.accent-dot.active { border-color: var(--text); box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--text); transform: scale(1.1); }
+.accent-dot { position: relative; width: 36px; height: 36px; border-radius: 50%; border: 0; padding: 0; background: var(--dot) border-box; box-shadow: inset 0 0 0 1px rgba(var(--fg-rgb), .2); }
+.accent-dot.active { outline: 2px solid var(--text); outline-offset: 3px; }
 .widget-list .switch-row { padding: 12px 0; border-top: 1px solid var(--line); }
 .widget-list .switch-row:first-child { border-top: 0; }
 .widget-area { display: block; margin-top: 18px; font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--faint); }
@@ -1057,7 +1057,6 @@ html { touch-action: manipulation; }
 :root[data-theme="light"] .danger-button { background: var(--danger); color: #ffffff; }
 :root[data-theme="light"] .danger-button:hover { background: #b3261e; }
 /* Accents : pastilles et bord du bouton principal visibles même pour Blanc sur fond clair. */
-:root[data-theme="light"] .accent-dot { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
 :root[data-theme="light"] .button.primary { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
 /* Liquid Glass en clair : verre dépoli blanc, bords clairs et ombre douce. */
 :root[data-theme="light"][data-glass] {

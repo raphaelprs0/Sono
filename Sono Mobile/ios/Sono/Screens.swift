@@ -333,7 +333,6 @@ struct SessionSettings: View {
                     await store.saveSettings(["name": sessionName.trimmingCharacters(in: .whitespaces)], message: L("Nom de la session enregistré."))
                 }
             }
-            if let sound { soundCard(sound) }
             SettingsCard(title: L("Accès à la session")) {
                 Toggle(isOn: Binding(get: { store.session.requireApproval == true }, set: { value in
                     Task { await store.saveSettings(["requireApproval": value], message: value ? L("Vous validerez désormais chaque nouvel invité.") : L("Tout le monde peut rejoindre avec le code.")) }
@@ -344,6 +343,7 @@ struct SessionSettings: View {
                     }
                 }
             }
+            if let sound { soundCard(sound) }
             SettingsCard(title: L("Lien d’invitation"), subtitle: L("Partagez ce lien avec les invités qui ne peuvent pas scanner le code QR.")) {
                 HStack {
                     Text(store.inviteURL).font(.system(size: 14)).foregroundStyle(Color.sonoText).lineLimit(1).truncationMode(.middle)
