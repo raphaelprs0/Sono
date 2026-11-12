@@ -262,9 +262,11 @@ func main() {
 		}
 		fatal(fmt.Sprintf("Connexion à Deezer impossible : %v", err))
 	}
-	// Qualité la plus haute permise par l’abonnement (320 kb/s en Premium) ; Deezer
-	// redescend seul en 128 kb/s si le compte ou le titre ne la permet pas.
-	if client.Account().CanHQ {
+	// Qualité la plus haute permise par l’abonnement : FLAC sans perte (Deezer Premium et HiFi), sinon MP3 320 kb/s ;
+	// Deezer redescend seul (320 puis 128 kb/s) si le compte ou le titre ne la permet pas.
+	if client.Account().CanHiFi {
+		client.SetQuality(dz.QualityLossless)
+	} else if client.Account().CanHQ {
 		client.SetQuality(dz.QualityHigh)
 	}
 	audio, err := player.NewPlayer()

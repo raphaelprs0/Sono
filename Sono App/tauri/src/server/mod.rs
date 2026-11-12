@@ -266,8 +266,9 @@ pub async fn serve(app: Shared) -> std::io::Result<()> {
     });
     println!("Sono est disponible sur le port {}. Adresse Wi-Fi : {}", app.port, routes::network_url(&app).unwrap_or_else(|| "indisponible".into()));
     tokio::spawn(async move { let _ = axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await; });
-    // Le lien « Internet » a déjà servi : son tunnel se prépare dès le lancement, porte fermée, pour un passage instantané.
-    if logic::truthy(app.lock().host_prefs.get("publicUsed")) {
+    // Une session d’hôte reprend (ou le lien « Internet » a déjà servi) : le tunnel se prépare dès le lancement,
+    // porte fermée, pour un passage instantané.
+    if { let s = app.lock(); logic::truthy(s.host_prefs.get("publicUsed")) || s.host_prefs.get("sessionCode").and_then(Value::as_str).is_some() } {
         let warm = app.clone();
         tokio::spawn(async move { let _ = tunnel::start(&warm).await; });
     }

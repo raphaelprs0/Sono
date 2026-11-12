@@ -50,6 +50,12 @@
 /* ───────────── Base ───────────── */ * { box-sizing: border-box; }
 /* Le fond de page est porté par :root ; body reste transparent pour laisser voir les fonds fixes posés derrière. */ html { scrollbar-gutter: stable; }
 body { margin: 0; min-width: 320px; }
+/* Défilement : jamais de déplacement horizontal de la page, et les listes et fenêtres qui défilent ne font pas bouger la page derrière. */
+html, body { overflow-x: clip; }
+html { overscroll-behavior-x: none; }
+.right-panel, .modal, .search-results, .fallback-results { overscroll-behavior: contain; }
+/* App de bureau : pas d’effet élastique (Windows le fait sur le pavé tactile, toute la page se déplaçait). */
+:root[data-desktop] { overscroll-behavior: none; }
 /* Pas de sélection de texte dans l’app (sauf dans les champs de saisie) : elle se comporte comme une application. */ body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
 img { -webkit-user-drag: none; }

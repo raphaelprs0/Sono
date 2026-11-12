@@ -2,7 +2,7 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.4.0-7927F5)
+![Version](https://img.shields.io/badge/Version-2.4.1-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -39,10 +39,11 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.4.0 | 2.4.0 (build 8) |
+| Version | 2.4.1 | 2.4.1 (build 9) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
+| Deezer quality | Lossless FLAC when the subscription allows it, otherwise MP3 320 or 128 kbps | Same |
 | Apple Music playback | MusicKit JS (Apple Music window) | iOS MusicKit (system player) |
 | Guests off the Wi-Fi | « Internet » public link (Cloudflare tunnel) | Always (online service) |
 | Languages | English, French | English, French |
@@ -134,8 +135,8 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 
 - **« Internet »**: a public link (Cloudflare tunnel, `trycloudflare.com`) for guests on 4G/5G. The `cloudflared` tool
   isn’t shipped with the app: it is downloaded once from Cloudflare the first time the link is turned on (≈ 20 MB on
-  Mac, 55 MB on Windows) and checked before use. The link takes about 7 s to create; once it has been used, Sono
-  prepares it at launch and switching from Wi-Fi to Internet becomes instant.
+  Mac, 55 MB on Windows) and checked before use. The link is prepared as soon as the host’s dashboard is open (closed to
+  guests until then), so switching from Wi-Fi to Internet is instant.
 - **Keyboard shortcuts**: Space (play/pause), → or N (next), ← or P (previous), and media keys.
 - **Deezer sign-in** through the official page, in a private window of the app.
 - **Join an iPhone session** from the computer, with its `SONO-1234` code.

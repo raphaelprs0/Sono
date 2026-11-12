@@ -543,6 +543,7 @@ function Equalizer({ playing }) {
 
 // App de bureau : quand la fenêtre est cachée ou réduite, les animations et le fond du mode TV se mettent en pause
 // (la page continue de tourner pour la musique et les invités, mais ne dessine plus rien).
+if (typeof window !== 'undefined' && window.sonoDesktop) document.documentElement.setAttribute('data-desktop', '');
 if (typeof window !== 'undefined') window.sonoDesktop?.onVisibility?.((visible) => document.documentElement.toggleAttribute('data-window-hidden', !visible));
 
 // Au doigt, le navigateur peut attendre avant de valider un appui (il guette un double appui).
@@ -986,14 +987,13 @@ function App() {
   const canManagePublicLink = hostState === 'host' && Boolean(hostToken) && !window.location.hostname.endsWith('.trycloudflare.com');
   useEffect(() => {
     if (!canManagePublicLink || publicUrl) return;
-    // Le service n’occupe de la mémoire que si ce lien sert vraiment : préparé d’avance après un premier usage.
-    if (readStorage('sono-public-used')) apiRequest('/api/public-link/prepare', { method: 'POST', headers: { 'x-host-token': hostToken }, body: JSON.stringify({ code: session.code }) }).catch(() => {});
+    // Préparé dès que le tableau de bord de l’hôte est ouvert (Cloudflare met ~5 s à créer un lien) : le passage à « Internet » est instantané.
+    apiRequest('/api/public-link/prepare', { method: 'POST', headers: { 'x-host-token': hostToken }, body: JSON.stringify({ code: session.code }) }).catch(() => {});
   }, [canManagePublicLink, publicUrl, hostToken, session.code]);
   const enablePublicAccess = async () => {
     setPublicBusy(true);
     try {
       const data = await apiRequest('/api/public-link', { method: 'POST', headers: hostHeaders, body: JSON.stringify({ code: session.code }) });
-      writeStorage('sono-public-used', '1');
       setPublicUrl(data.publicUrl);
       notify(tx("Le lien public est actif."));
     } catch (error) { notify(error.message, 'error'); }

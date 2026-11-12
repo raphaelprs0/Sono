@@ -2,7 +2,7 @@
 
 🇫🇷 **Français** · [🇬🇧 **Anglais**](README.md)
 
-![Version](https://img.shields.io/badge/Version-2.4.0-7927F5)
+![Version](https://img.shields.io/badge/Version-2.4.1-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -36,10 +36,11 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.4.0 | 2.4.0 (build 8) |
+| Version | 2.4.1 | 2.4.1 (build 9) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
+| Qualité Deezer | FLAC sans perte si l’abonnement le permet, sinon MP3 320 ou 128 kb/s | Pareil |
 | Lecture Apple Music | MusicKit JS (fenêtre Apple Music) | MusicKit d’iOS (lecteur du système) |
 | Invités hors du Wi-Fi | Lien public « Internet » (tunnel Cloudflare) | Toujours (service en ligne) |
 | Langues | Français, anglais | Français, anglais |
@@ -120,7 +121,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 
 - **Wi-Fi** : les invités du même réseau ouvrent l’adresse locale affichée (avec un lien court sans numéro de port quand c’est possible).
 
-- **« Internet »** : un lien public (tunnel Cloudflare `trycloudflare.com`) pour les invités en 4G/5G. L’outil `cloudflared` n’est pas livré avec l’app : il est téléchargé une seule fois depuis Cloudflare à la première activation (≈ 20 Mo sur Mac, 55 Mo sur Windows) et vérifié avant usage. Le lien se crée en 7 s environ ; une fois qu’il a servi, Sono le prépare dès son lancement et le passage Wi-Fi → Internet devient instantané.
+- **« Internet »** : un lien public (tunnel Cloudflare `trycloudflare.com`) pour les invités en 4G/5G. L’outil `cloudflared` n’est pas livré avec l’app : il est téléchargé une seule fois depuis Cloudflare à la première activation (≈ 20 Mo sur Mac, 55 Mo sur Windows) et vérifié avant usage. Le lien est préparé dès que le tableau de bord de l’hôte est ouvert (porte fermée aux invités) : le passage Wi-Fi → Internet est instantané.
 - **Raccourcis clavier** : Espace (lecture/pause), → ou N (suivant), ← ou P (précédent), et touches multimédia.
 - **Connexion Deezer** par la page officielle, dans une fenêtre privée de l’app.
 - **Rejoindre une session iPhone** depuis l’ordinateur, avec son code `SONO-1234`.
