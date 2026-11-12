@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.5.4 | 2.5.3 (build 13) |
+| Version | 2.5.4 | 2.5.4 (build 14) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
