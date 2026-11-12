@@ -2,7 +2,7 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.4.2-7927F5)
+![Version](https://img.shields.io/badge/Version-2.4.3-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.4.2 | 2.4.1 (build 9) |
+| Version | 2.4.3 | 2.4.1 (build 9) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -239,7 +239,7 @@ closes the app.
 | Device | How | What gets deleted |
 |---|---|---|
 | iPhone | Delete the app as usual | Everything: iOS erases the app and all its data (Sono doesn’t use the keychain, which iOS would keep) |
-| Windows | Settings → Apps → Sono → **Uninstall** | Everything: the app, its data, its window cache and the Deezer engine’s equalizer setting |
+| Windows | Settings → Apps → Sono → **Uninstall** | Everything: the app, its data, its window cache and the Deezer engine’s equalizer setting. Installing a new version over it keeps everything (sessions, accounts, settings) |
 | Mac | Drag Sono to the Trash | The app only (see below) |
 
 > [!IMPORTANT]

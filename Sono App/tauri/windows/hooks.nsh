@@ -1,8 +1,13 @@
-; Désinstallation de Sono sur Windows : toutes les données de Sono sont supprimées avec l’app
-; (sauf pendant une mise à jour, où le désinstalleur de l’ancienne version est lancé avec /UPDATE).
+; Désinstallation de Sono sur Windows : toutes les données de Sono sont supprimées avec l’app,
+; sauf pendant une mise à jour. Deux cas de mise à jour :
+; - mise à jour automatique : le désinstalleur de l’ancienne version est lancé avec /UPDATE ;
+; - nouvel installateur lancé par-dessus l’ancienne version : il lance l’ancien désinstalleur directement
+;   depuis le dossier de l’app ($EXEDIR = $INSTDIR). Une vraie désinstallation (Paramètres de Windows)
+;   passe toujours par une copie temporaire du désinstalleur, hors du dossier de l’app.
 !macro NSIS_HOOK_POSTUNINSTALL
   ${If} $UpdateMode <> 1
-    ; Sessions, réglages, compte Deezer, journaux
+  ${AndIf} $EXEDIR != $INSTDIR
+    ; Sessions, réglages, compte Deezer, journaux, connecteur du lien « Internet »
     RMDir /r "$APPDATA\Sono"
     ; Données de la fenêtre (WebView2 : cache, stockage local)
     RMDir /r "$LOCALAPPDATA\app.sono.desktop"

@@ -2,7 +2,7 @@
 
 🇫🇷 **Français** · [🇬🇧 **Anglais**](README.md)
 
-![Version](https://img.shields.io/badge/Version-2.4.2-7927F5)
+![Version](https://img.shields.io/badge/Version-2.4.3-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.4.2 | 2.4.1 (build 9) |
+| Version | 2.4.3 | 2.4.1 (build 9) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
@@ -220,7 +220,7 @@ celle-ci.
 | Appareil | Comment | Ce qui est supprimé |
 |---|---|---|
 | iPhone | Supprimer l’app comme d’habitude | Tout : iOS efface l’app et toutes ses données (Sono n’utilise pas le trousseau, qu’iOS garderait) |
-| Windows | Paramètres → Applications → Sono → **Désinstaller** | Tout : l’app, ses données, le cache de sa fenêtre et le réglage d’égaliseur du moteur Deezer |
+| Windows | Paramètres → Applications → Sono → **Désinstaller** | Tout : l’app, ses données, le cache de sa fenêtre et le réglage d’égaliseur du moteur Deezer. Installer une nouvelle version par-dessus garde tout (sessions, comptes, réglages) |
 | Mac | Glisser Sono à la Corbeille | L’app seulement (voir ci-dessous) |
 
 > [!IMPORTANT]
