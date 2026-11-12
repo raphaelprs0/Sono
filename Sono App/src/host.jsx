@@ -366,7 +366,7 @@ function AppearanceView({ appearance, onChange, onReset, onOpenTv, onSection }) 
       <h2>{tx("Couleur d’accent")}</h2>
       <p className="field-help">{tx("Boutons, titre en cours, éléments actifs.")}</p>
       <div className="accent-dots">
-        {ACCENTS.map((accent) => <button key={accent.hex} type="button" className={appearance.accent === accent.hex ? 'accent-dot active' : 'accent-dot'} style={{ '--dot': accent.hex }} title={accent.label} aria-label={`Accent ${accent.label}`} aria-pressed={appearance.accent === accent.hex} onClick={() => onChange({ accent: accent.hex })} />)}
+        {ACCENTS.map((accent) => <button key={accent.hex} type="button" className={appearance.accent === accent.hex ? 'accent-dot active' : 'accent-dot'} style={{ '--dot': accent.dot || accent.hex }} title={accent.label} aria-label={`Accent ${accent.label}`} aria-pressed={appearance.accent === accent.hex} onClick={() => onChange({ accent: accent.hex })} />)}
       </div>
     </div>
     <div className="settings-card widget-list">

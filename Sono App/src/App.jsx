@@ -52,16 +52,17 @@ const BACKGROUNDS = [
 ];
 // Couleurs d’accent, chacune avec la couleur de texte la plus lisible posée dessus (ink), une teinte de survol
 // et, pour le thème clair, une version foncée utilisée quand l’accent sert de couleur de texte (lightText).
-// Blanc et Noir sont monochromes : sur un fond de la même couleur, ils s’inversent pour rester visibles.
+// « Natif » n’a pas de couleur propre : blanc sur un fond sombre, noir sur un fond clair (jamais confondu avec le fond).
 const ACCENTS = [
   { hex: '#d7f75b', label: tx("Citron"), ink: '#171a08', hover: '#e4ff7a', lightText: '#5a7000' },
   { hex: '#c084fc', label: tx("Lilas"), ink: '#1f0b33', hover: '#d2a5fd', lightText: '#7a2ec4' },
   { hex: '#fb7185', label: tx("Framboise"), ink: '#330811', hover: '#fd94a4', lightText: '#c0243f' },
   { hex: '#fbbf24', label: tx("Or"), ink: '#2b1d02', hover: '#fcd05a', lightText: '#946000' },
-  { hex: '#f5f5f4', label: tx("Blanc"), ink: '#151512', hover: '#ffffff', mono: 'white' },
   { hex: '#bdd2e9', label: 'Pleins Phares', ink: '#0c1521', hover: '#d3e3f4', lightText: '#3a6491' },
-  { hex: '#151513', label: tx("Noir"), ink: '#f5f5f4', hover: '#2c2c29', mono: 'black' },
+  { hex: '#f5f5f4', label: tx("Natif"), ink: '#151512', hover: '#ffffff', native: true, dot: 'linear-gradient(135deg, #f5f5f4 50%, #151513 50%)' },
 ];
+// Version sombre de l’accent « Natif », affichée sur le thème clair.
+const NATIVE_ON_LIGHT = { hex: '#151513', ink: '#f5f5f4', hover: '#2c2c29' };
 const PANEL_WIDGETS = ['invite', 'participants', 'stats', 'activity'];
 
 function readAppearance() {
@@ -72,6 +73,7 @@ function normalizeAppearance(value) {
     const saved = value && typeof value === 'object' ? { ...value } : null;
     if (!saved) return DEFAULT_APPEARANCE;
     // Couleurs libres retirées : un ancien choix revient aux valeurs prédéfinies.
+    if (saved.accent === '#151513') saved.accent = '#f5f5f4';
     if (!ACCENTS.some((item) => item.hex === saved.accent)) saved.accent = DEFAULT_APPEARANCE.accent;
     // Fond inconnu ou retiré (ancien choix) : retour au fond par défaut.
     if (saved.background !== 'cover' && !BACKGROUNDS.some((item) => item.id === saved.background)) saved.background = DEFAULT_APPEARANCE.background;
@@ -89,9 +91,9 @@ function hexToRgb(hex) {
 
 // Couleur d’accent : toutes les nuances (survol, fond doux, texte posé dessus) en découlent, selon le thème.
 function applyAccent(hex, theme) {
-  let accent = ACCENTS.find((item) => item.hex === hex) || ACCENTS[0];
-  // Blanc sur fond blanc, noir sur fond noir : l’accent prend la couleur opposée pour rester visible.
-  if ((accent.mono === 'white' && theme === 'light') || (accent.mono === 'black' && theme === 'dark')) accent = ACCENTS.find((item) => item.mono && item.mono !== accent.mono);
+  const chosen = ACCENTS.find((item) => item.hex === hex) || ACCENTS[0];
+  // « Natif » : noir sur le thème clair, blanc sur le thème sombre.
+  const accent = chosen.native && theme === 'light' ? NATIVE_ON_LIGHT : chosen;
   const root = document.documentElement.style;
   root.setProperty('--accent-rgb', hexToRgb(accent.hex).join(', '));
   root.setProperty('--lime', accent.hex);
@@ -99,7 +101,7 @@ function applyAccent(hex, theme) {
   root.setProperty('--lime-ink', accent.ink);
   root.setProperty('--lime-text', theme === 'light' ? accent.lightText || accent.hex : accent.text || accent.hex);
   // Zones toujours sombres (carte du titre en cours, mode TV) : la version de l’accent faite pour un fond sombre.
-  const onDark = accent.mono === 'black' ? ACCENTS.find((item) => item.mono === 'white') : accent;
+  const onDark = chosen;
   root.setProperty('--dark-accent-rgb', hexToRgb(onDark.hex).join(', '));
   root.setProperty('--dark-lime', onDark.hex);
   root.setProperty('--dark-lime-hover', onDark.hover);

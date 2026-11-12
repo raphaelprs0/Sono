@@ -16,6 +16,7 @@ export default {
 "Lavande":"Lavender",
 "Blanc":"White",
 "Lilas":"Lilac",
+"Natif":"Native",
 "Framboise":"Raspberry",
 "Or":"Gold",
 "Automatique":"Automatic",

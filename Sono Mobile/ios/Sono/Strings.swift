@@ -38,6 +38,7 @@ private let serverPatterns: [(NSRegularExpression, String)] = english.keys.filte
 private let english: [String: String] = [
     "Automatique": "Automatic",
     "Lilas": "Lilac",
+    "Natif": "Native",
     "Framboise": "Raspberry",
     "Or": "Gold",
     "Accepter {0}": "Accept {0}",

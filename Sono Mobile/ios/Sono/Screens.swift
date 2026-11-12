@@ -465,7 +465,7 @@ struct AppearanceSettings: View {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 40), spacing: 12)], spacing: 12) {
                     ForEach(Accent.all) { accent in
                         Button { store.updateAppearance { $0.accent = accent.hex } } label: {
-                            Circle().fill(Color(hex: accent.hex)).frame(width: 38, height: 38)
+                            Circle().fill(accent.native ? AnyShapeStyle(LinearGradient(stops: [.init(color: Color(hex: "#f5f5f4"), location: 0.5), .init(color: Color(hex: "#151513"), location: 0.5)], startPoint: .topLeading, endPoint: .bottomTrailing)) : AnyShapeStyle(Color(hex: accent.hex))).frame(width: 38, height: 38)
                                 .overlay(Circle().strokeBorder(Color.sonoFg.opacity(0.22), lineWidth: 1))
                                 .overlay(Circle().strokeBorder(Color.sonoText, lineWidth: store.appearance.accent == accent.hex ? 3 : 0).padding(-4))
                         }

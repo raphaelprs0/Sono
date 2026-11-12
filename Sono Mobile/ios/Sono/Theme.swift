@@ -29,6 +29,7 @@ struct Appearance: Codable, Equatable {
         guard let text = UserDefaults.standard.string(forKey: "sono-appearance"), var value = try? JSONDecoder().decode(Appearance.self, from: Data(text.utf8)) else { return Appearance() }
         // Fond ou couleur retirés depuis (ancien choix) : retour aux valeurs par défaut.
         if value.background != "cover", !Backdrop.all.contains(where: { $0.id == value.background }) { value.background = Appearance().background }
+        if value.accent == "#151513" { value.accent = "#f5f5f4" }
         if !Accent.all.contains(where: { $0.hex == value.accent }) { value.accent = Appearance().accent }
         return value
     }
@@ -53,28 +54,28 @@ struct Appearance: Codable, Equatable {
     }
 }
 
-/// Couleurs d’accent. Blanc et Noir sont monochromes : sur un fond de la même couleur, ils s’inversent pour rester visibles.
+/// Couleurs d’accent. « Natif » n’a pas de couleur propre : blanc sur un fond sombre, noir sur un fond clair.
 struct Accent: Identifiable {
     let hex: String
     let label: String
     let ink: String
     var lightText: String? = nil
-    var mono: String? = nil
+    var native = false
     var id: String { hex }
     static let all = [
         Accent(hex: "#d7f75b", label: "Citron", ink: "#171a08", lightText: "#5a7000"),
         Accent(hex: "#c084fc", label: "Lilas", ink: "#1f0b33", lightText: "#7a2ec4"),
         Accent(hex: "#fb7185", label: "Framboise", ink: "#330811", lightText: "#c0243f"),
         Accent(hex: "#fbbf24", label: "Or", ink: "#2b1d02", lightText: "#946000"),
-        Accent(hex: "#f5f5f4", label: "Blanc", ink: "#151512", mono: "white"),
         Accent(hex: "#bdd2e9", label: "Pleins Phares", ink: "#0c1521", lightText: "#3a6491"),
-        Accent(hex: "#151513", label: "Noir", ink: "#f5f5f4", mono: "black"),
+        Accent(hex: "#f5f5f4", label: "Natif", ink: "#151512", native: true),
     ]
-    /// L’accent tel qu’il s’affiche sur ce thème (Blanc sur fond clair devient Noir, et l’inverse).
+    /// Version sombre de « Natif », affichée sur le thème clair.
+    static let nativeOnLight = Accent(hex: "#151513", label: "Natif", ink: "#f5f5f4", native: true)
+    /// L’accent tel qu’il s’affiche sur ce thème (« Natif » devient noir sur le thème clair).
     static func resolved(_ hex: String, light: Bool) -> Accent {
         let accent = all.first { $0.hex == hex } ?? all[0]
-        if (accent.mono == "white" && light) || (accent.mono == "black" && !light) { return all.first { $0.mono != nil && $0.mono != accent.mono } ?? accent }
-        return accent
+        return accent.native && light ? nativeOnLight : accent
     }
 }
 

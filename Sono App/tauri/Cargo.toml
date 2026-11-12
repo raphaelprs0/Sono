@@ -1,6 +1,6 @@
 [package]
 name = "sono"
-version = "2.5.0"
+version = "2.5.1"
 description = "Sono, la file musicale collaborative pour vos soirées."
 authors = ["Sono"]
 edition = "2021"
