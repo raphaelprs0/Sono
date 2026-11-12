@@ -90,7 +90,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 16px; border-radius: 99px; border: 1px solid transparent; font-size: 14px; font-weight: 600; white-space: nowrap; transition: background .15s, border-color .15s, transform .15s; }
 .button:not(:disabled):active { transform: scale(.98); }
 .button.primary { background: var(--lime); color: var(--lime-ink); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); }
-/* Boutons pleine largeur (formulaires, fenêtres) : même hauteur que sur l’iPhone */ .join-button, .modal-actions .button, .public-access-button { min-height: 42px; }
+/* Boutons pleine largeur (formulaires, fenêtres) : même hauteur que sur l’iPhone */ .join-button, .modal-actions .button { min-height: 42px; }
 .button.primary:not(:disabled):hover { background: var(--lime-hover); }
 .button.secondary { background: var(--surface-2); border-color: var(--line-strong); color: var(--text-2); }
 .button.secondary:not(:disabled):hover { background: var(--surface-3); color: var(--text); }
@@ -291,9 +291,9 @@ div.guest-name { padding: 10px 12px; cursor: default; }
 
 .home-panel { padding: 22px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: var(--shadow); }
 .home-form { display: flex; flex-direction: column; }
-.home-form > label:not(.code-input):not(.switch-row), .waiting-name { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-2); margin-bottom: 16px; text-align: left; }
-.home-form > label:not(.code-input):not(.switch-row) input, .waiting-name input { width: 100%; height: 46px; padding: 0 14px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; color: var(--text); font-size: 15px; }
-.home-form > label:not(.code-input):not(.switch-row) input:focus, .waiting-name input:focus { outline: 0; border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
+.home-form > label:not(.code-input), .waiting-name { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-2); margin-bottom: 16px; text-align: left; }
+.home-form > label:not(.code-input) input, .waiting-name input { width: 100%; height: 46px; padding: 0 14px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; color: var(--text); font-size: 15px; }
+.home-form > label:not(.code-input) input:focus, .waiting-name input:focus { outline: 0; border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
 .home-form .code-input { margin-top: 8px; }
 .form-label { font-size: 13.5px; font-weight: 500; color: var(--text-2); }
 .home-form .join-button { margin-top: 18px; }
@@ -819,7 +819,7 @@ html { touch-action: manipulation; }
   --fg-rgb: 20, 20, 18; --panel-rgb: 255, 255, 255;
 }
 /* Ce qui reste toujours sombre (posé sur la pochette, ou mode TV) : on y remet les couleurs du thème sombre. */
-:root[data-theme="light"] :is(.now-playing, .guest-now, .tv-view, .tv-page, .tv-preview, .tv-alerts, .tv-menu, .tv-tools, .tv-exit, .progress-tip) {
+:root[data-theme="light"] :is(.guest-now, .tv-view, .tv-page, .tv-alerts, .tv-menu, .tv-tools, .tv-exit, .progress-tip) {
   color-scheme: dark;
   --bg: #0f0f0d; --bg-raised: #131311; --surface: #181815; --surface-2: #1f1f1b; --surface-3: #282823;
   --line: #2a2a25; --line-strong: #3a3a33;
@@ -834,10 +834,8 @@ html { touch-action: manipulation; }
   color: var(--text);
 }
 /* La carte du titre en cours garde un fond sombre sur le thème clair (son texte est clair). */
-:root[data-theme="light"] :is(.now-playing, .guest-now) { background-color: #1a1a17; }
-:root[data-theme="light"] .sidebar, :root[data-theme="light"][data-custom-bg] .sidebar, :root[data-theme="light"][data-custom-bg] .right-panel { background: rgba(255, 255, 255, .82); }
+:root[data-theme="light"] .guest-now { background-color: #1a1a17; }
 :root[data-theme="light"] .guest-tabs { background: rgba(255, 255, 255, .9); }
-:root[data-theme="light"] .invite-card { background: var(--surface); }
 :root[data-theme="light"] .modal-backdrop { background: rgba(30, 30, 26, .38); }
 :root[data-theme="light"] .queue-list .queue-item.touch-lifted { background: #ffffff; box-shadow: 0 12px 30px rgba(0, 0, 0, .14); }
 /* Messages : sombres sur un fond clair. */
@@ -845,13 +843,11 @@ html { touch-action: manipulation; }
 :root[data-theme="light"] .toast button { color: #a9a89e; }
 :root[data-theme="light"] .toast button:hover { background: rgba(255, 255, 255, .1); }
 /* Erreurs et zone de suppression : rouges foncés, lisibles sur le blanc. */
-:root[data-theme="light"] :is(.integration-error, .inline-error) { color: #a3271d; border-color: rgba(207, 58, 46, .3); }
-:root[data-theme="light"] :is(.field-error, .join-card > .field-error, .danger-zone h2, .danger-text) { color: #b3261e; }
-:root[data-theme="light"] .danger-zone { border-color: rgba(207, 58, 46, .28); }
+:root[data-theme="light"] .inline-error { color: #a3271d; border-color: rgba(207, 58, 46, .3); }
+:root[data-theme="light"] :is(.field-error, .join-card > .field-error) { color: #b3261e; }
 :root[data-theme="light"] .danger-button { background: var(--danger); color: #ffffff; }
 :root[data-theme="light"] .danger-button:hover { background: #b3261e; }
 /* Accents : pastilles et bord du bouton principal visibles même pour Blanc sur fond clair. */
-:root[data-theme="light"] .accent-dot { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
 :root[data-theme="light"] .button.primary { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
 /* Liquid Glass en clair : verre dépoli blanc, bords clairs et ombre douce. */
 :root[data-theme="light"][data-glass] {
@@ -860,7 +856,6 @@ html { touch-action: manipulation; }
   --glass-edge: rgba(0, 0, 0, .08);
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(0, 0, 0, .04), 0 18px 50px rgba(0, 0, 0, .1);
 }
-:root[data-theme="light"][data-glass] .sidebar, :root[data-theme="light"][data-glass] .right-panel { background: linear-gradient(rgba(255, 255, 255, .5), rgba(255, 255, 255, .5)), rgba(255, 255, 255, .45); border-color: rgba(0, 0, 0, .07); }
 :root[data-theme="light"][data-glass] .modal { background: rgba(255, 255, 255, .86); }
 :root[data-theme="light"][data-glass] .toast { background: rgba(28, 28, 25, .82); color: #f4f2eb; }
 :root[data-theme="light"][data-glass] .modal-backdrop { background: rgba(30, 30, 26, .3); }

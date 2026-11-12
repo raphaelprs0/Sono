@@ -69,7 +69,7 @@ final class CarPlaySceneDelegate: UIResponder, CPTemplateApplicationSceneDelegat
         interfaceController.setRootTemplate(CPTabBarTemplate(templates: [queue, invite]), animated: false, completion: nil)
     }
 
-    func templateApplicationScene(_ scene: CPTemplateApplicationScene, didDisconnect interfaceController: CPInterfaceController) {
+    func templateApplicationScene(_ scene: CPTemplateApplicationScene, didDisconnectInterfaceController interfaceController: CPInterfaceController) {
         interface = nil
         driver.onCarChange = nil
     }

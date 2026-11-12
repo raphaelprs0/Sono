@@ -274,7 +274,7 @@ pub async fn serve(app: Shared) -> std::io::Result<()> {
     tokio::spawn(async move { let _ = axum::serve(listener, router.into_make_service_with_connect_info::<SocketAddr>()).await; });
     // Une session d’hôte reprend (ou le lien « Internet » a déjà servi) : le tunnel se prépare dès le lancement,
     // porte fermée, pour un passage instantané.
-    if { let s = app.lock(); logic::truthy(s.host_prefs.get("publicUsed")) || s.host_prefs.get("sessionCode").and_then(Value::as_str).is_some() } {
+    let res = { let s = app.lock(); logic::truthy(s.host_prefs.get("publicUsed")) || s.host_prefs.get("sessionCode").and_then(Value::as_str).is_some() }; if res {
         let warm = app.clone();
         tokio::spawn(async move { let _ = tunnel::start(&warm).await; });
     }

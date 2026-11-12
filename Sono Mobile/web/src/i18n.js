@@ -1,6 +1,5 @@
-// Langue de l’interface : le texte source est en français, l’anglais vient du dictionnaire i18n-en.js.
+// Langue de l’interface : le texte source est en français, l’anglais vient du dictionnaire i18n-en.js (chargé à part).
 // La langue est fixée au chargement de la page : en changer recharge la page (voir setLang).
-import en from './i18n-en.js';
 
 const KEY = 'sono-lang';
 const LANGS = ['fr', 'en'];
@@ -9,6 +8,8 @@ const systemLang = () => (/^fr\b/i.test(navigator.language || '') ? 'fr' : 'en')
 
 export const lang = stored() || systemLang();
 export const locale = lang === 'en' ? 'en-US' : 'fr-FR';
+// Le dictionnaire anglais n’est téléchargé que si l’interface est en anglais.
+const en = lang === 'en' ? (await import('./i18n-en.js')).default : {};
 document.documentElement.lang = lang;
 
 const fill = (text, args) => (args.length ? text.replace(/\{(\d)\}/g, (_, i) => args[i] ?? '') : text);

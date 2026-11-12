@@ -878,7 +878,6 @@ function App() {
       }
     }, 800);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchEnd, session.source, session.code, hostToken, currentId, nextKey, crossfadeEnded]);
   useEffect(() => {
     if (!watchEnd || session.source !== 'Apple Music') return undefined;
@@ -939,7 +938,6 @@ function App() {
         resumeHostingRef.current(code);
       }
     }).catch(() => {}).finally(() => { hostPrefsLoaded.current = true; });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const appearanceJson = JSON.stringify(appearance);
   useEffect(() => {
@@ -1267,7 +1265,6 @@ function App() {
       }
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostState, current?.id, session.source]);
   // À la fin d’un titre, on enchaîne : la file d’abord, puis la musique de fond.
   autoAdvanceRef.current = (endedId, switchedTo) => {
@@ -1341,7 +1338,6 @@ function App() {
   resumeHostingRef.current = resumeHosting;
   useEffect(() => {
     if (hostState === 'host' && hostToken && session.code) rememberHostSession(session.code, hostToken);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostState, session.code, hostToken]);
   // L’hôte est là : ses écrans (paramètres, connexions, mode TV…) sont préchargés pour s’ouvrir sans attente.
   useEffect(() => { if (hostState === 'host') loadHostParts().catch(() => {}); }, [hostState]);
@@ -1372,7 +1368,6 @@ function App() {
       else if (!adminInfo && wasAdmin.current) notify(tx("Vous n’êtes plus admin."));
     }
     wasAdmin.current = Boolean(adminInfo);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminInfo, adminLoaded, isGuest]);
   const deleteSession = async () => {
     const { code } = session;
@@ -1476,7 +1471,7 @@ function App() {
       {view === 'activity' && <ActivityView activity={activity} participants={session.participants || []} guests={session.guests} queue={queue} onRemove={(person) => setModal({ type: 'kick', person })} onToggleAdmin={(person) => (person.admin ? setAdmin(person, false) : setModal({ type: 'admin', person }))} />}
       {view === 'integrations' && <IntegrationsView notify={notify} hostToken={hostToken} sessionCode={session.code} source={session.source} onSourceChange={setSource} onAppleLinked={setAppleLinked} />}
       {view === 'appearance' && <AppearanceView appearance={appearance} onChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} onOpenTv={() => setTv({ tools: true, origin: ['.tv-preview'] })} onSection={setView} />}
-      {view === 'settings' && <SettingsView session={session} hostToken={hostToken} notify={notify} inviteUrl={inviteUrl} joinUrl={joinUrl} onCopy={copyInvite} onSave={saveSettings} onDelete={() => setModal('delete')} onSection={setView} />}
+      {view === 'settings' && <SettingsView session={session} hostToken={hostToken} notify={notify} inviteUrl={inviteUrl} onCopy={copyInvite} onSave={saveSettings} onDelete={() => setModal('delete')} onSection={setView} />}
     </main>
 
     {showPanel && <aside className="right-panel">
@@ -1644,7 +1639,6 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
       anchor.current = { positionMs: drift > 700 ? sample : livePosition(), at: performance.now(), playing: running };
       if (dragRef.current === null) run();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress, playing]);
   useEffect(() => {
     // Seul le temps affiché passe par ici, une fois par seconde.
@@ -1657,7 +1651,6 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
     run();
     const timer = window.setInterval(paint, 1000);
     return () => window.clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { if (dragRef.current === null) run(); }, [duration]);
   const msAt = (clientX) => {
@@ -1960,7 +1953,6 @@ function useListMotion(list, keys, skip) {
     }
     skip.current = false;
     positions.current = next;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys, list]);
 }
 
@@ -1977,7 +1969,6 @@ function useExitGhost(animateExit) {
       element.after(ghost);
       animateExit(ghost).onfinish = () => ghost.remove();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return ref;
 }
@@ -2337,7 +2328,6 @@ const FallbackList = memo(function FallbackList({ tracks, total, host, startInde
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsAll, total, sessionCode]);
   const items = (needsAll && all) || tracks;
   const visible = items.slice(0, limit);

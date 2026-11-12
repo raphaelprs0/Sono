@@ -369,8 +369,8 @@ struct SessionSettings: View {
             }
         }
         .onAppear { hostName = hostValue; sessionName = store.session.name }
-        .onChange(of: store.session.host) { value in hostName = value == "Hôte" ? "" : value }
-        .onChange(of: store.session.name) { value in sessionName = value }
+        .onChange(of: store.session.host) { _, value in hostName = value == "Hôte" ? "" : value }
+        .onChange(of: store.session.name) { _, value in sessionName = value }
         .task { sound = await store.loadSound() }
     }
 

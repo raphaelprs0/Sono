@@ -636,7 +636,7 @@ pub async fn clear_fallback(r: Req) -> Response {
 
 // ───── Deezer ─────
 fn body_session_access(r: &Req, owner_only: bool) -> Result<String, Response> {
-    let code = text(r.b("code").or_else(|| None), 20);
+    let code = text(r.b("code").or(None), 20);
     let code = if code.is_empty() { text_str(r.q("code"), 20) } else { code };
     let s = r.app.lock();
     let Some(session) = s.sessions.get(&code) else { return Err(not_found()) };

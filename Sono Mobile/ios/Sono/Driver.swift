@@ -228,7 +228,7 @@ final class Driver {
     }
 
     private func switchSource(to newSource: String) {
-        if useApple { apple.deactivate() } else if engine.isRunning { Task { [engine] in if ((try? await engine.request("/status", method: "GET"))?["state"] as? String)?.lowercased() == "playing" { try? await engine.request("/playpause") } } }
+        if useApple { apple.deactivate() } else if engine.isRunning { Task { [engine] in if ((try? await engine.request("/status", method: "GET"))?["state"] as? String)?.lowercased() == "playing" { _ = try? await engine.request("/playpause") } } }
         source = newSource
         commandedId = nil
         preloadId = nil
@@ -245,8 +245,8 @@ final class Driver {
         return ((status["state"] as? String ?? "").lowercased(), (status["track"] as? [String: Any])?["id"].map { "\($0)" }, (status["positionMs"] as? NSNumber)?.intValue ?? 0, (status["durationMs"] as? NSNumber)?.intValue ?? 0)
     }
 
-    private func pausePlayer() async { if useApple { apple.pause() } else { try? await engine.request("/pause") } }
-    private func resumePlayer() async { if useApple { apple.resume() } else { try? await engine.request("/resume") } }
+    private func pausePlayer() async { if useApple { apple.pause() } else { _ = try? await engine.request("/pause") } }
+    private func resumePlayer() async { if useApple { apple.resume() } else { _ = try? await engine.request("/resume") } }
 
     /// Identifiant du titre sur l’app de lecture : un titre proposé depuis l’autre app y est recherché.
     private func playableId(_ track: Track) async -> String? {
@@ -442,7 +442,7 @@ final class Driver {
     }
 
     func seek(ms: Int) async {
-        if useApple { apple.seek(ms: ms) } else { try? await engine.request("/seek?ms=\(ms)") }
+        if useApple { apple.seek(ms: ms) } else { _ = try? await engine.request("/seek?ms=\(ms)") }
         // L’écran verrouillé suit tout de suite le nouvel endroit.
         if !useApple, var info = MPNowPlayingInfoCenter.default().nowPlayingInfo {
             info[MPNowPlayingInfoPropertyElapsedPlaybackTime] = Double(ms) / 1000
@@ -464,7 +464,7 @@ final class Driver {
         ]
         let gains = (0..<10).map { band in max(-12, min(12, weights.reduce(0.0) { $0 + ((sound[$1.0] as? NSNumber)?.doubleValue ?? 0) * $1.1[band] })) }
         let body = try? JSONSerialization.data(withJSONObject: ["gains": gains, "preampDb": -max(0, gains.max() ?? 0)])
-        try? await engine.request("/eq", body: body)
+        _ = try? await engine.request("/eq", body: body)
     }
 
     // MARK: Service en ligne

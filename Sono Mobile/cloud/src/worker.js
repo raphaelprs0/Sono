@@ -778,7 +778,7 @@ const onConnection = (socket, code) => {
   socket.on('close', () => {
     clients.get(code)?.delete(socket);
     broadcast(session);
-    const { role, clientId } = socket.sono;
+    const { role } = socket.sono;
     if (role === 'host') setTimeout(() => { if (sessions.get(code) === session) reviewHostAbsence(session); }, HOST_LEAVE_GRACE_MS);
   });
 };

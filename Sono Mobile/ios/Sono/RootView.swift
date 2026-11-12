@@ -68,9 +68,9 @@ struct RootView: View {
             case .admin(let person): Text(L("{0} pourra lancer et passer les titres, gérer la file et accepter les invités, sans modifier les réglages ni les connexions.", person.name))
             }
         }
-        .onChange(of: store.phase) { phase in if phase != .host { sheet = nil; tab = .queue } }
+        .onChange(of: store.phase) { _, phase in if phase != .host { sheet = nil; tab = .queue } }
         // Retour dans l’app : l’état de la session est relu (la connexion a pu être coupée en arrière-plan).
-        .onChange(of: scenePhase) { phase in if phase == .active, store.phase == .host { Task { await store.refresh() } } }
+        .onChange(of: scenePhase) { _, phase in if phase == .active, store.phase == .host { Task { await store.refresh() } } }
     }
 
     private var confirmationTitle: String {

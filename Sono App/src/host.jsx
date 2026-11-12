@@ -2,7 +2,7 @@
 // chargées seulement quand l’hôte ouvre son tableau de bord, jamais sur la page des invités.
 import { Activity, Check, ChevronRight, CircleAlert, Copy, Disc3, Languages, Link2, ListMusic, LoaderCircle, Music2, Palette, Pause, Play, QrCode, Search, Settings, ShieldCheck, SkipBack, SkipForward, Trash2, Tv, UsersRound, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { tx, txServer, locale, lang, setLang } from './i18n.js';
+import { tx, txServer, lang, setLang } from './i18n.js';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import appleMusicLogo from './assets/apple-music.webp';
 import { createPortal } from 'react-dom';
@@ -446,7 +446,7 @@ function SettingsSections({ active, onChange }) {
   </div>;
 }
 
-function SettingsView({ session, hostToken, notify, inviteUrl, joinUrl, onCopy, onSave, onDelete, onSection }) {
+function SettingsView({ session, hostToken, notify, inviteUrl, onCopy, onSave, onDelete, onSection }) {
   const [name, setName] = useState(session.name);
   const [hostName, setHostName] = useState(session.host === 'Hôte' ? '' : session.host);
   const [saving, setSaving] = useState(null);
@@ -523,7 +523,6 @@ function FallbackModal({ source, sessionCode, hostToken, onClose, onChoose }) {
       } catch {}
     })();
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, sessionCode]);
   useEffect(() => {
     const term = query.trim();
@@ -538,7 +537,6 @@ function FallbackModal({ source, sessionCode, hostToken, onClose, onChoose }) {
       finally { if (!cancelled) setLoading(false); }
     }, 350);
     return () => { cancelled = true; window.clearTimeout(timer); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, source, sessionCode]);
   const choose = async (item) => {
     setChoosing(item.id);

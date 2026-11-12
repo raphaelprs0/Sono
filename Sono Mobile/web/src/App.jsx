@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react';
-import { tx, txServer, locale, lang, setLang } from './i18n.js';
+import { tx, txServer, locale, setLang } from './i18n.js';
 import {
   ArrowDown, ArrowRight, ArrowUp, Check, CircleAlert, Clock3, Disc3, Airplay, GripVertical, Link2, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, ShieldCheck, SkipBack, SkipForward, Trash2, UserRound, UsersRound, X,
 } from 'lucide-react';
@@ -959,7 +959,6 @@ function App() {
   resumeHostingRef.current = resumeHosting;
   useEffect(() => {
     if (hostState === 'host' && hostToken && session.code) rememberHostSession(session.code, hostToken);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hostState, session.code, hostToken]);
   // L’hôte est là : ses écrans (paramètres, connexions, mode TV…) sont préchargés pour s’ouvrir sans attente.
   useEffect(() => { if (hostState === 'host') loadHostParts().catch(() => {}); }, [hostState]);
@@ -975,7 +974,6 @@ function App() {
       else if (!adminInfo && wasAdmin.current) notify(tx("Vous n’êtes plus admin."));
     }
     wasAdmin.current = Boolean(adminInfo);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adminInfo, adminLoaded, isGuest]);
   const leaveAsGuest = () => {
     const socket = socketRef.current;
@@ -1105,7 +1103,6 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
       anchor.current = { positionMs: drift > 700 ? sample : livePosition(), at: performance.now(), playing: running };
       if (dragRef.current === null) run();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [progress, playing]);
   useEffect(() => {
     // Seul le temps affiché passe par ici, une fois par seconde.
@@ -1118,7 +1115,6 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
     run();
     const timer = window.setInterval(paint, 1000);
     return () => window.clearInterval(timer);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   useEffect(() => { if (dragRef.current === null) run(); }, [duration]);
   const msAt = (clientX) => {
@@ -1399,7 +1395,6 @@ function useListMotion(list, keys, skip) {
     }
     skip.current = false;
     positions.current = next;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [keys, list]);
 }
 
@@ -1417,7 +1412,6 @@ function useExitGhost(animateExit, skipRef) {
       element.after(ghost);
       animateExit(ghost).onfinish = () => ghost.remove();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return ref;
 }
@@ -1737,7 +1731,6 @@ const FallbackList = memo(function FallbackList({ tracks, total, host, startInde
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [needsAll, total, sessionCode]);
   const items = (needsAll && all) || tracks;
   const visible = items.slice(0, limit);

@@ -65,7 +65,7 @@ struct HomeView: View {
             .padding(.bottom, 40)
         }
         .scrollDismissesKeyboard(.interactively)
-        .onChange(of: focus) { field in
+        .onChange(of: focus) { _, field in
             guard let field else { return }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { withAnimation(.easeOut(duration: 0.25)) { proxy.scrollTo(field, anchor: .center) } }
         }

@@ -1,6 +1,6 @@
 [package]
 name = "sono"
-version = "2.5.4"
+version = "2.5.5"
 description = "Sono, la file musicale collaborative pour vos soirées."
 authors = ["Sono"]
 edition = "2021"
@@ -17,7 +17,7 @@ tauri = { version = "2", features = [] }
 tauri-plugin-single-instance = "2"
 axum = { version = "0.8", features = ["ws"] }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net", "fs", "time", "process", "sync", "io-util", "signal"] }
-tower-http = { version = "0.6", features = ["fs", "set-header"] }
+tower-http = { version = "0.6", features = ["fs"] }
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "gzip"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", features = ["preserve_order"] }
