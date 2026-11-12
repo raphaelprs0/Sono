@@ -52,9 +52,10 @@ async fn cloudflared(app: &Shared) -> Result<std::path::PathBuf, String> {
     let bundled = app.binary("cloudflared");
     if bundled.exists() { return Ok(bundled); }
     let dir = app.data_dir.join("bin");
-    let target = dir.join(if cfg!(windows) { "cloudflared.exe" } else { "cloudflared" });
-    let stamp = dir.join("cloudflared.version");
-    if target.exists() && std::fs::read_to_string(&stamp).ok().as_deref() == Some(CLOUDFLARED_VERSION) { return Ok(target); }
+    let exe = if cfg!(windows) { ".exe" } else { "" };
+    // Un nom par version : une copie déjà lancée (fichier verrouillé sous Windows) n’a jamais à être remplacée.
+    let target = dir.join(format!("cloudflared-{CLOUDFLARED_VERSION}{exe}"));
+    if target.exists() { return Ok(target); }
     let (asset, expected) = CLOUDFLARED_ASSET;
     let failed = |e: String| format!("Téléchargement du connecteur d’accès public impossible : {e}");
     if asset.is_empty() { return Err("Impossible de lancer le connecteur d’accès public.".into()); }
@@ -64,17 +65,31 @@ async fn cloudflared(app: &Shared) -> Result<std::path::PathBuf, String> {
     use sha2::Digest;
     if hex::encode(sha2::Sha256::digest(&bytes)) != expected { return Err("Le connecteur d’accès public téléchargé est invalide.".into()); }
     let program = if asset.ends_with(".tgz") { untar_cloudflared(&bytes).ok_or("Le connecteur d’accès public téléchargé est invalide.")? } else { bytes.to_vec() };
-    let part = target.with_extension("part");
+    // Écrit sous un nom provisoire unique, puis renommé. Sous Windows, l’antivirus garde souvent le fichier tout
+    // juste écrit pendant son analyse (« Accès refusé ») : on réessaie, et au pire la copie provisoire sert telle quelle.
+    let temporary = dir.join(format!("cloudflared-{CLOUDFLARED_VERSION}-{:08x}{exe}", rand::random::<u32>()));
     let write = async {
         tokio::fs::create_dir_all(&dir).await?;
-        tokio::fs::write(&part, &program).await?;
+        tokio::fs::write(&temporary, &program).await?;
         #[cfg(unix)]
-        { use std::os::unix::fs::PermissionsExt; tokio::fs::set_permissions(&part, std::fs::Permissions::from_mode(0o755)).await?; }
-        tokio::fs::rename(&part, &target).await?;
-        tokio::fs::write(&stamp, CLOUDFLARED_VERSION).await
+        { use std::os::unix::fs::PermissionsExt; tokio::fs::set_permissions(&temporary, std::fs::Permissions::from_mode(0o755)).await?; }
+        Ok::<(), std::io::Error>(())
     };
     write.await.map_err(|e| failed(e.to_string()))?;
-    Ok(target)
+    for _ in 0..20 {
+        if tokio::fs::rename(&temporary, &target).await.is_ok() || target.exists() { break; }
+        tokio::time::sleep(Duration::from_millis(250)).await;
+    }
+    let ready = if target.exists() { let _ = std::fs::remove_file(&temporary); target } else { temporary };
+    // Les anciennes copies (autres versions, essais interrompus) sont effacées quand elles ne servent plus.
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let name = entry.file_name().to_string_lossy().to_string();
+            if path != ready && (name.starts_with("cloudflared") || name == "cloudflared.version") { let _ = std::fs::remove_file(&path); }
+        }
+    }
+    Ok(ready)
 }
 
 /// Extrait le fichier « cloudflared » de l’archive .tgz publiée par Cloudflare (format tar simple).
