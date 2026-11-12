@@ -130,7 +130,14 @@ impl App {
         let tmp = self.data_dir.join("sessions.json.tmp");
         if tokio::fs::write(&tmp, json).await.is_ok() {
             restrict(&tmp);
-            if let Err(error) = tokio::fs::rename(&tmp, self.store_path()).await { eprintln!("Enregistrement impossible : {error}"); }
+            // Windows refuse parfois de remplacer un fichier ouvert un instant par l’antivirus : on réessaie.
+            for attempt in 0..10 {
+                match tokio::fs::rename(&tmp, self.store_path()).await {
+                    Ok(()) => return,
+                    Err(error) if attempt == 9 => eprintln!("Enregistrement impossible : {error}"),
+                    Err(_) => tokio::time::sleep(std::time::Duration::from_millis(150)).await,
+                }
+            }
         }
     }
 
@@ -141,7 +148,10 @@ impl App {
         let tmp = self.data_dir.join("sessions.json.tmp");
         if std::fs::write(&tmp, json).is_ok() {
             restrict(&tmp);
-            let _ = std::fs::rename(&tmp, self.store_path());
+            for _ in 0..10 {
+                if std::fs::rename(&tmp, self.store_path()).is_ok() { break; }
+                std::thread::sleep(std::time::Duration::from_millis(150));
+            }
         }
     }
 

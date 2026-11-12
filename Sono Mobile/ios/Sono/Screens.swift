@@ -260,6 +260,10 @@ struct SettingsScreen: View {
                     Picker("Section", selection: $store.settingsSection) { Text("Session").tag(0); Text(L("Apparence")).tag(1) }.pickerStyle(.segmented)
                 }
                 if store.settingsSection == 0 { SessionSettings(sheet: $sheet) } else { AppearanceSettings() }
+                // Version de l’app (celle de l’App Store / de l’IPA) et numéro de fabrication.
+                Text("Sono \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
+                    .font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
+                    .frame(maxWidth: .infinity).padding(.top, 6)
             }
             .padding(.horizontal, 20).padding(.bottom, 30)
         }

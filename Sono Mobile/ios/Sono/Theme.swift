@@ -229,7 +229,7 @@ struct AccentButtonStyle: ButtonStyle {
             .foregroundStyle(danger ? Color(hex: "#2a0705") : store.appearance.accentInk)
             .lineLimit(1)
             .padding(.horizontal, 16)
-            .frame(minHeight: wide ? 42 : 36)
+            .frame(minHeight: 42)
             .frame(maxWidth: wide ? .infinity : nil)
             .background(Capsule().fill(danger ? Color.sonoDanger : store.appearance.accentColor))
             .overlay(Capsule().strokeBorder(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25)), lineWidth: 1))

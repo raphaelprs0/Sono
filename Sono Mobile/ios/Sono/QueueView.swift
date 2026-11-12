@@ -391,7 +391,7 @@ struct SourceNotice: View {
         VStack(alignment: .leading, spacing: 12) {
             Text(L("Choisissez l’app qui jouera la musique")).font(.system(size: 15.5, weight: .semibold)).foregroundStyle(Color.sonoText)
             Text(L("Connectez Apple Music ou Deezer : la lecture et la recherche passeront par cette app.")).font(.system(size: 13)).foregroundStyle(Color.sonoMuted)
-            Button { tab = .connections } label: { Label(L("Connecter"), systemImage: "link") }.buttonStyle(AccentButtonStyle(wide: false))
+            Button { tab = .connections } label: { Label(L("Connecter"), systemImage: "link") }.buttonStyle(AccentButtonStyle())
         }
         .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)

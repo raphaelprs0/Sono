@@ -400,6 +400,7 @@ function AppearanceView({ appearance, onChange, onReset, onOpenTv, onSection }) 
       <SwitchRow title={tx("Texte à côté du QR code")} description={tx("« Ajoutez vos titres » et le lien court.")} checked={appearance.tvShowQrText} onChange={(tvShowQrText) => onChange({ tvShowQrText })} />
     </div>
     <div className="form-actions"><button type="button" className="button secondary" onClick={onReset}>{tx("Réinitialiser l’apparence")}</button></div>
+    <p className="app-version">Sono {__SONO_VERSION__}</p>
   </section>;
 }
 
@@ -487,6 +488,7 @@ function SettingsView({ session, hostToken, notify, inviteUrl, joinUrl, onCopy, 
       <p className="field-help">{tx('La file d’attente, l’historique et la liste des invités sont effacés définitivement. Les invités connectés sont déconnectés et le code {0} ne fonctionnera plus.', session.code)}</p>
       <div className="form-actions"><button type="button" className="button danger-button" onClick={onDelete}><Trash2 size={15} />{tx("Supprimer la session")}</button></div>
     </div>
+    <p className="app-version">Sono {__SONO_VERSION__}</p>
   </section>;
 }
 

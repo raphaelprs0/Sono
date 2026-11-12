@@ -39,7 +39,8 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.35), value: store.phase)
         .id(store.language)
         .overlay(alignment: .bottom) { ToastView().padding(.bottom, store.phase == .host ? 96 : 30) }
-        .tint(store.appearance.accentColor)
+        // Onglet actif, interrupteurs : la version lisible de l’accent (foncée sur le thème clair).
+        .tint(store.appearance.accentText)
         .hoverEffectDisabled()
         .preferredColorScheme(store.appearance.background == "white" ? .light : store.appearance.background == "auto" ? nil : .dark)
         // Le lecteur en grand prend tout l’écran ; les autres fenêtres sont des fenêtres d’iOS.

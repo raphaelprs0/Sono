@@ -238,13 +238,19 @@ pub async fn serve(app: Shared) -> std::io::Result<()> {
             tokio::spawn(async move { let _ = axum::serve(short, r.into_make_service_with_connect_info::<SocketAddr>()).await; });
         }
     }
-    let saved = app.lock().saved_deezer_arl.clone();
-    if !saved.is_empty() {
+    // Compte Deezer gardé : reconnecté au lancement. Juste après une mise à jour, l’antivirus de Windows analyse
+    // souvent le nouveau moteur pendant quelques secondes : on réessaie plusieurs fois avant d’abandonner.
+    if !app.lock().saved_deezer_arl.is_empty() {
         let app = app.clone();
         tokio::spawn(async move {
-            match deezer::start_bridge(&app, saved).await {
-                Ok(_) => app.broadcast_all(),
-                Err(e) => eprintln!("Reconnexion Deezer impossible : {e}"),
+            for wait in [0u64, 3, 6, 10, 20, 40] {
+                tokio::time::sleep(Duration::from_secs(wait)).await;
+                let saved = { let s = app.lock(); if s.deezer.is_some() { return; } s.saved_deezer_arl.clone() };
+                if saved.is_empty() { return; }
+                match deezer::start_bridge(&app, saved).await {
+                    Ok(_) => { app.broadcast_all(); return; }
+                    Err(e) => eprintln!("Reconnexion Deezer impossible : {e}"),
+                }
             }
         });
     }

@@ -1465,7 +1465,7 @@ function App() {
         {(widgets.queue || widgets.fallback) && <section className="queue-section">
           {widgets.queue && <><div className="section-heading">
             <div><h2>{tx("Prochains titres")} <span key={queue.length + (fallbackQueue?.total || 0)} className="count-pill pop">{queue.length + (fallbackQueue?.total || 0)}</span></h2>{queue.length > 0 && <p>{queueDuration(queue)} {tx("de musique proposée · glissez une ligne pour réordonner")}</p>}</div>
-            <button className="button primary" onClick={() => setModal('search')}><Plus size={18} />{tx("Ajouter")}</button>
+            <button className="button primary" onClick={() => setModal('search')}><Plus size={16} />{tx("Ajouter")}</button>
           </div>
           {session.fallback && <QueueGroupLabel title={tx("Proposés par les invités")} count={queue.length} />}
           <QueueList queue={queue} host fallback={session.fallback} onRemove={askRemove} onReorder={stableReorder} onBrowse={openSearch} /></>}
