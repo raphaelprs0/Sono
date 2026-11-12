@@ -109,37 +109,15 @@ struct Backdrop: Identifiable {
     var image: String? = nil
     var minShade: Double = 0
 
+    /// Noir, Blanc (thème clair) et Automatique (noir ou blanc selon le système) ; « Pochette en cours » est à part.
     static let all: [Backdrop] = [
-        Backdrop(id: "default", label: "Sombre", edges: ["#0f0f0d", "#0f0f0d"], layers: [.linear(angle: 180, stops: [("#0f0f0d", 0), ("#0f0f0d", 1)])]),
         Backdrop(id: "black", label: "Noir", edges: ["#000000", "#000000"], layers: [.linear(angle: 180, stops: [("#000000", 0), ("#000000", 1)])]),
-        Backdrop(id: "night", label: "Nuit", edges: ["#0b0f22", "#06070f"], layers: [
-            .linear(angle: 180, stops: [("#0b0f22", 0), ("#06070f", 1)]),
-            .radial(x: 0.92, y: 1.05, color: "#622ea0", alpha: 0.5, stop: 0.5),
-            .radial(x: 0.18, y: -0.05, color: "#4056be", alpha: 0.55, stop: 0.55),
+        Backdrop(id: "white", label: "Blanc", edges: ["#f4f4f0", "#f4f4f0"], layers: [
+            .linear(angle: 180, stops: [("#f4f4f0", 0), ("#f4f4f0", 1)]),
+            .radial(x: 0.5, y: -0.1, color: "#ffffff", alpha: 1, stop: 0.7),
         ]),
-        Backdrop(id: "aurora", label: "Aurore", edges: ["#05080e", "#05080e"], layers: [
-            .linear(angle: 180, stops: [("#05080e", 0), ("#05080e", 1)]),
-            .radial(x: 0.5, y: 1.15, color: "#1676aa", alpha: 0.4, stop: 0.55),
-            .radial(x: 0.88, y: 0.18, color: "#7c48e2", alpha: 0.42, stop: 0.5),
-            .radial(x: 0.12, y: 0.08, color: "#1ac496", alpha: 0.42, stop: 0.5),
-        ]),
-        Backdrop(id: "sunset", label: "Coucher de soleil", edges: ["#170a1d", "#3a1510"], layers: [
-            .linear(angle: 180, stops: [("#170a1d", 0), ("#2a0e19", 0.6), ("#3a1510", 1)]),
-            .radial(x: 0.08, y: 0.05, color: "#962876", alpha: 0.5, stop: 0.5),
-            .radial(x: 0.5, y: 1.25, color: "#ff8a3a", alpha: 0.55, stop: 0.55),
-        ]),
-        Backdrop(id: "ocean", label: "Océan", edges: ["#062a40", "#03141f"], layers: [
-            .linear(angle: 170, stops: [("#062a40", 0), ("#04354a", 0.45), ("#03141f", 1)]),
-            .radial(x: 0.05, y: 1, color: "#145a8c", alpha: 0.45, stop: 0.55),
-            .radial(x: 0.82, y: -0.05, color: "#3ec4d6", alpha: 0.32, stop: 0.5),
-        ]),
-        Backdrop(id: "pleins-phares", label: "Pleins Phares", edges: ["#262d33", "#262d33"], layers: [.linear(angle: 180, stops: [("#3f4b55", 0), ("#3f4b55", 1)])], image: "FondPleinsPhares"),
-        Backdrop(id: "apocalypse", label: "Apocalypse", edges: ["#2a0b10", "#030208"], layers: [
-            .linear(angle: 180, stops: [("#2a0b10", 0), ("#120310", 0.6), ("#030208", 1)]),
-            .radial(x: 0.58, y: 0.04, color: "#df7b47", alpha: 0.28, stop: 0.4),
-            .radial(x: 0.86, y: 0.72, color: "#a32418", alpha: 0.55, stop: 0.5),
-            .radial(x: 0.18, y: 0.28, color: "#f94c0e", alpha: 0.5, stop: 0.45),
-        ]),
+        // Aperçu seulement : à l’écran, c’est Noir ou Blanc selon le thème du système.
+        Backdrop(id: "auto", label: "Automatique", edges: ["#000000", "#000000"], layers: [.linear(angle: 135, stops: [("#000000", 0), ("#000000", 0.5), ("#f4f4f0", 0.5), ("#f4f4f0", 1)])]),
     ]
 }
 
@@ -186,7 +164,10 @@ struct AppBackground: View {
     @State private var measure: BackdropMeasure?
     @State private var measuredKey: String?
 
-    private var preset: Backdrop { Backdrop.all.first { $0.id == appearance.background } ?? Backdrop.all[0] }
+    @Environment(\.colorScheme) private var scheme
+    /// « Automatique » : Noir ou Blanc selon le thème du système.
+    private var backgroundID: String { appearance.background == "auto" ? (scheme == .light ? "white" : "black") : appearance.background }
+    private var preset: Backdrop { Backdrop.all.first { $0.id == backgroundID } ?? Backdrop.all[0] }
     private var sourceKey: String? { appearance.background == "cover" ? cover.flatMap { $0.isEmpty ? nil : $0 } : preset.image }
 
     /// Couleur des bords : la plus sombre des deux, après le même assombrissement que le fond.

@@ -2,7 +2,7 @@
 
 🇫🇷 **Français** · [🇬🇧 **Anglais**](README.md)
 
-![Version](https://img.shields.io/badge/Version-2.4.3-7927F5)
+![Version](https://img.shields.io/badge/Version-2.5.0-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.4.3 | 2.4.1 (build 9) |
+| Version | 2.5.0 | 2.5.0 (build 10) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
@@ -111,7 +111,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **Invités** : liste des présents, validation des arrivées (facultative), retrait d’un invité, nomination d’admins, bandeau d’arrivée quand quelqu’un rejoint.
 - **Activité** : journal de la session (titres ajoutés, arrivées, changements) et statistiques.
 - **Son** : égaliseur 3 bandes (basses, médiums, aigus) avec préréglages (« Neutre », « Plus de basses », « Voix claires »…), pour la lecture Deezer.
-- **Apparence** : fonds (Sombre, Noir, Nuit, Aurore, Coucher de soleil, Océan, pochette en cours, et des fonds illustrés), couleur d’accent (Citron, Menthe, Ciel, Lavande, Rose, Orange, Blanc…), style verre (Liquid Glass, désactivé par défaut), et un bouton pour revenir aux réglages d’origine. Par défaut : fond Noir et accent Citron.
+- **Apparence** : fonds Noir, Blanc (thème clair), Automatique (noir ou blanc selon le réglage du système) et pochette en cours ; couleurs d’accent Citron, Lilas, Framboise, Or, Blanc, Pleins Phares et Noir. Chaque élément (boutons, cartes, fenêtres, Liquid Glass) s’adapte au fond et à la couleur choisis : sur un fond de la même couleur, Blanc et Noir s’inversent pour rester visibles. Liquid Glass désactivé par défaut, et un bouton pour revenir aux réglages d’origine. Par défaut : fond Noir et accent Citron.
 - **Langue** : français ou anglais (Réglages → Apparence → Langue). Par défaut, celle de l’appareil ; les invités et l’écran TV suivent la langue de l’hôte.
 - **Mode TV** : un écran plein format pour la TV, avec la pochette, le titre, la barre de lecture, le titre suivant et le QR code (leur disposition se règle sur l’app ordinateur).
 - **Vider le cache** : ferme la session en cours et l’app, pour repartir de zéro (après confirmation).

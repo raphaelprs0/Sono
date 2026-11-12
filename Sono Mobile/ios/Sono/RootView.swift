@@ -41,7 +41,7 @@ struct RootView: View {
         .overlay(alignment: .bottom) { ToastView().padding(.bottom, store.phase == .host ? 96 : 30) }
         .tint(store.appearance.accentColor)
         .hoverEffectDisabled()
-        .preferredColorScheme(.dark)
+        .preferredColorScheme(store.appearance.background == "white" ? .light : store.appearance.background == "auto" ? nil : .dark)
         // Le lecteur en grand prend tout l’écran ; les autres fenêtres sont des fenêtres d’iOS.
         .fullScreenCover(isPresented: Binding(get: { sheet == .player }, set: { if !$0 { sheet = nil } })) { PlayerView() }
         .sheet(item: Binding(get: { sheet == .player ? nil : sheet }, set: { sheet = $0 })) { sheet in

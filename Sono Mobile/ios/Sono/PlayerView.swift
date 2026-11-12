@@ -65,6 +65,8 @@ struct PlayerView: View {
                 })
         }
         .presentationBackground(.clear)
+        // Lecteur en grand, posé sur la pochette ou sur du noir : toujours en couleurs sombres.
+        .environment(\.colorScheme, .dark)
     }
 
     @ViewBuilder private var background: some View {

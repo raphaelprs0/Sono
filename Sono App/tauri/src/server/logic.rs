@@ -248,7 +248,7 @@ fn fallback_summary(session: &mut Value, viewer: &Viewer) -> Value {
 }
 
 // Couleurs choisies par l’hôte, reprises sur les écrans des invités.
-const THEME_BACKGROUNDS: [&str; 9] = ["default", "black", "night", "aurora", "sunset", "ocean", "pleins-phares", "apocalypse", "cover"];
+const THEME_BACKGROUNDS: [&str; 4] = ["black", "white", "auto", "cover"];
 
 pub fn clean_theme(theme: Option<&Value>) -> Value {
     let Some(theme) = theme.filter(|t| t.is_object()) else { return Value::Null };
@@ -256,7 +256,7 @@ pub fn clean_theme(theme: Option<&Value>) -> Value {
     let accent = str_of(theme, "accent");
     let valid_accent = accent.len() == 7 && accent.starts_with('#') && accent[1..].chars().all(|c| c.is_ascii_hexdigit());
     json!({
-        "background": if THEME_BACKGROUNDS.contains(&background) { background } else { "default" },
+        "background": if THEME_BACKGROUNDS.contains(&background) { background } else { "black" },
         "accent": if valid_accent { accent.to_lowercase() } else { "#d7f75b".into() },
         "glass": theme.get("glass") == Some(&json!(true)),
         "lang": if str_of(theme, "lang") == "en" { "en" } else { "fr" },

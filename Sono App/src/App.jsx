@@ -6,7 +6,6 @@ import {
 import { createPortal, flushSync } from 'react-dom';
 import appleMusicLogo from './assets/apple-music.webp';
 import deezerIcon from './assets/deezer.webp';
-import pleinsPharesBackground from './assets/pleins-phares-fond.webp';
 
 // Parties réservées à l’hôte (host.jsx) : chargées à part, jamais sur la page des invités, et préchargées dès que l’hôte est là.
 export const loadHostParts = () => import('./host.jsx');
@@ -44,31 +43,24 @@ const DEFAULT_APPEARANCE = {
   // Fond du mode TV : la pochette en cours, animée (« cover »), ou un noir uni (« black »).
   tvBackground: 'cover',
 };
+// Fonds : noir, blanc (thème clair) ou automatique (noir ou blanc selon le système) ; « Pochette en cours » est à part.
 const BACKGROUNDS = [
-  { id: 'default', edges: ['#0f0f0d', '#0f0f0d'], label: tx("Sombre"), css: '#0f0f0d' },
   { id: 'black', edges: ['#000000', '#000000'], label: tx("Noir"), css: '#000000' },
-  { id: 'night', edges: ['#0b0f22', '#06070f'], label: tx("Nuit"), css: 'radial-gradient(ellipse at 18% -5%, rgba(64, 86, 190, .55) 0, transparent 55%), radial-gradient(ellipse at 92% 105%, rgba(98, 46, 160, .5) 0, transparent 50%), linear-gradient(180deg, #0b0f22, #06070f)' },
-  { id: 'aurora', edges: ['#05080e', '#05080e'], label: tx("Aurore"), css: 'radial-gradient(ellipse at 12% 8%, rgba(26, 196, 150, .42) 0, transparent 50%), radial-gradient(ellipse at 88% 18%, rgba(124, 72, 226, .42) 0, transparent 50%), radial-gradient(ellipse at 50% 115%, rgba(22, 118, 170, .4) 0, transparent 55%), #05080e' },
-  { id: 'sunset', edges: ['#170a1d', '#3a1510'], label: tx("Coucher de soleil"), css: 'radial-gradient(ellipse at 50% 125%, rgba(255, 138, 58, .55) 0, transparent 55%), radial-gradient(ellipse at 8% 5%, rgba(150, 40, 118, .5) 0, transparent 50%), linear-gradient(180deg, #170a1d, #2a0e19 60%, #3a1510)' },
-  { id: 'ocean', edges: ['#062a40', '#03141f'], label: tx("Océan"), css: 'radial-gradient(ellipse at 82% -5%, rgba(62, 196, 214, .32) 0, transparent 50%), radial-gradient(ellipse at 5% 100%, rgba(20, 90, 140, .45) 0, transparent 55%), linear-gradient(170deg, #062a40, #04354a 45%, #03141f)' },
-  // Couleurs des pochettes : « Pleins Phares » (Favé) et « APOCALYPSE » (Gazo).
-  // Exactement le rendu du mode « Pochette en cours » avec cette pochette (floutée, saturée, assombrie), calculé une fois.
-  { id: 'pleins-phares', edges: ['#262d33', '#262d33'], label: 'Pleins Phares', title: 'Pleins Phares — Favé', css: `#3f4b55 url(${pleinsPharesBackground}) center / cover no-repeat`, image: pleinsPharesBackground },
-  { id: 'apocalypse', edges: ['#2a0b10', '#030208'], label: 'Apocalypse', title: 'APOCALYPSE — Gazo', css: 'radial-gradient(ellipse at 18% 28%, rgba(249, 76, 14, .5) 0, transparent 45%), radial-gradient(ellipse at 86% 72%, rgba(163, 36, 24, .55) 0, transparent 50%), radial-gradient(ellipse at 58% 4%, rgba(223, 123, 71, .28) 0, transparent 40%), linear-gradient(180deg, #2a0b10, #120310 60%, #030208)' },
+  { id: 'white', edges: ['#f4f4f0', '#f4f4f0'], label: tx("Blanc"), css: 'radial-gradient(ellipse 90% 60% at 50% -10%, #ffffff 0, transparent 70%), #f4f4f0' },
+  // Aperçu seulement : le fond affiché est celui que le système choisit (voir resolveLook).
+  { id: 'auto', edges: ['#000000', '#000000'], label: tx("Automatique"), title: tx("Noir ou blanc selon le réglage du système"), css: 'linear-gradient(135deg, #000000 50%, #f4f4f0 50%)' },
 ];
-// Couleurs d’accent prédéfinies, chacune avec la couleur de texte qui reste la plus lisible posée dessus
-// (boutons, lecture en cours), une teinte de survol ajustée à la main et, pour les accents sombres,
-// une version plus claire utilisée quand l’accent sert de couleur de texte.
+// Couleurs d’accent, chacune avec la couleur de texte la plus lisible posée dessus (ink), une teinte de survol
+// et, pour le thème clair, une version foncée utilisée quand l’accent sert de couleur de texte (lightText).
+// Blanc et Noir sont monochromes : sur un fond de la même couleur, ils s’inversent pour rester visibles.
 const ACCENTS = [
-  { hex: '#d7f75b', label: tx("Citron"), ink: '#171a08', hover: '#e4ff7a' },
-  { hex: '#5bf7b0', label: tx("Menthe"), ink: '#062519', hover: '#7dfcc3' },
-  { hex: '#5bc8f7', label: tx("Ciel"), ink: '#05212f', hover: '#7dd6fb' },
-  { hex: '#a78bfa', label: tx("Lavande"), ink: '#170f30', hover: '#bba3fc', text: '#c9b8fd' },
-  { hex: '#f472b6', label: tx("Rose"), ink: '#2d0919', hover: '#f78fc6', text: '#f9a3d0' },
-  { hex: '#fb923c', label: 'Orange', ink: '#2a1203', hover: '#fca763' },
-  { hex: '#f5f5f4', label: tx("Blanc"), ink: '#151512', hover: '#ffffff' },
-  { hex: '#bdd2e9', label: 'Pleins Phares', ink: '#0c1521', hover: '#d3e3f4' },
-  { hex: '#f94c0e', label: 'Apocalypse', ink: '#1c0402', hover: '#ff6a33', text: '#ffa27d' },
+  { hex: '#d7f75b', label: tx("Citron"), ink: '#171a08', hover: '#e4ff7a', lightText: '#5a7000' },
+  { hex: '#c084fc', label: tx("Lilas"), ink: '#1f0b33', hover: '#d2a5fd', lightText: '#7a2ec4' },
+  { hex: '#fb7185', label: tx("Framboise"), ink: '#330811', hover: '#fd94a4', lightText: '#c0243f' },
+  { hex: '#fbbf24', label: tx("Or"), ink: '#2b1d02', hover: '#fcd05a', lightText: '#946000' },
+  { hex: '#f5f5f4', label: tx("Blanc"), ink: '#151512', hover: '#ffffff', mono: 'white' },
+  { hex: '#bdd2e9', label: 'Pleins Phares', ink: '#0c1521', hover: '#d3e3f4', lightText: '#3a6491' },
+  { hex: '#151513', label: tx("Noir"), ink: '#f5f5f4', hover: '#2c2c29', mono: 'black' },
 ];
 const PANEL_WIDGETS = ['invite', 'participants', 'stats', 'activity'];
 
@@ -95,16 +87,31 @@ function hexToRgb(hex) {
   return [0, 2, 4].map((index) => parseInt(value.slice(index, index + 2), 16));
 }
 
-// Couleur d’accent : toutes les nuances (survol, fond doux, texte posé dessus) en découlent.
-function applyAccent(hex) {
-  const accent = ACCENTS.find((item) => item.hex === hex) || ACCENTS[0];
+// Couleur d’accent : toutes les nuances (survol, fond doux, texte posé dessus) en découlent, selon le thème.
+function applyAccent(hex, theme) {
+  let accent = ACCENTS.find((item) => item.hex === hex) || ACCENTS[0];
+  // Blanc sur fond blanc, noir sur fond noir : l’accent prend la couleur opposée pour rester visible.
+  if ((accent.mono === 'white' && theme === 'light') || (accent.mono === 'black' && theme === 'dark')) accent = ACCENTS.find((item) => item.mono && item.mono !== accent.mono);
   const root = document.documentElement.style;
   root.setProperty('--accent-rgb', hexToRgb(accent.hex).join(', '));
   root.setProperty('--lime', accent.hex);
   root.setProperty('--lime-hover', accent.hover);
   root.setProperty('--lime-ink', accent.ink);
-  root.setProperty('--lime-text', accent.text || accent.hex);
+  root.setProperty('--lime-text', theme === 'light' ? accent.lightText || accent.hex : accent.text || accent.hex);
+  // Zones toujours sombres (carte du titre en cours, mode TV) : la version de l’accent faite pour un fond sombre.
+  const onDark = accent.mono === 'black' ? ACCENTS.find((item) => item.mono === 'white') : accent;
+  root.setProperty('--dark-accent-rgb', hexToRgb(onDark.hex).join(', '));
+  root.setProperty('--dark-lime', onDark.hex);
+  root.setProperty('--dark-lime-hover', onDark.hover);
+  root.setProperty('--dark-lime-ink', onDark.ink);
+  root.setProperty('--dark-lime-text', onDark.text || onDark.hex);
 }
+
+// Fond « Automatique » : noir ou blanc selon le thème du système, suivi en direct.
+const lightQuery = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+const subscribeSystemTheme = (callback) => { lightQuery?.addEventListener?.('change', callback); return () => lightQuery?.removeEventListener?.('change', callback); };
+function useSystemLight() { return useSyncExternalStore(subscribeSystemTheme, () => Boolean(lightQuery?.matches), () => false); }
+const resolveLook = (look, systemLight) => (look.background === 'auto' ? { ...look, background: systemLight ? 'white' : 'black' } : look);
 
 // Assombrissement minimal d’une image floutée pour que tous les textes posés dessus restent lisibles :
 // la zone la plus claire, une fois assombrie, ne dépasse pas BACKDROP_MAX_LUMINANCE (gris foncé).
@@ -898,14 +905,17 @@ function App() {
   // Les invités affichent Sono dans la langue choisie par l’hôte.
   useEffect(() => { if (isGuest) setLang(session.theme?.lang); }, [isGuest, session.theme?.lang]);
   // Session terminée : retour au design personnel.
-  const look = (!ended && guestTheme) || appearance;
+  const systemLight = useSystemLight();
+  const look = resolveLook((!ended && guestTheme) || appearance, systemLight);
   // Fond « pochette en cours » : la dernière pochette reste en mémoire, pour garder le même décor hors session.
   useEffect(() => { if (!isGuest && current?.cover) writeStorage('sono-last-cover', current.cover); }, [current?.cover, isGuest]);
   const backdropCover = current?.cover || (isGuest ? undefined : readStorage('sono-last-cover') || undefined);
   const edges = useBackdropEdges(look, backdropCover);
   useEffect(() => applyEdges(edges), [edges[0], edges[1]]);
   useEffect(() => {
-    applyAccent(look.accent);
+    const theme = look.background === 'white' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = theme;
+    applyAccent(look.accent, theme);
     document.documentElement.toggleAttribute('data-glass', look.glass);
     document.documentElement.toggleAttribute('data-custom-bg', look.background !== 'default');
   }, [look.accent, look.glass, look.background]);
@@ -1423,7 +1433,7 @@ function App() {
 
   const showPanel = view === 'queue' && PANEL_WIDGETS.some((id) => widgets[id]);
   return <div className={showPanel ? 'app-shell' : 'app-shell no-panel'}>
-    <AppBackdrop appearance={appearance} cover={current?.cover} />
+    <AppBackdrop appearance={look} cover={current?.cover} />
     <aside className="sidebar">
       <Brand />
       <div className="session-mini">{!live && <span className="live-dot offline" title={tx("Reconnexion…")} />}<div><small>Session</small><strong>{session.name}</strong><span>{session.code}</span></div></div>

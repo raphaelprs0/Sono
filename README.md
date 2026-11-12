@@ -2,7 +2,7 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.4.3-7927F5)
+![Version](https://img.shields.io/badge/Version-2.5.0-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.4.3 | 2.4.1 (build 9) |
+| Version | 2.5.0 | 2.5.0 (build 10) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -118,9 +118,11 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 - **Activity**: session log (tracks added, arrivals, changes) and statistics.
 - **Sound**: 3-band equalizer (bass, mids, treble) with presets (“Flat”, “More bass”, “Clear vocals”…), for
   Deezer playback.
-- **Appearance**: backgrounds (Dark, Black, Night, Aurora, Sunset, Ocean, current cover, and illustrated
-  backgrounds), accent color (Lemon, Mint, Sky, Lavender, Pink, Orange, White…), glass style (Liquid Glass, off by
-  default), and a button to go back to the original settings. By default: Black background and Lemon accent.
+- **Appearance**: Black, White (light theme), Automatic (black or white following the system setting) and current
+  cover backgrounds; Lemon, Lilac, Raspberry, Gold, White, Pleins Phares and Black accent colors. Every element (buttons,
+  cards, windows, Liquid Glass) adapts to the chosen background and color: on a background of the same color, White and
+  Black invert to stay visible. Liquid Glass is off by default, with a button to go back to the original settings. By
+  default: Black background and Lemon accent.
 - **Language**: English or French (Settings → Appearance → Language). By default, the device’s language; guests and the
   TV screen follow the host’s language.
 - **TV mode**: a full-screen view for the TV, with the cover, the title, the progress bar, the next track and the QR

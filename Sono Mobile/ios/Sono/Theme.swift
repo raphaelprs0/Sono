@@ -27,8 +27,9 @@ struct Appearance: Codable, Equatable {
 
     static func load() -> Appearance {
         guard let text = UserDefaults.standard.string(forKey: "sono-appearance"), var value = try? JSONDecoder().decode(Appearance.self, from: Data(text.utf8)) else { return Appearance() }
-        // Fond retiré depuis (ancien choix) : retour au fond par défaut.
+        // Fond ou couleur retirés depuis (ancien choix) : retour aux valeurs par défaut.
         if value.background != "cover", !Backdrop.all.contains(where: { $0.id == value.background }) { value.background = Appearance().background }
+        if !Accent.all.contains(where: { $0.hex == value.accent }) { value.accent = Appearance().accent }
         return value
     }
 
@@ -38,23 +39,50 @@ struct Appearance: Codable, Equatable {
         UserDefaults.standard.set(String(decoding: data, as: UTF8.self), forKey: "sono-appearance")
     }
 
-    var accentColor: Color { Color(hex: accent) }
+    /// Les couleurs suivent le thème affiché (clair ou sombre), résolu par iOS au moment de dessiner.
+    var accentColor: Color { Color(UIColor { UIColor(hex: Accent.resolved(accent, light: $0.userInterfaceStyle == .light).hex) }) }
     /// Texte posé sur l’accent : sombre sur les accents clairs.
-    var accentInk: Color { Accent.all.first { $0.hex == accent }.map { Color(hex: $0.ink) } ?? .black }
+    var accentInk: Color { Color(UIColor { UIColor(hex: Accent.resolved(accent, light: $0.userInterfaceStyle == .light).ink) }) }
+    /// Accent utilisé comme couleur de texte : foncé sur le thème clair pour rester lisible.
+    var accentText: Color {
+        Color(UIColor { trait in
+            let light = trait.userInterfaceStyle == .light
+            let value = Accent.resolved(accent, light: light)
+            return UIColor(hex: light ? value.lightText ?? value.hex : value.hex)
+        })
+    }
 }
 
+/// Couleurs d’accent. Blanc et Noir sont monochromes : sur un fond de la même couleur, ils s’inversent pour rester visibles.
 struct Accent: Identifiable {
     let hex: String
     let label: String
     let ink: String
+    var lightText: String? = nil
+    var mono: String? = nil
     var id: String { hex }
     static let all = [
-        Accent(hex: "#d7f75b", label: "Citron", ink: "#171a08"), Accent(hex: "#5bf7b0", label: "Menthe", ink: "#062519"),
-        Accent(hex: "#5bc8f7", label: "Ciel", ink: "#05212f"), Accent(hex: "#a78bfa", label: "Lavande", ink: "#170f30"),
-        Accent(hex: "#f472b6", label: "Rose", ink: "#2d0919"), Accent(hex: "#fb923c", label: "Orange", ink: "#2a1203"),
-        Accent(hex: "#f5f5f4", label: "Blanc", ink: "#151512"), Accent(hex: "#bdd2e9", label: "Pleins Phares", ink: "#0c1521"),
-        Accent(hex: "#f94c0e", label: "Apocalypse", ink: "#1c0402"),
+        Accent(hex: "#d7f75b", label: "Citron", ink: "#171a08", lightText: "#5a7000"),
+        Accent(hex: "#c084fc", label: "Lilas", ink: "#1f0b33", lightText: "#7a2ec4"),
+        Accent(hex: "#fb7185", label: "Framboise", ink: "#330811", lightText: "#c0243f"),
+        Accent(hex: "#fbbf24", label: "Or", ink: "#2b1d02", lightText: "#946000"),
+        Accent(hex: "#f5f5f4", label: "Blanc", ink: "#151512", mono: "white"),
+        Accent(hex: "#bdd2e9", label: "Pleins Phares", ink: "#0c1521", lightText: "#3a6491"),
+        Accent(hex: "#151513", label: "Noir", ink: "#f5f5f4", mono: "black"),
     ]
+    /// L’accent tel qu’il s’affiche sur ce thème (Blanc sur fond clair devient Noir, et l’inverse).
+    static func resolved(_ hex: String, light: Bool) -> Accent {
+        let accent = all.first { $0.hex == hex } ?? all[0]
+        if (accent.mono == "white" && light) || (accent.mono == "black" && !light) { return all.first { $0.mono != nil && $0.mono != accent.mono } ?? accent }
+        return accent
+    }
+}
+
+extension UIColor {
+    convenience init(hex: String) {
+        let value = Int(hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0
+        self.init(red: CGFloat(value >> 16 & 255) / 255, green: CGFloat(value >> 8 & 255) / 255, blue: CGFloat(value & 255) / 255, alpha: 1)
+    }
 }
 
 extension Color {
@@ -62,10 +90,25 @@ extension Color {
         let value = Int(hex.trimmingCharacters(in: CharacterSet(charactersIn: "#")), radix: 16) ?? 0
         self.init(red: Double(value >> 16 & 255) / 255, green: Double(value >> 8 & 255) / 255, blue: Double(value & 255) / 255)
     }
-    static let sonoBackground = Color(red: 15 / 255, green: 15 / 255, blue: 13 / 255)
-    static let sonoText = Color(red: 244 / 255, green: 243 / 255, blue: 236 / 255)
-    static let sonoMuted = Color(red: 0.62, green: 0.62, blue: 0.58)
-    static let sonoDanger = Color(red: 1, green: 0.47, blue: 0.42)
+    /// Couleur qui change avec le thème affiché (sombre ou clair).
+    static func themed(dark: UIColor, light: UIColor) -> Color { Color(UIColor { $0.userInterfaceStyle == .light ? light : dark }) }
+    static let sonoBackground = themed(dark: UIColor(hex: "#0f0f0d"), light: UIColor(hex: "#f4f4f0"))
+    static let sonoText = themed(dark: UIColor(hex: "#f4f3ec"), light: UIColor(hex: "#151513"))
+    static let sonoMuted = themed(dark: UIColor(red: 0.62, green: 0.62, blue: 0.58, alpha: 1), light: UIColor(hex: "#66665e"))
+    static let sonoDanger = themed(dark: UIColor(red: 1, green: 0.47, blue: 0.42, alpha: 1), light: UIColor(hex: "#cf3a2e"))
+    /// Teinte des voiles et traits : blanc sur le thème sombre, presque noir sur le thème clair.
+    static let sonoFg = themed(dark: .white, light: UIColor(hex: "#141412"))
+    /// Fond des champs de saisie.
+    static let sonoField = themed(dark: UIColor.black.withAlphaComponent(0.28), light: UIColor.black.withAlphaComponent(0.05))
+    static let sonoSurface = themed(dark: UIColor(hex: "#181815"), light: .white)
+    static let sonoSurfaceTop = themed(dark: UIColor(hex: "#23231e"), light: .white)
+    static let sonoSurfaceBottom = themed(dark: UIColor(hex: "#191916"), light: UIColor(hex: "#f7f7f3"))
+    static let sonoLine = themed(dark: UIColor(hex: "#2a2a25"), light: UIColor(hex: "#e2e2da"))
+    static let sonoLineStrong = themed(dark: UIColor(hex: "#3a3a33"), light: UIColor(hex: "#d4d4cb"))
+    static let sonoGlass = themed(dark: UIColor(red: 22 / 255, green: 22 / 255, blue: 20 / 255, alpha: 0.62), light: UIColor.white.withAlphaComponent(0.6))
+    static let sonoGlassSolid = themed(dark: UIColor(red: 14 / 255, green: 14 / 255, blue: 12 / 255, alpha: 0.68), light: UIColor.white.withAlphaComponent(0.78))
+    static let sonoGlassEdge = themed(dark: UIColor.white.withAlphaComponent(0.24), light: UIColor.black.withAlphaComponent(0.08))
+    static let sonoGlassHighlight = themed(dark: UIColor.white.withAlphaComponent(0.42), light: UIColor.white.withAlphaComponent(0.95))
 }
 
 // MARK: Pochettes : téléchargées une fois, réduites à la taille affichée (peu de mémoire), gardées en cache
@@ -120,7 +163,7 @@ struct CoverView: View {
 
     var body: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Color.white.opacity(0.08))
+            RoundedRectangle(cornerRadius: radius, style: .continuous).fill(Color.sonoFg.opacity(0.08))
             if let image = image ?? url.flatMap({ CoverCache.shared.cached($0, pixels: pixels) }) {
                 Image(uiImage: image).resizable().scaledToFill().transition(.opacity)
             } else {
@@ -143,9 +186,9 @@ private let glassSheen = LinearGradient(stops: [
     .init(color: .white.opacity(0.15), location: 0), .init(color: .white.opacity(0.04), location: 0.48), .init(color: .white.opacity(0.09), location: 1),
 ], startPoint: UnitPoint(x: 0.21, y: 0), endPoint: UnitPoint(x: 0.79, y: 1))
 
-/// Liseré clair, plus marqué en haut (reflet de la lumière).
+/// Liseré du verre, plus marqué en haut (reflet de la lumière) ; sombre et discret sur le thème clair.
 private let glassEdge = LinearGradient(stops: [
-    .init(color: .white.opacity(0.42), location: 0), .init(color: .white.opacity(0.22), location: 0.12), .init(color: .white.opacity(0.2), location: 0.9), .init(color: .white.opacity(0.26), location: 1),
+    .init(color: .sonoGlassHighlight, location: 0), .init(color: .sonoGlassEdge, location: 0.12), .init(color: .sonoGlassEdge, location: 0.9), .init(color: .sonoGlassEdge, location: 1),
 ], startPoint: .top, endPoint: .bottom)
 
 struct GlassCard: ViewModifier {
@@ -157,14 +200,14 @@ struct GlassCard: ViewModifier {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         if store.appearance.glass {
             content
-                .background(shape.fill(solid ? Color(red: 14 / 255, green: 14 / 255, blue: 12 / 255).opacity(0.68) : Color(red: 22 / 255, green: 22 / 255, blue: 20 / 255).opacity(0.62)).overlay(shape.fill(glassSheen)))
+                .background(shape.fill(solid ? Color.sonoGlassSolid : Color.sonoGlass).overlay(shape.fill(glassSheen)))
                 .overlay(shape.strokeBorder(glassEdge, lineWidth: 1))
                 // Ombre douce : une image calculée une fois (aucun flou recalculé en défilant ou en glissant).
                 .background(SoftShadow(radius: radius, blur: 20, opacity: 0.3).offset(y: 14))
         } else {
             content
-                .background(shape.fill(solid ? AnyShapeStyle(LinearGradient(colors: [Color(hex: "#23231e"), Color(hex: "#191916")], startPoint: .topLeading, endPoint: .bottomTrailing)) : AnyShapeStyle(Color(hex: "#181815"))))
-                .overlay(shape.strokeBorder(Color(hex: solid ? "#3a3a33" : "#2a2a25"), lineWidth: 1))
+                .background(shape.fill(solid ? AnyShapeStyle(LinearGradient(colors: [Color.sonoSurfaceTop, Color.sonoSurfaceBottom], startPoint: .topLeading, endPoint: .bottomTrailing)) : AnyShapeStyle(Color.sonoSurface)))
+                .overlay(shape.strokeBorder(solid ? Color.sonoLineStrong : Color.sonoLine, lineWidth: 1))
         }
     }
 }
@@ -206,8 +249,8 @@ struct SecondaryButtonStyle: ButtonStyle {
             .lineLimit(1)
             .padding(.horizontal, 14)
             .frame(minHeight: 36)
-            .background(Capsule().fill(Color(red: 14 / 255, green: 14 / 255, blue: 12 / 255).opacity(0.3)).overlay(Capsule().fill(Color.white.opacity(0.08))))
-            .overlay(Capsule().strokeBorder(LinearGradient(colors: [.white.opacity(0.32), .white.opacity(0.18)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3)), lineWidth: 1))
+            .background(Capsule().fill(Color.sonoGlass).overlay(Capsule().fill(Color.sonoFg.opacity(0.06))))
+            .overlay(Capsule().strokeBorder(LinearGradient(colors: [.sonoGlassHighlight, .sonoGlassEdge], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3)), lineWidth: 1))
     }
 }
 
@@ -293,7 +336,7 @@ struct AirPlayButton: View {
         ZStack {
             Image(systemName: "airplay.audio")
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(active ? store.appearance.accentColor : Color.white)
+                .foregroundStyle(active ? store.appearance.accentText : Color.sonoText)
             RoutePicker().opacity(0.02)
         }
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification).receive(on: RunLoop.main)) { _ in active = AirPlayRoute.isActive }
@@ -368,7 +411,7 @@ struct Brand: View {
                 }
             }
             .frame(height: size * 1.04)
-            (Text("sono").foregroundColor(Color.sonoText) + Text(".").foregroundColor(store.appearance.accentColor))
+            (Text("sono").foregroundColor(Color.sonoText) + Text(".").foregroundColor(store.appearance.accentText))
                 .font(.system(size: size, weight: .heavy))
                 .tracking(-1.2)
         }
@@ -382,6 +425,6 @@ struct Eyebrow: View {
     let text: String
     @EnvironmentObject private var store: Store
     var body: some View {
-        Text(text.uppercased()).font(.system(size: 13, weight: .bold)).tracking(2.2).foregroundStyle(store.appearance.accentColor)
+        Text(text.uppercased()).font(.system(size: 13, weight: .bold)).tracking(2.2).foregroundStyle(store.appearance.accentText)
     }
 }

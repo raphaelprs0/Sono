@@ -108,9 +108,9 @@ const fallbackSummary = (session, viewer) => {
   return isController(session, viewer) ? { ...summary, next: peekFallback(session) } : summary;
 };
 // Couleurs choisies par l’hôte (fond, accent, Liquid Glass), reprises sur les écrans des invités.
-const THEME_BACKGROUNDS = ['default', 'black', 'night', 'aurora', 'sunset', 'ocean', 'pleins-phares', 'apocalypse', 'cover'];
+const THEME_BACKGROUNDS = ['black', 'white', 'auto', 'cover'];
 const cleanTheme = (theme) => (theme && typeof theme === 'object' ? {
-  background: THEME_BACKGROUNDS.includes(theme.background) ? theme.background : 'default',
+  background: THEME_BACKGROUNDS.includes(theme.background) ? theme.background : 'black',
   accent: /^#[0-9a-f]{6}$/i.test(theme.accent) ? theme.accent.toLowerCase() : '#d7f75b',
   glass: theme.glass === true,
   lang: theme.lang === 'en' ? 'en' : 'fr',

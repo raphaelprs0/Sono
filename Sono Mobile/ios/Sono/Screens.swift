@@ -32,7 +32,7 @@ struct FallbackSheet: View {
                 if loading { ProgressView() }
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
-            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.08)))
+            .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.sonoFg.opacity(0.08)))
             if let error { Label(error, systemImage: "exclamationmark.circle").font(.system(size: 13)).foregroundStyle(Color.sonoDanger) }
             if results == nil, kind == "playlist", !mine.isEmpty { Text(L("MES PLAYLISTS")).font(.system(size: 11.5, weight: .bold)).tracking(1.4).foregroundStyle(Color.sonoMuted) }
             ScrollView {
@@ -110,7 +110,7 @@ struct ActivityScreen: View {
                     ForEach(Array(store.activity.enumerated()), id: \.offset) { _, item in
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: item.icon == "plus" ? "plus" : item.icon == "user" ? "person.fill" : "music.note")
-                                .font(.system(size: 12, weight: .bold)).foregroundStyle(store.appearance.accentColor)
+                                .font(.system(size: 12, weight: .bold)).foregroundStyle(store.appearance.accentText)
                                 .frame(width: 32, height: 32).background(Circle().fill(store.appearance.accentColor.opacity(0.14)))
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(LServer(item.text)).font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoText)
@@ -140,7 +140,7 @@ struct ActivityScreen: View {
         return VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Text(L("Dans la session")).font(.system(size: 18, weight: .bold)).foregroundStyle(Color.sonoText)
-                Text("\(participants.count)").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.sonoText).padding(.horizontal, 9).padding(.vertical, 3).background(Capsule().fill(Color.white.opacity(0.1)))
+                Text("\(participants.count)").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.sonoText).padding(.horizontal, 9).padding(.vertical, 3).background(Capsule().fill(Color.sonoFg.opacity(0.1)))
             }
             ForEach(participants) { person in
                 HStack(spacing: 12) {
@@ -149,7 +149,7 @@ struct ActivityScreen: View {
                         HStack(spacing: 6) {
                             Text(person.name).font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText).lineLimit(1)
                             if person.isHost || person.admin == true {
-                                Text(person.isHost ? L("Hôte") : "Admin").font(.system(size: 11, weight: .bold)).foregroundStyle(store.appearance.accentColor)
+                                Text(person.isHost ? L("Hôte") : "Admin").font(.system(size: 11, weight: .bold)).foregroundStyle(store.appearance.accentText)
                                     .padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(store.appearance.accentColor.opacity(0.15)))
                             }
                         }
@@ -163,7 +163,7 @@ struct ActivityScreen: View {
                             }
                             Button(role: .destructive) { confirmation = .kick(person) } label: { Label(L("Retirer de la session"), systemImage: "person.badge.minus") }
                         } label: {
-                            Image(systemName: "ellipsis").font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText).frame(width: 36, height: 36).background(Circle().fill(Color.white.opacity(0.08)))
+                            Image(systemName: "ellipsis").font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText).frame(width: 36, height: 36).background(Circle().fill(Color.sonoFg.opacity(0.08)))
                         }
                         .accessibilityLabel(L("Options pour {0}", person.name))
                     }
@@ -207,7 +207,7 @@ struct ConnectionsScreen: View {
                     HStack(spacing: 8) {
                         Text(name).font(.system(size: 17, weight: .bold)).foregroundStyle(Color.sonoText)
                         if connected && store.session.source == name {
-                            Text(L("App de lecture")).font(.system(size: 11, weight: .bold)).foregroundStyle(store.appearance.accentColor).padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(store.appearance.accentColor.opacity(0.15)))
+                            Text(L("App de lecture")).font(.system(size: 11, weight: .bold)).foregroundStyle(store.appearance.accentText).padding(.horizontal, 7).padding(.vertical, 2).background(Capsule().fill(store.appearance.accentColor.opacity(0.15)))
                         }
                     }
                     HStack(spacing: 6) {
@@ -282,7 +282,7 @@ struct SettingsCard<Content: View>: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.top, 22)
-        .overlay(alignment: .top) { Rectangle().fill(Color.white.opacity(0.1)).frame(height: 0.5) }
+        .overlay(alignment: .top) { Rectangle().fill(Color.sonoFg.opacity(0.1)).frame(height: 0.5) }
     }
 }
 
@@ -296,8 +296,8 @@ struct InputField: View {
             TextField("", text: $text, prompt: Text(prompt).foregroundColor(Color.sonoMuted.opacity(0.6)))
                 .font(.system(size: 15))
                 .padding(.horizontal, 14).padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.black.opacity(0.25)))
-                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.white.opacity(0.1)))
+                .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.sonoField))
+                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.sonoFg.opacity(0.1)))
                 .foregroundStyle(Color.sonoText)
         }
     }
@@ -389,7 +389,7 @@ struct SessionSettings: View {
                             Text(label).font(.system(size: 13, weight: .semibold))
                                 .foregroundStyle(value == preset ? store.appearance.accentInk : Color.sonoText)
                                 .padding(.horizontal, 14).padding(.vertical, 9)
-                                .background(Capsule().fill(value == preset ? store.appearance.accentColor : Color.white.opacity(0.08)))
+                                .background(Capsule().fill(value == preset ? store.appearance.accentColor : Color.sonoFg.opacity(0.08)))
                         }
                     }
                 }
@@ -453,11 +453,11 @@ struct AppearanceSettings: View {
             }
             SettingsCard(title: L("Arrière-plan")) {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 12) {
+                    ForEach(Backdrop.all) { backdrop in
+                        swatch(id: backdrop.id, label: L(backdrop.label)) { GradientLayers(layers: backdrop.layers) }
+                    }
                     swatch(id: "cover", label: L("Pochette en cours")) {
                         LinearGradient(colors: [Color(hex: "#3a2a5c"), Color(hex: "#1f4a5c")], startPoint: .topLeading, endPoint: .bottomTrailing).overlay(Image(systemName: "opticaldisc").foregroundStyle(.white))
-                    }
-                    ForEach(Backdrop.all) { backdrop in
-                        swatch(id: backdrop.id, label: L(backdrop.label)) { AppBackground(appearance: { var a = Appearance(); a.background = backdrop.id; return a }(), cover: nil, edges: false) }
                     }
                 }
             }
@@ -466,7 +466,8 @@ struct AppearanceSettings: View {
                     ForEach(Accent.all) { accent in
                         Button { store.updateAppearance { $0.accent = accent.hex } } label: {
                             Circle().fill(Color(hex: accent.hex)).frame(width: 38, height: 38)
-                                .overlay(Circle().strokeBorder(.white, lineWidth: store.appearance.accent == accent.hex ? 3 : 0).padding(-4))
+                                .overlay(Circle().strokeBorder(Color.sonoFg.opacity(0.22), lineWidth: 1))
+                                .overlay(Circle().strokeBorder(Color.sonoText, lineWidth: store.appearance.accent == accent.hex ? 3 : 0).padding(-4))
                         }
                         .accessibilityLabel("Accent \(L(accent.label))")
                     }
@@ -512,7 +513,7 @@ struct AppearanceSettings: View {
         Button { store.updateAppearance { $0.background = id } } label: {
             VStack(spacing: 6) {
                 preview().frame(height: 58).clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(store.appearance.background == id ? store.appearance.accentColor : Color.white.opacity(0.12), lineWidth: store.appearance.background == id ? 2.5 : 1))
+                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(store.appearance.background == id ? store.appearance.accentColor : Color.sonoFg.opacity(0.12), lineWidth: store.appearance.background == id ? 2.5 : 1))
                 Text(label).font(.system(size: 11.5, weight: .medium)).foregroundStyle(Color.sonoText).lineLimit(1).minimumScaleFactor(0.8)
             }
         }

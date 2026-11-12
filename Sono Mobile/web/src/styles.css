@@ -33,6 +33,9 @@
   --radius: 12px;
   --radius-lg: 24px;
   --shadow: 0 24px 80px rgba(0, 0, 0, .45);
+  /* Teinte des voiles et traits clairs (blanc en thème sombre, presque noir en thème clair) et des panneaux translucides. */
+  --fg-rgb: 255, 255, 255;
+  --panel-rgb: 12, 12, 11;
   --font-display: 'Manrope', system-ui, sans-serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
 
@@ -95,7 +98,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .danger-button:hover { background: #ff958c; }
 
 .icon-button { border: 0; background: transparent; width: 36px; height: 36px; padding: 0; display: inline-grid; place-items: center; border-radius: 50%; color: var(--muted); transition: background .15s, color .15s; flex-shrink: 0; }
-.icon-button:not(:disabled):hover { background: rgba(255, 255, 255, .07); color: var(--text); }
+.icon-button:not(:disabled):hover { background: rgba(var(--fg-rgb), .07); color: var(--text); }
 
 .text-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 500; padding: 6px 8px; }
 .text-button:hover { color: var(--lime-text); }
@@ -127,10 +130,10 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 /* Miniature déjà floutée : agrandie telle quelle, sans filtre à recalculer */ .now-backdrop.soft, .app-backdrop.blurred img.soft { filter: none; }
  .guest-now::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(15, 15, 13, .55), rgba(15, 15, 13, .35)); pointer-events: none; }
 
-/* Bouton lecture « verre » : disque translucide cerclé de clair, icône blanche (lisible sur tous les fonds). */ .play-button, .tv-player-buttons .icon-button.tv-play { width: 58px; height: 58px; background: rgba(255, 255, 255, .14); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .34); transition: transform .15s, background .15s; }
-.play-button:not(:disabled):hover, .tv-player-buttons .icon-button.tv-play:not(:disabled):hover { background: rgba(255, 255, 255, .24); color: #fff; transform: scale(1.05); }
+/* Bouton lecture « verre » : disque translucide cerclé de clair, icône blanche (lisible sur tous les fonds). */ .play-button, .tv-player-buttons .icon-button.tv-play { width: 58px; height: 58px; background: rgba(var(--fg-rgb), .14); color: #fff; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .34); transition: transform .15s, background .15s; }
+.play-button:not(:disabled):hover, .tv-player-buttons .icon-button.tv-play:not(:disabled):hover { background: rgba(var(--fg-rgb), .24); color: #fff; transform: scale(1.05); }
 .play-button:not(:disabled):active, .tv-player-buttons .icon-button.tv-play:not(:disabled):active { transform: scale(.96); }
-.skip-button { width: 46px; height: 46px; color: var(--text-2); background: rgba(255, 255, 255, .06); }
+.skip-button { width: 46px; height: 46px; color: var(--text-2); background: rgba(var(--fg-rgb), .06); }
 
 .queue-list { --cols: 16px 26px 44px minmax(0, 2fr) minmax(0, 1.2fr) minmax(90px, 140px) 46px 108px; display: flex; flex-direction: column; gap: 2px; }
 .queue-list.is-guest { --cols: 48px minmax(0, 1fr) auto auto; }
@@ -244,7 +247,7 @@ input::placeholder { color: var(--faint); }
 .edge-tint.bottom i { bottom: 100%; background: linear-gradient(transparent, var(--edge-bottom)); }
 .guest-header { width: 100%; max-width: 680px; margin: 0 auto; padding: 18px 20px; display: flex; align-items: center; justify-content: space-between; }
 .guest-header .brand { font-size: 24px; }
-.guest-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); background: rgba(255, 255, 255, .04); border: 1px solid var(--line-strong); padding: 6px 12px; border-radius: 99px; }
+.guest-badge { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); background: rgba(var(--fg-rgb), .04); border: 1px solid var(--line-strong); padding: 6px 12px; border-radius: 99px; }
 .guest-badge.offline { color: var(--peach); border-color: rgba(235, 169, 127, .35); }
 .guest-main { flex: 1; width: 100%; max-width: 640px; margin: 0 auto; padding: 16px 20px 48px; }
 .guest-welcome { text-align: center; margin-bottom: 20px; }
@@ -430,7 +433,7 @@ a.button { text-decoration: none; }
 
 input[type="range"] { width: 100%; accent-color: var(--lime); }
 
-/* ───────────── Liquid Glass ───────────── */ :root[data-glass] { --glass-fill: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .48); --glass-fill-solid: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .68); --glass-edge: rgba(255, 255, 255, .2); --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 -1px 0 rgba(255, 255, 255, .06), inset 1px 0 0 rgba(255, 255, 255, .08), 0 18px 50px rgba(0, 0, 0, .3); }
+/* ───────────── Liquid Glass ───────────── */ :root[data-glass] { --glass-fill: linear-gradient(135deg, rgba(var(--fg-rgb), .11), rgba(var(--fg-rgb), .02) 55%, rgba(var(--fg-rgb), .06)), rgba(14, 14, 12, .48); --glass-fill-solid: linear-gradient(135deg, rgba(var(--fg-rgb), .11), rgba(var(--fg-rgb), .02) 55%, rgba(var(--fg-rgb), .06)), rgba(14, 14, 12, .68); --glass-edge: rgba(var(--fg-rgb), .2); --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 -1px 0 rgba(255, 255, 255, .06), inset 1px 0 0 rgba(255, 255, 255, .08), 0 18px 50px rgba(0, 0, 0, .3); }
 
  :root[data-glass] .join-requests, :root[data-glass] .modal, :root[data-glass] .empty-state, :root[data-glass] .home-panel, :root[data-glass] .tv-exit, :root[data-glass] .tv-alerts .join-requests, :root[data-glass] .guest-now, :root[data-glass] .join-card {
   background: var(--glass-fill); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow);
@@ -439,22 +442,22 @@ input[type="range"] { width: 100%; accent-color: var(--lime); }
  :root[data-glass] .modal { border-radius: 26px; }
 
 :root[data-glass] .button.secondary, :root[data-glass] .search-input, :root[data-glass] .icon-button.skip-button {
-  background: linear-gradient(rgba(255, 255, 255, .08), rgba(255, 255, 255, .08)), rgba(14, 14, 12, .3); border-color: rgba(255, 255, 255, .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
+  background: linear-gradient(rgba(var(--fg-rgb), .08), rgba(var(--fg-rgb), .08)), rgba(var(--panel-rgb), .3); border-color: rgba(var(--fg-rgb), .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
   backdrop-filter: blur(16px) saturate(170%); -webkit-backdrop-filter: blur(16px) saturate(170%);
 }
 :root[data-glass] .button { border-radius: 99px; }
 
 :root[data-glass] .button.primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5); }
 
-:root[data-glass] .queue-item:hover { background: rgba(255, 255, 255, .06); }
+:root[data-glass] .queue-item:hover { background: rgba(var(--fg-rgb), .06); }
 :root[data-glass] .modal-backdrop { background: rgba(0, 0, 0, .58); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-/* Fenêtres (QR code, recherche…) : le reflet du verre reste, mais le fond est presque opaque pour bien lire. */ :root[data-glass] .modal { background: linear-gradient(135deg, rgba(255, 255, 255, .1), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(16, 16, 14, .88); }
+/* Fenêtres (QR code, recherche…) : le reflet du verre reste, mais le fond est presque opaque pour bien lire. */ :root[data-glass] .modal { background: linear-gradient(135deg, rgba(var(--fg-rgb), .1), rgba(var(--fg-rgb), .02) 55%, rgba(var(--fg-rgb), .06)), rgba(var(--panel-rgb), .88); }
 
 :root[data-glass] .toast { background: rgba(28, 28, 26, .62); color: var(--text); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%); }
 :root[data-glass] .toast > span { background: rgba(var(--accent-rgb), .22); color: var(--lime-text); }
 :root[data-glass] .toast.error > span { background: var(--danger-soft); color: var(--danger); }
 :root[data-glass] .toast button { color: var(--text-2); }
-:root[data-glass] .toast button:hover { background: rgba(255, 255, 255, .1); }
+:root[data-glass] .toast button:hover { background: rgba(var(--fg-rgb), .1); }
 
 /* Barre de progression (tableau de bord et mode TV) */ .progress { --rail: 4px; display: grid; grid-template-columns: 3.2em minmax(0, 1fr) 3.2em; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
 .progress-time:first-child { text-align: right; }
@@ -464,7 +467,7 @@ input[type="range"] { width: 100%; accent-color: var(--lime); }
 .progress-fill { right: 0; transform: scaleX(0); transform-origin: left; transition: height .15s ease; }
 .progress.dragging .progress-fill, .progress.dragging .progress-thumb, .progress.dragging .progress-thumb-track { transition: none; }
 /* Le curseur suit la barre par translation de toute la largeur de la piste. */ .progress-thumb-track { position: absolute; left: 0; right: 0; top: 50%; height: 0; pointer-events: none; }
-.progress-rail { right: 0; background: rgba(255, 255, 255, .14); }
+.progress-rail { right: 0; background: rgba(var(--fg-rgb), .14); }
 .progress-fill { background: var(--lime); }
 .progress-thumb { position: absolute; left: 0; top: -6.5px; width: 13px; height: 13px; margin-left: -6.5px; border-radius: 50%; background: #fff; box-shadow: 0 1px 6px rgba(0, 0, 0, .45); opacity: 0; transform: scale(.5); transition: opacity .15s ease, transform .15s ease; }
 .progress-track:hover, .progress.dragging .progress-track, .progress-track:focus-visible { --rail: 6px; }
@@ -505,7 +508,7 @@ span.tv-cover { display: grid; place-items: center; background: var(--surface-2)
   .tv-player-buttons { justify-content: center; }
 }
 .tv-player-buttons .icon-button { width: 44px; height: 44px; color: var(--text); }
-.tv-player-buttons .icon-button:not(:disabled):hover { background: rgba(255, 255, 255, .1); }
+.tv-player-buttons .icon-button:not(:disabled):hover { background: rgba(var(--fg-rgb), .1); }
 .tv-view.idle .tv-player-buttons { opacity: 0; pointer-events: none; }
 .tv-progress { --rail: 6px; font-size: clamp(12px, 1.1vw, 19px); color: var(--text-2); }
 .tv-progress .progress-track { height: 26px; }
@@ -563,7 +566,7 @@ span.tv-cover { display: grid; place-items: center; background: var(--surface-2)
 
 /* Mode TV : menu du clic droit (masquer le code QR) */ .tv-menu { position: fixed; z-index: 60; min-width: 220px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 10px; background: rgba(20, 20, 18, .94); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
 .tv-menu button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--text); font-size: 13.5px; text-align: left; }
-.tv-menu button:hover { background: rgba(255, 255, 255, .1); }
+.tv-menu button:hover { background: rgba(var(--fg-rgb), .1); }
 
 /* App iPhone : pas de zoom dans les champs, appui immédiat, encoche et barre d’accueil respectées */ html { -webkit-text-size-adjust: 100%; }
 button, a, input { touch-action: manipulation; }
@@ -576,8 +579,8 @@ body { padding-top: env(safe-area-inset-top); }
   :root[data-native-tabs] .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
 }
 :root[data-native-tabs][data-glass] {
-  --glass-fill: linear-gradient(145deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .03) 48%, rgba(255, 255, 255, .09)), rgba(16, 16, 14, .38);
-  --glass-edge: rgba(255, 255, 255, .22);
+  --glass-fill: linear-gradient(145deg, rgba(var(--fg-rgb), .16), rgba(var(--fg-rgb), .03) 48%, rgba(var(--fg-rgb), .09)), rgba(16, 16, 14, .38);
+  --glass-edge: rgba(var(--fg-rgb), .22);
   --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 14px 40px rgba(0, 0, 0, .3);
 }
 
@@ -605,11 +608,11 @@ body { padding-top: env(safe-area-inset-top); }
 .tv-page-qr .tv-invite-text { display: flex; flex-direction: column; gap: 6px; }
 .tv-page-qr .tv-invite-text strong { font-size: 22px; }
 .tv-page-qr .tv-invite-text span { font-size: 15px; color: var(--lime-text); overflow-wrap: anywhere; }
-.tv-page-nav { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 14px); z-index: 3; display: flex; gap: 4px; padding: 4px; transform: translateX(-50%); border: 1px solid rgba(255, 255, 255, .22); border-radius: 99px; background: rgba(20, 20, 18, .42); -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 10px 28px rgba(0, 0, 0, .35); }
-.tv-page-nav button { display: grid; place-items: center; width: 44px; height: 34px; border: 0; border-radius: 99px; background: transparent; color: rgba(255, 255, 255, .72); transition: background .2s, color .2s; }
-.tv-page-nav button.active { background: rgba(255, 255, 255, .22); color: #fff; }
+.tv-page-nav { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 14px); z-index: 3; display: flex; gap: 4px; padding: 4px; transform: translateX(-50%); border: 1px solid rgba(var(--fg-rgb), .22); border-radius: 99px; background: rgba(20, 20, 18, .42); -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 10px 28px rgba(0, 0, 0, .35); }
+.tv-page-nav button { display: grid; place-items: center; width: 44px; height: 34px; border: 0; border-radius: 99px; background: transparent; color: rgba(var(--fg-rgb), .72); transition: background .2s, color .2s; }
+.tv-page-nav button.active { background: rgba(var(--fg-rgb), .22); color: #fff; }
 @media (max-width: 900px) {
-  .tv-view .tv-exit, .tv-view.idle .tv-exit { top: calc(env(safe-area-inset-top) + 10px); right: 14px; opacity: 1; pointer-events: auto; -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); background: rgba(20, 20, 18, .42); border: 1px solid rgba(255, 255, 255, .22); }
+  .tv-view .tv-exit, .tv-view.idle .tv-exit { top: calc(env(safe-area-inset-top) + 10px); right: 14px; opacity: 1; pointer-events: auto; -webkit-backdrop-filter: blur(22px) saturate(1.7); backdrop-filter: blur(22px) saturate(1.7); background: rgba(20, 20, 18, .42); border: 1px solid rgba(var(--fg-rgb), .22); }
   .tv-view { padding: 0; }
 }
 /* Téléphone à l’horizontale : pochette à gauche, lecteur à droite */ @media (max-width: 900px) and (orientation: landscape) {
@@ -623,7 +626,7 @@ body { padding-top: env(safe-area-inset-top); }
   .tv-page-nav { bottom: 8px; }
 }
 
-/* Quitter le mode TV sur téléphone : poignée pour glisser vers le bas */ .tv-grabber { position: absolute; top: calc(env(safe-area-inset-top) + 8px); left: 50%; z-index: 4; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: rgba(255, 255, 255, .45); }
+/* Quitter le mode TV sur téléphone : poignée pour glisser vers le bas */ .tv-grabber { position: absolute; top: calc(env(safe-area-inset-top) + 8px); left: 50%; z-index: 4; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: rgba(var(--fg-rgb), .45); }
 @media (max-width: 900px) {
   .tv-view { touch-action: pan-x; }
 }
@@ -644,7 +647,7 @@ body { padding-top: env(safe-area-inset-top); }
 .queue-list .queue-item.touch-settling { position: relative; z-index: 5; border-radius: 16px; transition: transform .2s cubic-bezier(.32, .72, 0, 1), background .2s ease, box-shadow .2s ease; background: transparent; box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
 /* Les lignes restent sur leur propre couche : le texte ne change pas de rendu au moment de les déposer. */ :root[data-native-tabs] .queue-list.is-host .queue-item { will-change: transform; }
 
-:root[data-native-tabs][data-glass] { --glass-fill: linear-gradient(145deg, rgba(255, 255, 255, .15), rgba(255, 255, 255, .04) 48%, rgba(255, 255, 255, .09)), rgba(22, 22, 20, .62); }
+:root[data-native-tabs][data-glass] { --glass-fill: linear-gradient(145deg, rgba(var(--fg-rgb), .15), rgba(var(--fg-rgb), .04) 48%, rgba(var(--fg-rgb), .09)), rgba(22, 22, 20, .62); }
 :root[data-native-tabs] .modal-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .68); }
 /* Réponse immédiate au doigt, et pages qui apparaissent en douceur */ * { -webkit-tap-highlight-color: transparent; }
 :root[data-native-tabs] button { transition: transform .12s ease, background .15s, color .15s, opacity .15s; }
@@ -719,7 +722,7 @@ html { touch-action: manipulation; }
 .progress .progress-track { grid-column: 1 / -1; grid-row: 1; height: 22px; }
 .progress .progress-time { grid-row: 2; min-width: 0; text-align: left; transition: color .2s; }
 .progress .progress-time:last-child { text-align: right; }
-.progress .progress-rail { position: absolute; left: 0; right: 0; height: var(--rail); border-radius: 99px; overflow: hidden; background: rgba(255, 255, 255, .15); transition: height .24s cubic-bezier(.3, 1.5, .5, 1); }
+.progress .progress-rail { position: absolute; left: 0; right: 0; height: var(--rail); border-radius: 99px; overflow: hidden; background: rgba(var(--fg-rgb), .15); transition: height .24s cubic-bezier(.3, 1.5, .5, 1); }
 .progress .progress-fill { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 0 99px 99px 0; background: linear-gradient(90deg, color-mix(in srgb, var(--lime) 62%, transparent), var(--lime)); transform: translate3d(-100%, 0, 0); will-change: transform; }
 .progress.dragging, .tv-progress.dragging, .progress .progress-track:hover { --rail: 5px; }
 .progress.dragging { --rail: 11px; color: var(--text-2); }
@@ -745,14 +748,14 @@ html { touch-action: manipulation; }
 
 /* Fenêtres sur téléphone : une poignée en haut, on les ferme en glissant vers le bas (la croix disparaît) */ .sheet-grabber { display: none; }
 @media (max-width: 680px) {
-  .modal .sheet-grabber { display: block; position: absolute; top: 8px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: rgba(255, 255, 255, .32); }
+  .modal .sheet-grabber { display: block; position: absolute; top: 8px; left: 50%; width: 40px; height: 5px; margin-left: -20px; border-radius: 99px; background: rgba(var(--fg-rgb), .32); }
   .modal .modal-close { display: none; }
   .modal { will-change: transform; overscroll-behavior: contain; }
 }
 
 :root[data-glass] .code-input input { background: transparent; border: 0; box-shadow: none; }
 
-.tv-airplay { position: absolute; top: calc(env(safe-area-inset-top) - 8px); right: 14px; z-index: 4; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(255, 255, 255, .22); border-radius: 99px; background: rgba(20, 20, 18, .45); color: #fff; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.tv-airplay { position: absolute; top: calc(env(safe-area-inset-top) - 8px); right: 14px; z-index: 4; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(var(--fg-rgb), .22); border-radius: 99px; background: rgba(20, 20, 18, .45); color: #fff; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 
 /* Écran de la TV (recopie depuis l’iPhone) : seulement l’affichage, sans boutons */ .tv-display .tv-exit, .tv-display .tv-player-buttons, .tv-display .tv-grabber, .tv-display .tv-page-nav, .tv-display .tv-menu { display: none !important; }
 .tv-display, .tv-display * { cursor: none !important; }
@@ -800,5 +803,64 @@ html { touch-action: manipulation; }
    à chaque image du glissement) : des fonds presque opaques donnent le même rendu sur la pochette déjà floutée. */
 .tv-sheet .tv-view :is(.tv-play, .tv-page-nav, .tv-exit, .tv-airplay, .icon-button) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 .tv-sheet .tv-view .tv-page-nav, .tv-sheet .tv-view .tv-airplay { background: rgba(28, 28, 26, .72); }
-.tv-sheet .tv-view .tv-player-buttons .icon-button.tv-play { background: rgba(255, 255, 255, .16); }
+.tv-sheet .tv-view .tv-player-buttons .icon-button.tv-play { background: rgba(var(--fg-rgb), .16); }
 
+
+/* ───────────── Thème clair (fond Blanc, ou Automatique quand le système est en clair) ───────────── */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f4f0; --bg-raised: #ffffff; --surface: #ffffff; --surface-2: #f0f0eb; --surface-3: #e6e6df;
+  --line: #e2e2da; --line-strong: #cfcfc6;
+  --text: #151513; --text-2: #3b3b36; --muted: #66665e; --faint: #74746c;
+  --lime-soft: rgba(var(--accent-rgb), .2); --lime-line: rgba(var(--accent-rgb), .55);
+  --peach: #b45f28; --peach-soft: rgba(180, 95, 40, .12); --violet: #6b4bd0; --violet-soft: rgba(107, 75, 208, .1);
+  --danger: #cf3a2e; --danger-soft: rgba(207, 58, 46, .09);
+  --shadow: 0 18px 50px rgba(0, 0, 0, .1);
+  --fg-rgb: 20, 20, 18; --panel-rgb: 255, 255, 255;
+}
+/* Ce qui reste toujours sombre (posé sur la pochette, ou mode TV) : on y remet les couleurs du thème sombre. */
+:root[data-theme="light"] :is(.now-playing, .guest-now, .tv-view, .tv-page, .tv-preview, .tv-alerts, .tv-menu, .tv-tools, .tv-exit, .progress-tip) {
+  color-scheme: dark;
+  --bg: #0f0f0d; --bg-raised: #131311; --surface: #181815; --surface-2: #1f1f1b; --surface-3: #282823;
+  --line: #2a2a25; --line-strong: #3a3a33;
+  --text: #f4f2eb; --text-2: #dedcd2; --muted: #c4c3b9; --faint: #b0afa5;
+  --danger: #ff8278; --danger-soft: rgba(255, 130, 120, .1);
+  --fg-rgb: 255, 255, 255; --panel-rgb: 12, 12, 11;
+  --glass-fill: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .62);
+  --glass-fill-solid: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .78);
+  --glass-edge: rgba(255, 255, 255, .2);
+  --accent-rgb: var(--dark-accent-rgb); --lime: var(--dark-lime); --lime-hover: var(--dark-lime-hover); --lime-ink: var(--dark-lime-ink); --lime-text: var(--dark-lime-text);
+  --lime-soft: rgba(var(--dark-accent-rgb), .1); --lime-line: rgba(var(--dark-accent-rgb), .28);
+  color: var(--text);
+}
+/* La carte du titre en cours garde un fond sombre sur le thème clair (son texte est clair). */
+:root[data-theme="light"] :is(.now-playing, .guest-now) { background-color: #1a1a17; }
+:root[data-theme="light"] .sidebar, :root[data-theme="light"][data-custom-bg] .sidebar, :root[data-theme="light"][data-custom-bg] .right-panel { background: rgba(255, 255, 255, .82); }
+:root[data-theme="light"] .guest-tabs { background: rgba(255, 255, 255, .9); }
+:root[data-theme="light"] .invite-card { background: var(--surface); }
+:root[data-theme="light"] .modal-backdrop { background: rgba(30, 30, 26, .38); }
+:root[data-theme="light"] .queue-list .queue-item.touch-lifted { background: #ffffff; box-shadow: 0 12px 30px rgba(0, 0, 0, .14); }
+/* Messages : sombres sur un fond clair. */
+:root[data-theme="light"] .toast { background: #1c1c19; color: #f4f2eb; box-shadow: 0 14px 40px rgba(0, 0, 0, .22); }
+:root[data-theme="light"] .toast button { color: #a9a89e; }
+:root[data-theme="light"] .toast button:hover { background: rgba(255, 255, 255, .1); }
+/* Erreurs et zone de suppression : rouges foncés, lisibles sur le blanc. */
+:root[data-theme="light"] :is(.integration-error, .inline-error) { color: #a3271d; border-color: rgba(207, 58, 46, .3); }
+:root[data-theme="light"] :is(.field-error, .join-card > .field-error, .danger-zone h2, .danger-text) { color: #b3261e; }
+:root[data-theme="light"] .danger-zone { border-color: rgba(207, 58, 46, .28); }
+:root[data-theme="light"] .danger-button { background: var(--danger); color: #ffffff; }
+:root[data-theme="light"] .danger-button:hover { background: #b3261e; }
+/* Accents : pastilles et bord du bouton principal visibles même pour Blanc sur fond clair. */
+:root[data-theme="light"] .accent-dot { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .18); }
+:root[data-theme="light"] .button.primary { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
+/* Liquid Glass en clair : verre dépoli blanc, bords clairs et ombre douce. */
+:root[data-theme="light"][data-glass] {
+  --glass-fill: linear-gradient(135deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .45) 55%, rgba(255, 255, 255, .6)), rgba(255, 255, 255, .35);
+  --glass-fill-solid: linear-gradient(135deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .7) 55%, rgba(255, 255, 255, .8)), rgba(255, 255, 255, .6);
+  --glass-edge: rgba(0, 0, 0, .08);
+  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(0, 0, 0, .04), 0 18px 50px rgba(0, 0, 0, .1);
+}
+:root[data-theme="light"][data-glass] .sidebar, :root[data-theme="light"][data-glass] .right-panel { background: linear-gradient(rgba(255, 255, 255, .5), rgba(255, 255, 255, .5)), rgba(255, 255, 255, .45); border-color: rgba(0, 0, 0, .07); }
+:root[data-theme="light"][data-glass] .modal { background: rgba(255, 255, 255, .86); }
+:root[data-theme="light"][data-glass] .toast { background: rgba(28, 28, 25, .82); color: #f4f2eb; }
+:root[data-theme="light"][data-glass] .modal-backdrop { background: rgba(30, 30, 26, .3); }

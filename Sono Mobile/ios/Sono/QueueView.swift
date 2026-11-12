@@ -63,7 +63,7 @@ struct QueueView: View {
                 HStack(spacing: 8) {
                     Text(L("Prochains titres")).font(.system(size: 20, weight: .bold)).foregroundStyle(Color.sonoText)
                     Text("\(total)").font(.system(size: 12, weight: .bold)).foregroundStyle(Color.sonoText)
-                        .padding(.horizontal, 9).padding(.vertical, 3).background(Capsule().fill(Color.white.opacity(0.1)))
+                        .padding(.horizontal, 9).padding(.vertical, 3).background(Capsule().fill(Color.sonoFg.opacity(0.1)))
                         .contentTransition(.numericText()).animation(.snappy, value: total)
                 }
                 if !store.queue.isEmpty {
@@ -225,7 +225,7 @@ struct NowPlayingCard: View {
                 VStack(alignment: .leading, spacing: 5) {
                     HStack(spacing: 7) {
                         Equalizer(playing: store.playing && current != nil, color: store.appearance.accentColor)
-                        Text(current == nil ? L("LECTURE") : store.playing ? L("EN LECTURE") : L("EN PAUSE")).font(.system(size: 11.5, weight: .bold)).tracking(1.6).foregroundStyle(store.appearance.accentColor)
+                        Text(current == nil ? L("LECTURE") : store.playing ? L("EN LECTURE") : L("EN PAUSE")).font(.system(size: 11.5, weight: .bold)).tracking(1.6).foregroundStyle(store.appearance.accentText)
                     }
                     Text(current?.title ?? L("Aucun titre en cours")).font(.system(size: 18, weight: .bold)).foregroundStyle(Color.sonoText).lineLimit(2)
                         .id(current?.key).transition(.opacity)
@@ -233,13 +233,13 @@ struct NowPlayingCard: View {
                         .font(.system(size: 14)).foregroundStyle(Color.sonoMuted).lineLimit(1)
                 }
                 Spacer(minLength: 0)
-                AirPlayButton().frame(width: 34, height: 34).background(Circle().fill(Color.white.opacity(0.08)))
+                AirPlayButton().frame(width: 34, height: 34).background(Circle().fill(Color.sonoFg.opacity(0.08)))
             }
             .animation(.easeInOut(duration: 0.25), value: current?.key)
             Controls(size: .regular)
             if current != nil { ProgressBar(compact: true) }
             if let next = store.nextUp {
-                Divider().overlay(Color.white.opacity(0.08))
+                Divider().overlay(Color.sonoFg.opacity(0.08))
                 HStack(spacing: 10) {
                     Text(L("ENSUITE")).font(.system(size: 11.5, weight: .bold)).tracking(1.6).foregroundStyle(Color.sonoMuted)
                     Text("\(next.title) · \(next.artist)").font(.system(size: 14)).foregroundStyle(Color.sonoText).lineLimit(1)
@@ -256,6 +256,8 @@ struct NowPlayingCard: View {
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
         .glassCard(radius: 28, solid: true)
+        // Carte du titre en cours : toujours sombre (comme sur l’ordinateur), même sur le thème clair.
+        .environment(\.colorScheme, .dark)
         .contentShape(Rectangle())
         .onTapGesture(perform: open)
     }
@@ -277,8 +279,8 @@ struct Controls: View {
                     .foregroundStyle(.white)
                     .contentTransition(.symbolEffect(.replace))
                     .frame(width: big ? 70 : 52, height: big ? 70 : 52)
-                    .background(Circle().fill(Color.white.opacity(0.14)))
-                    .overlay(Circle().strokeBorder(Color.white.opacity(0.34), lineWidth: 1))
+                    .background(Circle().fill(Color.sonoFg.opacity(0.14)))
+                    .overlay(Circle().strokeBorder(Color.sonoFg.opacity(0.34), lineWidth: 1))
             }
             .buttonStyle(PressStyle())
             .disabled(store.current == nil && store.nextUp == nil)
@@ -293,8 +295,8 @@ struct Controls: View {
             Image(systemName: symbol).font(.system(size: side * 0.36, weight: .semibold))
                 .foregroundStyle(Color.sonoText.opacity(enabled ? 0.9 : 0.3))
                 .frame(width: side, height: side)
-                .background(Circle().fill(Color(red: 14 / 255, green: 14 / 255, blue: 12 / 255).opacity(0.3)).overlay(Circle().fill(Color.white.opacity(0.08))))
-                .overlay(Circle().strokeBorder(LinearGradient(colors: [.white.opacity(0.3), .white.opacity(0.15)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
+                .background(Circle().fill(Color(red: 14 / 255, green: 14 / 255, blue: 12 / 255).opacity(0.3)).overlay(Circle().fill(Color.sonoFg.opacity(0.08))))
+                .overlay(Circle().strokeBorder(LinearGradient(colors: [Color.sonoFg.opacity(0.3), Color.sonoFg.opacity(0.15)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
                 .opacity(enabled ? 1 : 0.6)
         }
         .buttonStyle(PressStyle())
@@ -324,7 +326,7 @@ struct ProgressBar: View {
             VStack(spacing: 6) {
                 GeometryReader { geometry in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.14))
+                        Capsule().fill(Color.sonoFg.opacity(0.14))
                         Capsule().fill(compact ? store.appearance.accentColor : Color.sonoText).frame(width: max(0, geometry.size.width * fraction))
                             .animation(dragging == nil ? .linear(duration: 0.5) : nil, value: fraction)
                     }
@@ -367,7 +369,7 @@ struct FallbackRow: View {
                     Button { choose() } label: { Label(L("Changer"), systemImage: "arrow.triangle.2.circlepath") }
                     Button(role: .destructive) { store.clearFallback() } label: { Label(L("Désactiver"), systemImage: "xmark") }
                 } label: {
-                    Image(systemName: "ellipsis").font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText).frame(width: 36, height: 36).background(Circle().fill(Color.white.opacity(0.08)))
+                    Image(systemName: "ellipsis").font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText).frame(width: 36, height: 36).background(Circle().fill(Color.sonoFg.opacity(0.08)))
                 }
             }
             .padding(12)
@@ -408,7 +410,7 @@ struct JoinRequestsBanner: View {
                     Avatar(name: request.name, size: 32)
                     Text(request.name).font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoText).lineLimit(1)
                     Spacer()
-                    Button { store.decide(request, accept: false) } label: { Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36).background(Circle().fill(Color.white.opacity(0.1))).foregroundStyle(Color.sonoText) }
+                    Button { store.decide(request, accept: false) } label: { Image(systemName: "xmark").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36).background(Circle().fill(Color.sonoFg.opacity(0.1))).foregroundStyle(Color.sonoText) }
                         .accessibilityLabel(L("Refuser {0}", request.name))
                     Button { store.decide(request, accept: true) } label: { Image(systemName: "checkmark").font(.system(size: 13, weight: .bold)).frame(width: 36, height: 36).background(Circle().fill(store.appearance.accentColor)).foregroundStyle(store.appearance.accentInk) }
                         .accessibilityLabel(L("Accepter {0}", request.name))
