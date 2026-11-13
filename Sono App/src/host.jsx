@@ -793,17 +793,18 @@ function TvView({ origin, current, previousKey, next, playing, inviteUrl, contro
     root.style.overflow = 'hidden';
     // Quitter le plein écran (Échap) ramène à la vue normale.
     const onFullscreen = () => { if (!document.fullscreenElement) closeRef.current(); };
-    const onKey = (event) => { if (event.key === 'Escape') closeRef.current(); };
+    // Échap ferme seulement le mode TV : la touche est gardée par la page, la fenêtre reste en plein écran (Mac).
+    const onKey = (event) => { if (event.key !== 'Escape') return; event.preventDefault(); event.stopImmediatePropagation(); closeRef.current(); };
     let timer;
     const wake = () => { setIdle(false); window.clearTimeout(timer); timer = window.setTimeout(() => setIdle(true), 2500); };
     wake();
     document.addEventListener('fullscreenchange', onFullscreen);
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
     window.addEventListener('mousemove', wake);
     return () => {
       window.clearTimeout(timer);
       document.removeEventListener('fullscreenchange', onFullscreen);
-      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       window.removeEventListener('mousemove', wake);
       root.style.overflow = overflow;
       setScreenFull(false);

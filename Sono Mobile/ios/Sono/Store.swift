@@ -92,6 +92,8 @@ final class Store: ObservableObject {
     @Published private(set) var language = Lang.current
     /// Onglet ouvert dans Réglages (gardé quand l’écran se reconstruit, par exemple après un changement de langue).
     @Published var settingsSection = 0
+    /// Invitation ouverte depuis la page d’un invité (« Ouvrir dans l’app Sono ») : la session s’affiche dans l’app.
+    @Published var pendingInvite: URL?
     @Published var carInvite: Bool
     @Published var status = PlayerStatus()
     /// Les comptes de musique de ce téléphone ont été vérifiés (moteur Deezer relancé, Apple Music lu) :

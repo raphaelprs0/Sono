@@ -45,6 +45,8 @@ struct RootView: View {
         .preferredColorScheme(store.appearance.background == "white" ? .light : store.appearance.background == "auto" ? nil : .dark)
         // Le lecteur en grand prend tout l’écran ; les autres fenêtres sont des fenêtres d’iOS.
         .fullScreenCover(isPresented: Binding(get: { sheet == .player }, set: { if !$0 { sheet = nil } })) { PlayerView() }
+        // Invitation reçue par un lien sono:// : la page de la session s’ouvre dans l’app, comme après un scan.
+        .fullScreenCover(item: $store.pendingInvite) { url in GuestScreen(url: url) { store.pendingInvite = nil } }
         .sheet(item: Binding(get: { sheet == .player ? nil : sheet }, set: { sheet = $0 })) { sheet in
             switch sheet {
             case .qr: QRSheet().presentationDetents([.large]).presentationDragIndicator(.visible)

@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react';
 import { tx, txServer, locale, lang, setLang } from './i18n.js';
 import {
-  Activity, ArrowRight, Check, ChevronRight, CircleAlert, Clock3, Copy, Disc3, Globe2, GripVertical, Link2, Maximize2, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, Settings, ShieldCheck, ShieldPlus, SkipBack, SkipForward, Trash2, Tv, UserMinus, UserPlus, UserRound, UsersRound, Wifi, X
+  Activity, ArrowRight, Check, ChevronRight, CircleAlert, Clock3, Copy, Disc3, Globe2, GripVertical, Link2, Maximize2, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, Settings, ShieldCheck, ShieldPlus, SkipBack, Smartphone, SkipForward, Trash2, Tv, UserMinus, UserPlus, UserRound, UsersRound, Wifi, X
 } from 'lucide-react';
 import { createPortal, flushSync } from 'react-dom';
 import appleMusicLogo from './assets/apple-music.webp';
@@ -2234,6 +2234,11 @@ function JoinForm({ guestName, onConfirmName }) {
   </form>;
 }
 
+// iPhone ou iPad dans un navigateur (pas dans la page ouverte par l’app Sono elle-même) : un lien propose
+// d’ouvrir la session dans l’app Sono, si elle est installée.
+const appleMobile = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+const openInAppLink = (code) => (appleMobile && /Safari\//.test(navigator.userAgent) ? `sono://open?url=${encodeURIComponent(`${window.location.origin}/${String(code).replace(/^SONO-/, '')}`)}` : null);
+
 function NameGate({ session, onConfirm, toast, closeToast }) {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -2254,6 +2259,7 @@ function NameGate({ session, onConfirm, toast, closeToast }) {
         <p className="form-note">{tx("Il ne pourra plus être modifié une fois dans la session.")}</p>
         {error && <p className="field-error" role="alert">{error}</p>}
         <button className="button primary join-button" type="submit">{session.requireApproval ? <ShieldCheck size={18} /> : <ArrowRight size={18} />}{session.requireApproval ? tx("Demander l’accès") : tx("Rejoindre la session")}</button>
+        {openInAppLink(session.code) && <a className="open-in-app" href={openInAppLink(session.code)}><Smartphone size={15} />{tx("Ouvrir dans l’app Sono")}</a>}
       </form>
     </main>
     {toast && <Toast toast={toast} onClose={closeToast} />}
@@ -2392,7 +2398,8 @@ function Modal({ children, onClose, className = '' }) {
   });
   useEffect(() => {
     const previous = document.activeElement;
-    const handler = (event) => event.key === 'Escape' && closeRef.current();
+    // Échap ferme la fenêtre ouverte, sans faire sortir l’app du plein écran.
+    const handler = (event) => { if (event.key !== 'Escape') return; event.preventDefault(); closeRef.current(); };
     document.addEventListener('keydown', handler);
     document.body.classList.add('modal-open');
     return () => {

@@ -43,6 +43,17 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.rootViewController = root
         window.makeKeyAndVisible()
         self.window = window
+        openInvite(connectionOptions.urlContexts)
+    }
+
+    /// « Ouvrir dans l’app Sono » sur la page d’un invité : sono://open?url=<adresse d’invitation>.
+    func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) { openInvite(URLContexts) }
+
+    private func openInvite(_ contexts: Set<UIOpenURLContext>) {
+        guard let link = contexts.first?.url, link.scheme == "sono",
+              let address = URLComponents(url: link, resolvingAgainstBaseURL: false)?.queryItems?.first(where: { $0.name == "url" })?.value,
+              let invite = sonoInvite(address) else { return }
+        SonoApp.store.pendingInvite = invite
     }
 }
 

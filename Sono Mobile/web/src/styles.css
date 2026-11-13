@@ -859,3 +859,5 @@ html { touch-action: manipulation; }
 :root[data-theme="light"][data-glass] .modal { background: rgba(255, 255, 255, .86); }
 :root[data-theme="light"][data-glass] .toast { background: rgba(28, 28, 25, .82); color: #f4f2eb; }
 :root[data-theme="light"][data-glass] .modal-backdrop { background: rgba(30, 30, 26, .3); }
+
+/* « Ouvrir dans l’app Sono » (iPhone, page d’un invité) */ .open-in-app { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 14px; font-size: 13.5px; font-weight: 600; color: var(--lime-text); text-decoration: none; }

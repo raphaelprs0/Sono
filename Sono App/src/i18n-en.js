@@ -194,6 +194,7 @@ export default {
 "Ex. Léa":"E.g. Leah",
 "Demander l’accès":"Ask to join",
 "Rejoindre la session":"Join the session",
+"Ouvrir dans l’app Sono":"Open in the Sono app",
 "Retiré de la session":"Removed from the session",
 "Demande refusée":"Request declined",
 "Demande envoyée":"Request sent",
