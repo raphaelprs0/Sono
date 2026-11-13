@@ -2,7 +2,7 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.5.7-7927F5)
+![Version](https://img.shields.io/badge/Version-2.5.8-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.5.7 | 2.5.7 (build 17) |
+| Version | 2.5.8 | 2.5.8 (build 18) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -126,7 +126,8 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 - **Language**: English or French (Settings → Appearance → Language). By default, the device’s language; guests and the
   TV screen follow the host’s language.
 - **TV mode**: a full-screen view for the TV, with the cover, the title, the progress bar, the next track and the QR
-  code (their layout is set in the desktop app). Escape leaves TV mode without taking the window out of full screen.
+  code (their layout is set in the desktop app). It opens by growing out of the player and closes by shrinking back into
+  it, the same animation in reverse. Escape leaves TV mode without taking the window out of full screen.
 - **Clear the cache**: shows the cache size, then closes the current session and the app to start from scratch (after confirmation). Accounts and the « Internet » link connector are kept.
 - **App version**: shown at the bottom of the settings (computer and iPhone).
 - **No surprise restarts**: relaunching the app doesn’t restart the music on its own; disconnecting the music app resets
@@ -466,7 +467,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.5.7**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.5.8**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -481,7 +482,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.5.7-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.5.8-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

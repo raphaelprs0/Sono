@@ -2,7 +2,7 @@
 
 🇫🇷 **Français** · [🇬🇧 **Anglais**](README.md)
 
-![Version](https://img.shields.io/badge/Version-2.5.7-7927F5)
+![Version](https://img.shields.io/badge/Version-2.5.8-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.5.7 | 2.5.7 (build 17) |
+| Version | 2.5.8 | 2.5.8 (build 18) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
@@ -113,7 +113,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **Son** : égaliseur 3 bandes (basses, médiums, aigus) avec préréglages (« Neutre », « Plus de basses », « Voix claires »…), pour la lecture Deezer.
 - **Apparence** : fonds Noir, Blanc (thème clair), Automatique (noir ou blanc selon le réglage du système) et pochette en cours ; couleurs d’accent Citron, Lilas, Framboise, Or, Pleins Phares et Natif (blanc sur un fond sombre, noir sur un fond clair, jamais de la couleur du fond). Chaque élément (boutons, cartes, fenêtres, Liquid Glass) s’adapte au fond et à la couleur choisis. Liquid Glass désactivé par défaut, et un bouton pour revenir aux réglages d’origine. Par défaut : fond Noir et accent Citron.
 - **Langue** : français ou anglais (Réglages → Apparence → Langue). Par défaut, celle de l’appareil ; les invités et l’écran TV suivent la langue de l’hôte.
-- **Mode TV** : un écran plein format pour la TV, avec la pochette, le titre, la barre de lecture, le titre suivant et le QR code (leur disposition se règle sur l’app ordinateur). Échap quitte le mode TV sans faire sortir la fenêtre du plein écran.
+- **Mode TV** : un écran plein format pour la TV, avec la pochette, le titre, la barre de lecture, le titre suivant et le QR code (leur disposition se règle sur l’app ordinateur). Il s’ouvre en s’agrandissant depuis le lecteur et se referme en revenant s’y poser, avec la même animation à l’envers. Échap quitte le mode TV sans faire sortir la fenêtre du plein écran.
 - **Vider le cache** : affiche la taille du cache, puis ferme la session en cours et l’app pour repartir de zéro (après confirmation). Les comptes et le connecteur du lien « Internet » sont gardés.
 - **Version de l’app** : affichée en bas des Réglages (ordinateur et iPhone).
 - **Reprise sans surprise** : relancer l’app ne relance pas la musique toute seule ; déconnecter l’app de musique remet la session à zéro (titre en cours, file, historique, musique de fond).
@@ -444,7 +444,7 @@ Le script :
 La première fois prend quelques minutes, les suivantes sont plus rapides. En cas d’erreur, le script affiche seulement
 les lignes `error:` de la compilation.
 
-La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.5.7**). Elle n’a **aucune
+La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.5.8**). Elle n’a **aucune
 signature** et ne contient aucune information personnelle : elle doit être signée avec votre propre compte Apple
 pour s’installer.
 
@@ -460,7 +460,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. L’IPA : le dossier Payload/ compressé
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.5.7-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.5.8-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

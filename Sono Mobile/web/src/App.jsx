@@ -1946,7 +1946,7 @@ function useMediaKeys(controls, enabled) {
 }
 
 // Même animation dans les deux sens : la fermeture rejoue l’ouverture à l’envers.
-const TV_ZOOM = { duration: 600, easing: 'cubic-bezier(.32, .72, 0, 1)' };
+const TV_ZOOM = { duration: 750, easing: 'cubic-bezier(.32, .72, 0, 1)' };
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 function Toast({ toast, onClose }) {

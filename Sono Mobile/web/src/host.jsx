@@ -131,22 +131,24 @@ const setScreenFull = (on) => {
   return document.fullscreenElement ? document.exitFullscreen?.().catch(() => {}) : Promise.resolve();
 };
 
-// Le zoom n’anime que le déplacement, la taille et la transparence : trois propriétés que la carte graphique
-// gère seule, sans redessiner l’écran à chaque image (un découpage arrondi animé, lui, le forçait).
-function tvZoomKeyframes(origin) {
+// L’écran prend exactement la forme de l’élément d’origine (largeur, hauteur et coins arrondis) : à la fermeture,
+// il rétrécit jusqu’à se poser sur le lecteur, resté visible dessous, et s’efface juste avant d’y arriver.
+function tvZoomKeyframes(origin, closing) {
   const target = tvOriginElement(origin);
   const { innerWidth: width, innerHeight: height } = window;
   let rect = target?.getBoundingClientRect();
   // Élément absent ou hors de l’écran : zoom depuis le centre.
-  if (!rect || !rect.width || rect.bottom < 0 || rect.top > height) rect = { left: width * .2, top: height * .2, width: width * .6, height: height * .6 };
-  const scale = rect.width / width;
+  const visible = rect && rect.width && rect.bottom >= 0 && rect.top <= height;
+  if (!visible) rect = { left: width * .2, top: height * .2, width: width * .6, height: height * .6 };
+  const sx = rect.width / width;
+  const sy = rect.height / height;
   const dx = rect.left + rect.width / 2 - width / 2;
   const dy = rect.top + rect.height / 2 - height / 2;
-  return [
-    { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${scale})`, opacity: 0 },
-    { opacity: 1, offset: .3 },
-    { transform: 'translate3d(0, 0, 0) scale(1)', opacity: 1 },
-  ];
+  // Les coins sont rétrécis avec l’écran : leur rayon est agrandi d’autant pour retomber sur celui du lecteur.
+  const radius = visible ? parseFloat(getComputedStyle(target).borderTopLeftRadius) || 0 : 24;
+  const small = { transform: `translate3d(${dx}px, ${dy}px, 0) scale(${sx}, ${sy})`, borderRadius: `${radius / sx}px / ${radius / sy}px`, opacity: 0 };
+  const full = { transform: 'translate3d(0, 0, 0) scale(1, 1)', borderRadius: '0px / 0px', opacity: 1 };
+  return closing ? [full, { opacity: 1, offset: .55 }, small] : [small, { opacity: 1, offset: .3 }, full];
 }
 
 function TvView({ display = false, origin, current, previousKey, next, playing, inviteUrl, controls, appearance, onAppearance, showTools, progressBar, onExit, toast, closeToast, children }) {
@@ -189,13 +191,19 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
     // défile qui bouge, pas le lecteur : déplacer un élément aimanté ferait recaler le défilement d’iOS.
     const sheet = sheetRef.current;
     if (sheet) {
-      const slide = { duration: direction === 'reverse' ? 300 : 460, easing: 'cubic-bezier(.32, .72, 0, 1)', direction, fill: direction === 'reverse' ? 'forwards' : 'none' };
-      scrimRef.current?.animate([{ opacity: 0 }, { opacity: 0.6 }], { ...slide, fill: 'forwards' });
-      return sheet.animate([{ transform: `translate3d(0, ${sheet.clientHeight}px, 0)` }, { transform: 'none' }], slide).finished.catch(() => {});
+      const closing = direction === 'reverse';
+      const slide = { duration: 540, easing: 'cubic-bezier(.32, .72, 0, 1)', fill: closing ? 'forwards' : 'none' };
+      const down = { transform: `translate3d(0, ${sheet.clientHeight}px, 0)` };
+      const up = { transform: 'none' };
+      scrimRef.current?.animate(closing ? [{ opacity: 0.6 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0.6 }], { ...slide, fill: 'forwards' });
+      return sheet.animate(closing ? [up, down] : [down, up], slide).finished.catch(() => {});
     }
-    if (target) target.style.visibility = 'hidden';
-    scrimRef.current?.animate([{ opacity: 0 }, { opacity: 1 }], { ...TV_ZOOM, direction, fill: 'forwards' });
-    return view.animate(tvZoomKeyframes(origin), { ...TV_ZOOM, direction, fill: direction === 'reverse' ? 'forwards' : 'none' })
+    const closing = direction === 'reverse';
+    // À l’ouverture, le lecteur disparaît sous l’écran qui grandit ; à la fermeture, il reste affiché dessous
+    // pour que l’écran qui rétrécit s’y fonde sans laisser de vide.
+    if (target && !closing) target.style.visibility = 'hidden';
+    scrimRef.current?.animate(closing ? [{ opacity: 1 }, { opacity: 0, offset: .55 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 1 }], { ...TV_ZOOM, fill: 'forwards' });
+    return view.animate(tvZoomKeyframes(origin, closing), { ...TV_ZOOM, fill: closing ? 'forwards' : 'none' })
       .finished.catch(() => {}).finally(() => { if (target) target.style.visibility = ''; });
   }, [origin]);
   // Plein écran d’abord (la page change de taille), puis zoom depuis le lecteur à sa place définitive.
