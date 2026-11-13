@@ -17,7 +17,7 @@
 avec leur téléphone et proposent leurs titres : tout le monde voit la file, la musique est jouée sur **Deezer** ou
 **Apple Music**, et personne n’a besoin d’installer quoi que ce soit pour participer.
 
-> 💬 **Contact :** Sur Discord ``@rprs``
+> 💬 **Contact :** Sur Discord ``@raphaelprs``
 >
 > 🤖 **Projet Vibe-coder :** En partie écrit par une IA, puis testé à chaque étape sur de vraies machines.
 >

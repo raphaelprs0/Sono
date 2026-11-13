@@ -17,7 +17,7 @@
 suggest tracks: everyone sees the queue, the music plays on **Deezer** or **Apple Music**, and nobody has to install
 anything to join in.
 
-> 💬 **Contact :** On Discord ``@rprs``
+> 💬 **Contact :** On Discord ``@raphaelprs``
 >
 > 🤖 **Vibe-coded project :** Partially written by an AI, then tested at every stage on real machines.
 >
