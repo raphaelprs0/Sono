@@ -5,18 +5,26 @@ use serde_json::Value;
 use std::time::Duration;
 
 /// Pas de pochette, ou l’image grise que Deezer donne aux albums sans visuel (adresse sans identifiant).
+/// (L’empreinte d41d8… est celle d’un fichier vide : Deezer l’utilise aussi pour les albums sans visuel.)
 pub fn missing(cover: &str) -> bool {
-    !cover.starts_with("https://") || cover.contains("/images/cover//") || cover.contains("/images/artist//")
+    !cover.starts_with("https://") || cover.contains("/images/cover//") || cover.contains("/images/artist//") || cover.contains("d41d8cd98f00b204e9800998ecf8427e")
+}
+
+/// Titre importé par l’utilisateur (ses propres fichiers envoyés sur Deezer, identifiant négatif, ou un morceau de sa
+/// bibliothèque Apple Music, identifiant « i. ») : il n’existe dans aucun catalogue, sa pochette n’est jamais remplacée.
+fn imported(item: &Value) -> bool {
+    let id = match item.get("providerId") { Some(Value::String(s)) => s.trim().to_string(), Some(Value::Number(n)) => n.to_string(), _ => String::new() };
+    id.starts_with('-') || id.starts_with("i.")
 }
 
 fn key(item: &Value) -> Option<String> {
     let title = item.get("title").and_then(Value::as_str).unwrap_or("").trim().to_lowercase();
     let artist = item.get("artist").and_then(Value::as_str).unwrap_or("").trim().to_lowercase();
-    if title.is_empty() || artist.is_empty() || !missing(item.get("cover").and_then(Value::as_str).unwrap_or("")) { return None; }
+    if title.is_empty() || artist.is_empty() || artist == "artiste inconnu" || imported(item) || !missing(item.get("cover").and_then(Value::as_str).unwrap_or("")) { return None; }
     Some(format!("{artist}\u{1f}{title}"))
 }
 
-/// Titres en cours, à venir et récents d’une session.
+/// Titres en cours, à venir, récents, et les prochains titres de la musique de fond (ceux affichés) d’une session.
 fn tracks(session: &mut Value) -> Vec<&mut Value> {
     let mut list = Vec::new();
     let Some(object) = session.as_object_mut() else { return list };
@@ -25,6 +33,12 @@ fn tracks(session: &mut Value) -> Vec<&mut Value> {
             "current" if value.is_object() => list.push(value),
             "queue" => if let Some(items) = value.as_array_mut() { list.extend(items.iter_mut()) },
             "history" => if let Some(items) = value.as_array_mut() { list.extend(items.iter_mut().take(20)) },
+            "fallback" if value.is_object() => {
+                let next: Vec<usize> = value.get("upcoming").and_then(Value::as_array).into_iter().flatten().filter_map(Value::as_u64).map(|i| i as usize).take(20).collect();
+                if let Some(items) = value.get_mut("tracks").and_then(Value::as_array_mut) {
+                    list.extend(items.iter_mut().enumerate().filter(|(i, _)| next.contains(i)).map(|(_, item)| item));
+                }
+            }
             _ => {}
         }
     }

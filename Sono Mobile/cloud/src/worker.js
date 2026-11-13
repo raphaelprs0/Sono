@@ -183,10 +183,18 @@ const broadcast = (session) => {
 };
 // Pochettes manquantes : un titre sans pochette (ou avec l’image vide de Deezer) en reçoit une, cherchée sur
 // Deezer puis sur l’iTunes Store, à partir de l’artiste et du titre. Chaque titre n’est cherché qu’une fois.
-const coverMissing = (cover) => !String(cover || '').startsWith('https://') || /\/images\/(cover|artist)\/\//.test(cover);
+// (L’empreinte d41d8… est celle d’un fichier vide : Deezer l’utilise aussi pour les albums sans visuel.)
+const coverMissing = (cover) => !String(cover || '').startsWith('https://') || /\/images\/(cover|artist)\/\/|d41d8cd98f00b204e9800998ecf8427e/.test(cover);
+// Titre importé par l’utilisateur (ses propres fichiers envoyés sur Deezer, identifiant négatif, ou un morceau de sa
+// bibliothèque Apple Music, identifiant « i. ») : il n’existe dans aucun catalogue, sa pochette n’est jamais remplacée.
+const importedTrack = (item) => { const id = String(item?.providerId ?? '').trim(); return id.startsWith('-') || id.startsWith('i.'); };
 const coversTried = new Map();
-const coverKey = (item) => (item?.title && item?.artist && coverMissing(item.cover) ? `${item.artist.trim().toLowerCase()}\u001f${item.title.trim().toLowerCase()}` : null);
-const sessionTracks = (session) => [session.current, ...(session.queue || []), ...(session.history || []).slice(0, 20)].filter((item) => item && typeof item === 'object');
+const coverKey = (item) => (item?.title && item?.artist && item.artist.trim().toLowerCase() !== 'artiste inconnu' && !importedTrack(item) && coverMissing(item.cover) ? `${item.artist.trim().toLowerCase()}\u001f${item.title.trim().toLowerCase()}` : null);
+// Titres en cours, à venir, récents, et les prochains titres de la musique de fond (ceux affichés).
+const sessionTracks = (session) => {
+  const fallback = Array.isArray(session.fallback?.tracks) ? (session.fallback.upcoming || []).slice(0, 20).map((index) => session.fallback.tracks[index]) : [];
+  return [session.current, ...(session.queue || []), ...(session.history || []).slice(0, 20), ...fallback].filter((item) => item && typeof item === 'object');
+};
 const sameArtist = (a, b) => {
   const clean = (value) => String(value || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
   const [x, y] = [clean(a), clean(b)];
