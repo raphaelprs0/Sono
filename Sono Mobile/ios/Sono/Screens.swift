@@ -316,6 +316,8 @@ struct SessionSettings: View {
     @State private var sound: Sound?
     @State private var soundTask: Task<Void, Never>?
     @State private var confirmClear = false
+    /// Taille de ce que « Vider le cache » efface (dossier Caches et fichiers temporaires), calculée à l’affichage.
+    @State private var cacheBytes: Int64?
 
     private let presets: [(String, Sound)] = [
         (L("Neutre"), .neutral), (L("Moins de basses"), Sound(bass: -6, mid: 0, treble: 1)), (L("Plus de basses"), Sound(bass: 5, mid: 0, treble: 0)),
@@ -356,13 +358,16 @@ struct SessionSettings: View {
                 }
             }
             SettingsCard(title: L("Stockage"), subtitle: L("Efface tout ce que l’app garde en cache. La session en cours est fermée et Sono se ferme ; vos comptes connectés sont conservés.")) {
-                Button { confirmClear = true } label: { Label(L("Vider le cache"), systemImage: "trash") }.buttonStyle(SecondaryButtonStyle())
+                Text(cacheBytes.map { L("Taille du cache : {0}", Self.formatBytes($0)) } ?? L("Calcul de la taille…"))
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Color.sonoText)
+                Button { Task { await measureCache() }; confirmClear = true } label: { Label(L("Vider le cache"), systemImage: "trash") }.buttonStyle(SecondaryButtonStyle())
             }
+            .task { await measureCache() }
             .alert(L("Vider le cache ?"), isPresented: $confirmClear) {
                 Button(L("Vider et fermer Sono"), role: .destructive) { clearAndQuit() }
                 Button(L("Annuler"), role: .cancel) {}
             } message: {
-                Text(L("La session en cours va être fermée : la musique s’arrête et les invités ne pourront plus y accéder. Sono va ensuite se fermer pour que le cache soit entièrement vidé. Rouvrez l’app pour créer une nouvelle session."))
+                Text((cacheBytes.map { L("{0} seront libérés.", Self.formatBytes($0)) + "\n\n" } ?? "") + L("La session en cours va être fermée : la musique s’arrête et les invités ne pourront plus y accéder. Sono va ensuite se fermer pour que le cache soit entièrement vidé. Rouvrez l’app pour créer une nouvelle session."))
             }
             SettingsCard(title: L("Supprimer la session"), subtitle: L("La file d’attente, l’historique et la liste des invités sont effacés définitivement. Les invités connectés sont déconnectés et le code {0} ne fonctionnera plus.", store.session.code)) {
                 Button { sheet = .delete } label: { Label(L("Supprimer la session"), systemImage: "trash") }.buttonStyle(AccentButtonStyle(danger: true))
@@ -423,6 +428,33 @@ struct SessionSettings: View {
         }
     }
 
+    /// Les dossiers que « Vider le cache » efface : Caches (réponses réseau, pochettes) et temporaire.
+    nonisolated private static var cacheFolders: [URL] { [FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0], FileManager.default.temporaryDirectory] }
+
+    /// Taille totale de ces dossiers, en octets (calcul hors de l’interface).
+    nonisolated private static func cacheSize() -> Int64 {
+        var total: Int64 = 0
+        for folder in cacheFolders {
+            guard let items = FileManager.default.enumerator(at: folder, includingPropertiesForKeys: [.totalFileAllocatedSizeKey, .isRegularFileKey]) else { continue }
+            while let url = items.nextObject() as? URL {
+                let values = try? url.resourceValues(forKeys: [.totalFileAllocatedSizeKey, .isRegularFileKey])
+                if values?.isRegularFile == true { total += Int64(values?.totalFileAllocatedSize ?? 0) }
+            }
+        }
+        return total
+    }
+
+    private func measureCache() async {
+        cacheBytes = await Task.detached(priority: .utility) { Self.cacheSize() }.value
+    }
+
+    /// Taille lisible (Ko, Mo, Go) dans la langue de l’app.
+    static func formatBytes(_ bytes: Int64) -> String {
+        let value = Double(bytes)
+        let measurement: Measurement<UnitInformationStorage> = value >= 1e9 ? .init(value: value / 1e9, unit: .gigabytes) : value >= 1e6 ? .init(value: value / 1e6, unit: .megabytes) : .init(value: max(value, 0) / 1e3, unit: .kilobytes)
+        return measurement.formatted(.measurement(width: .abbreviated, usage: .asProvided, numberFormatStyle: .number.precision(.fractionLength(0...(measurement.value < 10 ? 1 : 0)))).locale(Lang.locale))
+    }
+
     /// Ferme la session en cours, efface tout le cache (réponses réseau, dossiers Caches et temporaire), puis ferme Sono :
     /// au prochain lancement, rien ne reste en mémoire ni sur le disque.
     private func clearAndQuit() {
@@ -430,7 +462,7 @@ struct SessionSettings: View {
             await store.deleteSession()
             let fm = FileManager.default
             URLCache.shared.removeAllCachedResponses()
-            for folder in [fm.urls(for: .cachesDirectory, in: .userDomainMask)[0], fm.temporaryDirectory] {
+            for folder in Self.cacheFolders {
                 for item in (try? fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)) ?? [] { try? fm.removeItem(at: item) }
             }
             store.notify(L("Cache vidé : Sono se ferme."))

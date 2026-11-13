@@ -861,6 +861,22 @@ async fn close_all_sessions(app: &Shared, reason: &str) {
 /// « Vider le cache » (Réglages, sur cet ordinateur seulement) : la session en cours est fermée (les invités voient la fin
 /// de session), puis le cache du navigateur de la fenêtre, les fichiers compressés gardés en mémoire et les restes de
 /// l’ancienne version Electron sont effacés, et Sono se ferme pour repartir vraiment de zéro. Le compte Deezer est gardé.
+/// Ce que « Vider le cache » efface dans le dossier de données : tout sauf les sessions (et les comptes) et le
+/// connecteur du lien « Internet » téléchargé (bin/).
+fn is_cache_entry(name: &str) -> bool { !["sessions.json", "sessions.json.tmp", "bin"].contains(&name) }
+
+/// Taille de ce que « Vider le cache » libérerait : dossier de données hors sessions, et cache de la fenêtre.
+pub async fn local_cache_size(r: Req) -> Response {
+    if !r.is_direct_local() { return err(StatusCode::NOT_FOUND, "Introuvable."); }
+    let data = r.app.data_dir.clone();
+    let webview = r.app.cache_size.lock().unwrap().clone();
+    let bytes = tokio::task::spawn_blocking(move || {
+        let files: u64 = std::fs::read_dir(&data).map(|entries| entries.flatten().filter(|e| is_cache_entry(&e.file_name().to_string_lossy())).map(|e| dir_size(&e.path())).sum()).unwrap_or(0);
+        files + webview.map(|size| size()).unwrap_or(0)
+    }).await.unwrap_or(0);
+    ok(json!({ "bytes": bytes }))
+}
+
 pub async fn local_cache_clear(r: Req) -> Response {
     if !r.is_direct_local() { return err(StatusCode::NOT_FOUND, "Introuvable."); }
     close_all_sessions(&r.app, "Musique coupée : cache vidé").await;
@@ -873,7 +889,7 @@ pub async fn local_cache_clear(r: Req) -> Response {
         if let Ok(entries) = std::fs::read_dir(&data) {
             for entry in entries.flatten() {
                 let name = entry.file_name().to_string_lossy().to_string();
-                if ["sessions.json", "sessions.json.tmp"].contains(&name.as_str()) { continue; }
+                if !is_cache_entry(&name) { continue; }
                 let size = dir_size(&entry.path());
                 let removed = if entry.path().is_dir() { std::fs::remove_dir_all(entry.path()) } else { std::fs::remove_file(entry.path()) };
                 if removed.is_ok() { freed += size; }

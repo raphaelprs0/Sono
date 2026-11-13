@@ -214,6 +214,8 @@ fn main() {
             *shared.deezer_login.lock().unwrap() = Some(Arc::new(move || { let h = handle.clone(); Box::pin(deezer_login(h)) }));
             let cache_handle = app.handle().clone();
             *shared.clear_cache.lock().unwrap() = Some(Arc::new(move || clear_webview_cache(&cache_handle)));
+            let size_handle = app.handle().clone();
+            *shared.cache_size.lock().unwrap() = Some(Arc::new(move || webview_dirs(&size_handle).iter().map(|d| size_of(d)).sum()));
             let quit_handle = app.handle().clone();
             *shared.quit_app.lock().unwrap() = Some(Arc::new(move || quit_handle.exit(0)));
             let _ = SERVER.set(shared.clone());

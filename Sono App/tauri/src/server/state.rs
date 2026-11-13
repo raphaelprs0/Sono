@@ -72,6 +72,8 @@ pub struct App {
     pub writing: tokio::sync::Mutex<()>,
     pub deezer_login: Mutex<Option<DeezerLogin>>,
     pub clear_cache: Mutex<Option<ClearCache>>,
+    /// Taille actuelle du cache de la fenêtre (en octets).
+    pub cache_size: Mutex<Option<ClearCache>>,
     pub quit_app: Mutex<Option<QuitApp>>,
     pub deezer_login_in_progress: AtomicBool,
     pub deezer_child: Mutex<Option<tokio::process::Child>>,

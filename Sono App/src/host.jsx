@@ -2,7 +2,7 @@
 // chargées seulement quand l’hôte ouvre son tableau de bord, jamais sur la page des invités.
 import { Activity, Check, ChevronRight, CircleAlert, Copy, Disc3, Languages, Link2, ListMusic, LoaderCircle, Music2, Palette, Pause, Play, QrCode, Search, Settings, ShieldCheck, SkipBack, SkipForward, Trash2, Tv, UsersRound, X } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
-import { tx, txServer, lang, setLang } from './i18n.js';
+import { tx, txServer, lang, locale, setLang } from './i18n.js';
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import appleMusicLogo from './assets/apple-music.webp';
 import { createPortal } from 'react-dom';
@@ -886,9 +886,19 @@ function TvView({ origin, current, previousKey, next, playing, inviteUrl, contro
 
 // « Vider le cache » : seulement dans l’app (pas sur la page d’un invité). La session en cours est fermée, le cache effacé,
 // puis Sono se ferme pour repartir vraiment de zéro (le compte Deezer reste connecté).
+// Taille lisible (Ko, Mo, Go) dans la langue de l’interface.
+function formatBytes(bytes) {
+  const [unit, value] = bytes >= 1e9 ? ['gigabyte', bytes / 1e9] : bytes >= 1e6 ? ['megabyte', bytes / 1e6] : ['kilobyte', Math.max(bytes, 0) / 1e3];
+  return new Intl.NumberFormat(locale, { style: 'unit', unit, maximumFractionDigits: value < 10 ? 1 : 0 }).format(value);
+}
+
 function CacheCard({ notify }) {
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Taille de ce que « Vider le cache » libérerait, calculée à l’ouverture et avant de confirmer.
+  const [size, setSize] = useState(null);
+  const measure = useCallback(() => fetch('/api/local/cache').then((r) => r.json()).then((data) => setSize(data.bytes ?? 0)).catch(() => setSize(null)), []);
+  useEffect(() => { if (window.sonoDesktop) measure(); }, [measure]);
   if (!window.sonoDesktop) return null;
   const clear = async () => {
     setBusy(true);
@@ -901,12 +911,14 @@ function CacheCard({ notify }) {
   return <div className="settings-card">
     <h2>{tx("Stockage")}</h2>
     <p className="field-help">{tx("Efface tout ce que l’app garde en cache (pochettes, pages, anciennes données). La session en cours est fermée et Sono se ferme ; vos comptes connectés sont conservés.")}</p>
-    <div className="form-actions"><button type="button" className="button secondary" onClick={() => setConfirming(true)}><Trash2 size={15} />{tx("Vider le cache")}</button></div>
+    <p className="cache-size">{size === null ? tx("Calcul de la taille…") : tx("Taille du cache : {0}", formatBytes(size))}</p>
+    <div className="form-actions"><button type="button" className="button secondary" onClick={() => { measure(); setConfirming(true); }}><Trash2 size={15} />{tx("Vider le cache")}</button></div>
     {/* Attachée à la page : dans la carte (effet verre), elle serait centrée sur la carte et non sur la fenêtre. */}
     {confirming && createPortal(<Modal onClose={() => !busy && setConfirming(false)} className="confirm-modal">
       <div className="modal-symbol danger"><Trash2 size={22} /></div>
       <h2>{tx("Vider le cache ?")}</h2>
       <p>{tx("La session en cours va être fermée : la musique s’arrête et les invités ne pourront plus y accéder. Sono va ensuite se fermer pour que le cache soit entièrement vidé. Rouvrez l’app pour créer une nouvelle session.")}</p>
+      {size !== null && <p className="cache-size-freed">{tx("{0} seront libérés.", formatBytes(size))}</p>}
       <div className="modal-actions"><button className="button secondary" disabled={busy} onClick={() => setConfirming(false)}>{tx("Annuler")}</button><button className="button danger-button" disabled={busy} onClick={clear}>{busy ? <LoaderCircle className="spin" size={16} /> : null}{tx("Vider et fermer Sono")}</button></div>
     </Modal>, document.body)}
   </div>;

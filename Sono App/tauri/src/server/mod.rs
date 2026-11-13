@@ -82,6 +82,7 @@ pub fn create(config: Config) -> Shared {
         writing: tokio::sync::Mutex::new(()),
         deezer_login: Mutex::new(None),
         clear_cache: Mutex::new(None),
+        cache_size: Mutex::new(None),
         quit_app: Mutex::new(None),
         deezer_login_in_progress: AtomicBool::new(false),
         deezer_child: Mutex::new(None),
@@ -217,7 +218,7 @@ pub fn router(app: Shared) -> Router {
         .route("/api/integrations/opendeezer/preload", post(deezer_preload))
         .route("/api/integrations/opendeezer/transport", post(deezer_transport))
         .route("/api/local/host", get(local_host_get).put(local_host_put))
-        .route("/api/local/cache", post(local_cache_clear))
+        .route("/api/local/cache", get(local_cache_size).post(local_cache_clear))
         .route("/api/sound", get(sound_get).put(sound_put))
         .route("/ws", get(ws::upgrade))
         .route("/assets/{*file}", get(assets))
