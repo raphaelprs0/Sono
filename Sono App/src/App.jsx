@@ -2230,7 +2230,7 @@ function JoinForm({ guestName, onConfirmName }) {
     {window.sonoDesktop && <label className="join-link">{tx("Session sur un autre appareil ? Lien d’invitation")}<input value={link} type="url" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(event) => { setLink(event.target.value); setError(''); }} placeholder="https://…" autoComplete="off" /></label>}
     {error && <p className="field-error" role="alert">{error}</p>}
     <button className="button primary join-button" type="submit" disabled={busy}>{busy ? <LoaderCircle className="spin" size={18} /> : <ArrowRight size={18} />}{tx("Rejoindre")}</button>
-    <p className="join-hint"><QrCode size={16} />{tx("Vous avez le code QR ? Scannez-le simplement avec l’appareil photo.")}</p>
+    {!window.sonoDesktop && <p className="join-hint"><QrCode size={16} />{tx("Vous avez le code QR ? Scannez-le simplement avec l’appareil photo.")}</p>}
   </form>;
 }
 
