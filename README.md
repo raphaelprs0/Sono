@@ -2,7 +2,7 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.5.12-7927F5)
+![Version](https://img.shields.io/badge/Version-2.6.0-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.5.12 | 2.5.12 (build 22) |
+| Version | 2.6.0 | 2.6.0 (build 23) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -76,7 +76,7 @@ At a party, the music often goes through one person’s phone: everyone else has
 Sono fixes that:
 
 1. The **host** opens Sono and creates a session (a name, their first name, optionally guest approval).
-2. Sono shows a **QR code** and a short code such as `SONO-4821`.
+2. Sono shows a **QR code** and an invite link.
 3. **Guests** scan the QR code (or type the address): a page opens in their browser, they enter their first name and
    search for tracks.
 4. Each suggested track joins the **shared queue**, visible to everyone, with the first name of whoever added it.
@@ -148,7 +148,7 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
   guests until then), so switching from Wi-Fi to Internet is instant.
 - **Keyboard shortcuts**: Space (play/pause), → or N (next), ← or P (previous), and media keys.
 - **Deezer sign-in** through the official page, in a private window of the app.
-- **Join an iPhone session** from the computer, with its `SONO-1234` code.
+- **Join an iPhone session** from the computer, with its invite link.
 - On Mac, closing the window **keeps Sono running** (music and guests carry on); Cmd+Q quits it.
 
 ### 📱 Extra on the iPhone app
@@ -472,7 +472,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.5.12**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.6.0**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -487,7 +487,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.5.12-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.6.0-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

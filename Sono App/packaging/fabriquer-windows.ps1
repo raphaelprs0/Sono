@@ -22,13 +22,6 @@ Need zig 'installez Zig (winget install zig.zig), puis rouvrez PowerShell.'
 $version = (Get-Content (Join-Path $app 'tauri/tauri.conf.json') -Raw | ConvertFrom-Json).version
 Write-Host "Fabrication de Sono $version pour Windows..."
 
-# Service en ligne de Sono Mobile (rejoindre une session iPhone depuis l'ordinateur) : l'adresse écrite par deploy.sh.
-$config = Join-Path $root 'Sono Mobile/ios/Config.xcconfig'
-if (Test-Path $config) {
-  foreach ($line in Get-Content $config) {
-    if ($line -match '^SONO_SERVER_URL = (https?):/\$\(\)/(.+)$') { $env:SONO_MOBILE_SERVICE = "$($Matches[1])://$($Matches[2].Trim())" }
-  }
-}
 # Le chemin du dossier personnel ne doit pas rester dans le programme distribué.
 $env:CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS = "--remap-path-prefix=$env:USERPROFILE=~"
 

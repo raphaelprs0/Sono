@@ -1013,7 +1013,7 @@ function App() {
   }
 
   if (isGuest && ['pending', 'refused', 'removed'].includes(admission)) {
-    return <><AppBackdrop appearance={look} /><WaitingView session={session} admission={admission} live={live} name={myName} onRetry={requestAgain} toast={toast} closeToast={closeToast} /></>;
+    return <><AppBackdrop appearance={look} /><WaitingView session={session} admission={admission} live={live} name={myName} onRetry={requestAgain} onLeave={leaveAsGuest} toast={toast} closeToast={closeToast} /></>;
   }
 
   if (isGuest) {
@@ -1606,42 +1606,22 @@ const openInvite = (address, name) => { native ? native.call('openInvite', { url
 function JoinForm({ guestName, onConfirmName }) {
   const [name, setName] = useState(guestName || '');
   const [link, setLink] = useState('');
-  const [digits, setDigits] = useState('');
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
-  const submit = async (event) => {
+  // On rejoint avec le lien d’invitation de l’hôte (ou en scannant son code QR) : il n’y a plus de code à taper.
+  const submit = (event) => {
     event.preventDefault();
     if (!name.trim()) return setError(tx("Indiquez votre prénom pour que l’hôte vous reconnaisse."));
-    if (link.trim()) {
-      const address = inviteAddress(link);
-      if (!address) return setError(tx("Ce lien d’invitation n’est pas valide. Copiez-le depuis la page de l’hôte."));
-      onConfirmName(name);
-      return openInvite(address, name.trim());
-    }
-    if (digits.length !== 4) return setError(tx("Le code contient 4 chiffres, par exemple SONO-4821."));
-    const code = `SONO-${digits}`;
-    setBusy(true);
-    setError('');
-    try {
-      await apiRequest(`/api/sessions/${code}`);
-      onConfirmName(name);
-      window.location.assign(`/${code.replace(/^SONO-/, '')}`);
-    } catch (requestError) {
-      setError(requestError.status === 404 ? tx("Aucune session ne correspond à ce code. Si elle est hébergée sur un ordinateur, collez son lien d’invitation.") : requestError.message);
-      setBusy(false);
-    }
+    const address = inviteAddress(link);
+    if (!address) return setError(link.trim() ? tx("Ce lien d’invitation n’est pas valide. Copiez-le depuis la page de l’hôte.") : tx("Collez le lien d’invitation envoyé par l’hôte, ou scannez son code QR."));
+    onConfirmName(name);
+    openInvite(address, name.trim());
   };
   return <form className="home-form" onSubmit={submit} noValidate>
     <label>{tx("Votre prénom")}<input value={name} maxLength={30} onChange={(event) => { setName(event.target.value); setError(''); }} placeholder={tx("Pour que l’hôte vous reconnaisse")} autoComplete="given-name" /></label>
     <p className="form-note">{tx("Il ne pourra plus être modifié une fois dans la session.")}</p>
-    <span className="form-label">{tx("Code affiché par l’hôte")}</span>
-    <label className={error ? 'code-input invalid' : 'code-input'}>
-      <span aria-hidden="true">SONO-</span>
-      <input value={digits} onChange={(event) => { setDigits(event.target.value.replace(/\D/g, '').slice(-4)); setError(''); }} inputMode="numeric" autoComplete="off" placeholder="0000" aria-label={tx("Code de la session")} aria-invalid={Boolean(error)} />
-    </label>
-    {native && <label className="join-link">{tx("Session sur un autre appareil ? Lien d’invitation")}<input value={link} type="url" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(event) => { setLink(event.target.value); setError(''); }} placeholder="https://…" autoComplete="off" /></label>}
+    <label>{tx("Lien d’invitation")}<input value={link} type="url" inputMode="url" autoCapitalize="none" autoCorrect="off" spellCheck={false} onChange={(event) => { setLink(event.target.value); setError(''); }} placeholder="https://…" autoComplete="off" aria-invalid={Boolean(error)} /></label>
     {error && <p className="field-error" role="alert">{error}</p>}
-    <button className="button primary join-button" type="submit" disabled={busy}>{busy ? <LoaderCircle className="spin" size={18} /> : <ArrowRight size={18} />}{tx("Rejoindre")}</button>
+    <button className="button primary join-button" type="submit"><ArrowRight size={18} />{tx("Rejoindre")}</button>
     <p className="join-hint"><QrCode size={16} />{tx("Vous avez le code QR ? Scannez-le simplement avec l’appareil photo.")}</p>
   </form>;
 }
@@ -1678,7 +1658,7 @@ function NameGate({ session, onConfirm, toast, closeToast }) {
   </div>;
 }
 
-function WaitingView({ session, admission, live, name, onRetry, toast, closeToast }) {
+function WaitingView({ session, admission, live, name, onRetry, onLeave, toast, closeToast }) {
   const removed = admission === 'removed';
   const refused = admission === 'refused' || removed;
   return <div className="guest-shell" data-live={live}>
@@ -1690,7 +1670,11 @@ function WaitingView({ session, admission, live, name, onRetry, toast, closeToas
         <p>{removed ? tx("{0} vous a retiré de « {1} ». Vous pouvez lui demander à revenir.", session.host, session.name) : refused ? tx("{0} n’a pas accepté votre demande pour « {1} ».", session.host, session.name) : tx("{0} doit accepter votre arrivée dans « {1} ».", session.host, session.name)}</p>
         <div className="guest-name waiting-identity"><Avatar name={name} /><span>{tx("Vous êtes")} <strong>{name}</strong></span></div>
         {refused
-          ? <button className="button primary join-button" onClick={onRetry}>{removed ? tx("Demander à revenir") : tx("Renvoyer une demande")}</button>
+          ? <>
+            <button className="button primary join-button" onClick={onRetry}>{removed ? tx("Demander à revenir") : tx("Renvoyer une demande")}</button>
+            {/* Retour à l’accueil Créer / Rejoindre (dans l’app iPhone, ferme la session et revient à l’écran d’accueil). */}
+            <button className="button secondary join-button leave-button" onClick={onLeave}><LogOut size={16} />{tx("Quitter")}</button>
+          </>
           : <p className="join-hint"><Clock3 size={16} />{tx("Cette page s’ouvrira toute seule dès que l’hôte aura accepté.")}</p>}
       </div>
     </main>

@@ -369,7 +369,7 @@ struct SessionSettings: View {
             } message: {
                 Text((cacheBytes.map { L("{0} seront libérés.", Self.formatBytes($0)) + "\n\n" } ?? "") + L("La session en cours va être fermée : la musique s’arrête et les invités ne pourront plus y accéder. Sono va ensuite se fermer pour que le cache soit entièrement vidé. Rouvrez l’app pour créer une nouvelle session."))
             }
-            SettingsCard(title: L("Supprimer la session"), subtitle: L("La file d’attente, l’historique et la liste des invités sont effacés définitivement. Les invités connectés sont déconnectés et le code {0} ne fonctionnera plus.", store.session.code)) {
+            SettingsCard(title: L("Supprimer la session"), subtitle: L("La file d’attente, l’historique et la liste des invités sont effacés définitivement. Les invités connectés sont déconnectés et le lien d’invitation ne fonctionnera plus.")) {
                 Button { sheet = .delete } label: { Label(L("Supprimer la session"), systemImage: "trash") }.buttonStyle(AccentButtonStyle(danger: true))
             }
         }

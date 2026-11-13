@@ -300,7 +300,6 @@ final class Store: ObservableObject {
 
     var nextUp: Track? { queue.first ?? session.fallback?.next }
     var inviteURL: String { server.appending(path: session.code.replacingOccurrences(of: "SONO-", with: "")).absoluteString }
-    var joinURL: String { server.appending(path: "rejoindre").absoluteString }
 
     private func perform(_ path: String, method: String = "POST", body: [String: Any]? = nil) async throws {
         apply(try await api.payload(path, method: method, token: token, body: body))

@@ -31,7 +31,7 @@ const TV_ZONES = [
 
 const WIDGETS = [
   { id: 'progress', area: 'Centre', label: tx("Barre de progression"), description: tx("Sous la lecture en cours, pour avancer ou reculer dans le titre.") },
-  { id: 'invite', area: 'Droite', label: tx("Code QR d’invitation"), description: tx("QR code, code de session et choix Wi-Fi / Internet.") },
+  { id: 'invite', area: 'Droite', label: tx("Code QR d’invitation"), description: tx("QR code, lien d’invitation et choix Wi-Fi / Internet.") },
   { id: 'participants', area: 'Droite', label: tx("Dans la session"), description: tx("Les personnes présentes, avec le bouton pour retirer.") },
   { id: 'stats', area: 'Droite', label: tx("Statistiques"), description: tx("Invités connectés et durée proposée en attente.") },
   { id: 'activity', area: 'Droite', label: tx("Activité récente"), description: tx("Les dernières actions de la session.") },
@@ -474,7 +474,7 @@ function SettingsView({ session, hostToken, notify, inviteUrl, onCopy, onSave, o
     </form>
     <div className="settings-card">
       <h2>{tx("Accès à la session")}</h2>
-      <ApprovalSwitch checked={Boolean(session.requireApproval)} onChange={(value) => onSave({ requireApproval: value }, value ? tx("Vous validerez désormais chaque nouvel invité.") : tx("Tout le monde peut rejoindre avec le code."))} description={tx("Chaque personne qui rejoint doit être acceptée par vous. Les invités déjà présents restent dans la session.")} />
+      <ApprovalSwitch checked={Boolean(session.requireApproval)} onChange={(value) => onSave({ requireApproval: value }, value ? tx("Vous validerez désormais chaque nouvel invité.") : tx("Tout le monde peut rejoindre avec le lien."))} description={tx("Chaque personne qui rejoint doit être acceptée par vous. Les invités déjà présents restent dans la session.")} />
     </div>
     <SoundCard sessionCode={session.code} hostToken={hostToken} source={session.source} notify={notify} />
     <div className="settings-card">
@@ -485,7 +485,7 @@ function SettingsView({ session, hostToken, notify, inviteUrl, onCopy, onSave, o
     <CacheCard notify={notify} />
     <div className="settings-card danger-zone">
       <h2>{tx("Supprimer la session")}</h2>
-      <p className="field-help">{tx('La file d’attente, l’historique et la liste des invités sont effacés définitivement. Les invités connectés sont déconnectés et le code {0} ne fonctionnera plus.', session.code)}</p>
+      <p className="field-help">{tx('La file d’attente, l’historique et la liste des invités sont effacés définitivement. Les invités connectés sont déconnectés et le lien d’invitation ne fonctionnera plus.')}</p>
       <div className="form-actions"><button type="button" className="button danger-button" onClick={onDelete}><Trash2 size={15} />{tx("Supprimer la session")}</button></div>
     </div>
     <p className="app-version">Sono {__SONO_VERSION__}</p>

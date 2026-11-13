@@ -15,8 +15,6 @@ out=$(cd "$app/.." && pwd)
 # makensis plante avec la langue « C » du terminal : on lui donne le français.
 export LC_ALL=fr_FR.UTF-8 LANG=fr_FR.UTF-8
 version=$(node -p "require('$app/tauri/tauri.conf.json').version")
-# Service en ligne de Sono Mobile (rejoindre une session iPhone depuis l’ordinateur) : l’adresse écrite par Sono Mobile/deploy.sh.
-export SONO_MOBILE_SERVICE=$(sed -n 's#^SONO_SERVER_URL = \(https\{0,1\}\):/$()/#\1://#p' "$out/Sono Mobile/ios/Config.xcconfig" 2>/dev/null)
 # Les chemins de ce Mac (dossier personnel) ne doivent pas rester dans les programmes distribués.
 export CARGO_TARGET_AARCH64_APPLE_DARWIN_RUSTFLAGS="--remap-path-prefix=$HOME=~" CARGO_TARGET_X86_64_PC_WINDOWS_MSVC_RUSTFLAGS="--remap-path-prefix=$HOME=~"
 cd "$app"

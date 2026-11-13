@@ -2,7 +2,7 @@
 
 🇫🇷 **Français** · [🇬🇧 **Anglais**](README.md)
 
-![Version](https://img.shields.io/badge/Version-2.5.12-7927F5)
+![Version](https://img.shields.io/badge/Version-2.6.0-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.5.12 | 2.5.12 (build 22) |
+| Version | 2.6.0 | 2.6.0 (build 23) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
@@ -73,7 +73,7 @@ En soirée, la musique passe souvent par le téléphone d’une seule personne :
 prendre son téléphone. Sono règle ça :
 
 1. L’**hôte** ouvre Sono et crée une session (un nom, son prénom, éventuellement la validation des invités).
-2. Sono affiche un **QR code** et un code court du type `SONO-4821`.
+2. Sono affiche un **QR code** et un lien d’invitation.
 3. Les **invités** scannent le QR code (ou tapent l’adresse) : une page s’ouvre dans leur navigateur, ils donnent leur
    prénom et cherchent des titres.
 4. Chaque titre proposé rejoint la **file d’attente commune**, visible par tous, avec le prénom de qui l’a ajouté.
@@ -126,7 +126,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **« Internet »** : un lien public (tunnel Cloudflare `trycloudflare.com`) pour les invités en 4G/5G. L’outil `cloudflared` n’est pas livré avec l’app : il est téléchargé une seule fois depuis Cloudflare à la première activation (≈ 20 Mo sur Mac, 55 Mo sur Windows) et vérifié avant usage. Le lien est préparé dès que le tableau de bord de l’hôte est ouvert (porte fermée aux invités) : le passage Wi-Fi → Internet est instantané.
 - **Raccourcis clavier** : Espace (lecture/pause), → ou N (suivant), ← ou P (précédent), et touches multimédia.
 - **Connexion Deezer** par la page officielle, dans une fenêtre privée de l’app.
-- **Rejoindre une session iPhone** depuis l’ordinateur, avec son code `SONO-1234`.
+- **Rejoindre une session iPhone** depuis l’ordinateur, avec son lien d’invitation.
 - Sur Mac, fermer la fenêtre **garde Sono actif** (musique et invités continuent) ; Cmd+Q le quitte.
 
 ### 📱 En plus sur l’app iPhone
@@ -445,7 +445,7 @@ Le script :
 La première fois prend quelques minutes, les suivantes sont plus rapides. En cas d’erreur, le script affiche seulement
 les lignes `error:` de la compilation.
 
-La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.5.12**). Elle n’a **aucune
+La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.6.0**). Elle n’a **aucune
 signature** et ne contient aucune information personnelle : elle doit être signée avec votre propre compte Apple
 pour s’installer.
 
@@ -461,7 +461,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. L’IPA : le dossier Payload/ compressé
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.5.12-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.6.0-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

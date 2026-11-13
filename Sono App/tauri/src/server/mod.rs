@@ -184,7 +184,6 @@ pub fn router(app: Shared) -> Router {
     use routes::*;
     Router::new()
         .route("/api/health", get(health))
-        .route("/api/join/lookup", get(join_lookup))
         .route("/api/config", get(config))
         .route("/api/public-link/prepare", post(public_prepare))
         .route("/api/public-link", post(public_enable).delete(public_disable))

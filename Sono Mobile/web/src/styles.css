@@ -292,12 +292,9 @@ div.guest-name { padding: 10px 12px; cursor: default; }
 
 .home-panel { padding: 22px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 20px; box-shadow: var(--shadow); }
 .home-form { display: flex; flex-direction: column; }
-.home-form > label:not(.code-input), .waiting-name { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-2); margin-bottom: 16px; text-align: left; }
-.home-form > label:not(.code-input) input, .waiting-name input { width: 100%; height: 46px; padding: 0 14px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; color: var(--text); font-size: 15px; }
-.home-form > label:not(.code-input) input:focus, .waiting-name input:focus { outline: 0; border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
-.home-form .code-input { margin-top: 8px; }
-.form-label { font-size: 13.5px; font-weight: 500; color: var(--text-2); text-align: left; }
-/* Code de l’hôte : même hauteur et mêmes coins que les autres champs du formulaire. */ .home-form .code-input { margin: 8px 0 0; height: 52px; border-radius: 10px; font-size: 22px; letter-spacing: 2.5px; }
+.home-form > label, .waiting-name { display: flex; flex-direction: column; gap: 8px; font-size: 13.5px; font-weight: 500; color: var(--text-2); margin-bottom: 16px; text-align: left; }
+.home-form > label input, .waiting-name input { width: 100%; height: 46px; padding: 0 14px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 10px; color: var(--text); font-size: 15px; }
+.home-form > label input:focus, .waiting-name input:focus { outline: 0; border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
 .home-form .join-button { margin-top: 18px; }
 .home-form > .field-error { margin-top: 10px; }
 
@@ -318,14 +315,9 @@ div.guest-name { padding: 10px 12px; cursor: default; }
 .join-card .modal-symbol { margin: 0 auto 18px; }
 .join-card h1 { font-size: 26px; letter-spacing: -.8px; }
 .join-card > p { font-size: 14.5px; color: var(--muted); margin-top: 8px; }
-.code-input { display: flex; align-items: center; justify-content: center; margin-top: 24px; height: 64px; padding: 0 18px; background: var(--bg); border: 1px solid var(--line-strong); border-radius: 14px; font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: 3px; cursor: text; transition: border-color .15s, box-shadow .15s; }
-.code-input:focus-within { border-color: var(--lime-line); box-shadow: 0 0 0 3px var(--lime-soft); }
-.code-input.invalid { border-color: rgba(255, 130, 120, .6); }
-.code-input span { color: var(--muted); }
-.code-input input { width: calc(4ch + 16px); border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; letter-spacing: inherit; padding: 0; }
-.code-input input::placeholder { color: var(--surface-3); }
 .join-card > .field-error { display: block; margin-top: 10px; color: #ffa198; font-size: 13.5px; }
 .join-button { width: 100%; margin-top: 18px; }
+.join-button.leave-button { margin-top: 10px; }
 .join-hint { display: flex; align-items: flex-start; justify-content: center; gap: 8px; margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); text-align: left; }
 .join-hint svg { flex-shrink: 0; margin-top: 1px; }
 
@@ -731,8 +723,6 @@ html { touch-action: manipulation; }
 .progress .progress-tip { display: none; }
 .tv-progress { font-size: 12px; }
 
-/* Rejoindre une session hébergée ailleurs */ .join-link { display: block; margin-top: 16px; font-size: 13px; color: var(--muted); }
-.join-link input { display: block; width: 100%; margin-top: 6px; }
 
 /* Fonds tirés de la pochette : l’ancien reste dessous pendant que le nouveau apparaît, sans trou ni saut */
 @keyframes fade-only { from { opacity: 0; } }
@@ -754,7 +744,6 @@ html { touch-action: manipulation; }
   .modal { will-change: transform; overscroll-behavior: contain; }
 }
 
-:root[data-glass] .code-input input { background: transparent; border: 0; box-shadow: none; }
 
 .tv-airplay { position: absolute; top: calc(env(safe-area-inset-top) - 8px); right: 14px; z-index: 4; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(var(--fg-rgb), .22); border-radius: 99px; background: rgba(20, 20, 18, .45); color: #fff; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 

@@ -137,7 +137,6 @@ struct PlayerView: View {
                 VStack(spacing: 8) {
                     Text(L("Ajoutez vos titres")).font(.system(size: 25, weight: .bold)).foregroundStyle(.white)
                     Text(store.inviteURL.replacingOccurrences(of: "https://", with: "")).font(.system(size: 15, weight: .medium)).foregroundStyle(.white.opacity(0.7)).multilineTextAlignment(.center)
-                    Text(store.session.code).font(.system(size: 20, weight: .bold)).tracking(4).foregroundStyle(store.appearance.accentColor).padding(.top, 4)
                 }
             }
             Spacer()
@@ -276,7 +275,6 @@ struct QRSheet: View {
                 Text(L("Rejoindre {0}", store.session.name)).font(.system(size: 23, weight: .bold)).foregroundStyle(Color.sonoText).multilineTextAlignment(.center)
                 Text(L("Scannez ce code avec l’appareil photo de votre téléphone.")).font(.system(size: 15)).foregroundStyle(Color.sonoMuted).multilineTextAlignment(.center)
                 QRCodeView(text: store.inviteURL).padding(16).background(RoundedRectangle(cornerRadius: 24, style: .continuous).fill(.white)).frame(maxWidth: 270)
-                Text(store.session.code).font(.system(size: 26, weight: .bold)).tracking(5).foregroundStyle(Color.sonoText)
                 Button { store.copyInvite() } label: {
                     HStack {
                         Text(store.inviteURL).font(.system(size: 14)).foregroundStyle(Color.sonoText).lineLimit(1).truncationMode(.middle)
@@ -287,7 +285,6 @@ struct QRSheet: View {
                     .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.08)))
                 }
                 .accessibilityLabel(L("Copier le lien"))
-                Text(LocalizedStringKey(L("Sans appareil photo : ouvrez **{0}** et tapez le code.", store.joinURL.replacingOccurrences(of: "https://", with: "")))).font(.system(size: 13)).foregroundStyle(Color.sonoMuted).multilineTextAlignment(.center)
                 Toggle(isOn: Binding(get: { store.carInvite }, set: { store.setCarInvite($0) })) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(L("Afficher sur l’écran de la voiture")).font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText)

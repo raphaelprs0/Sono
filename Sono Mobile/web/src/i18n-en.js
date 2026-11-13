@@ -1,5 +1,7 @@
 // Traductions anglaises : texte français d’origine → anglais. Fichier généré, une entrée par texte de l’interface.
 export default {
+"Collez le lien d’invitation envoyé par l’hôte, ou scannez son code QR.":"Paste the invite link sent by the host, or scan their QR code.",
+"Quitter":"Leave",
 "Session Sono":"Sono session",
 "Noir":"Black",
 "Citron":"Lemon",
@@ -83,12 +85,8 @@ export default {
 "Votre prénom":"Your first name",
 "Indiquez votre prénom pour que l’hôte vous reconnaisse.":"Enter your first name so the host recognizes you.",
 "Ce lien d’invitation n’est pas valide. Copiez-le depuis la page de l’hôte.":"This invite link isn’t valid. Copy it from the host’s page.",
-"Le code contient 4 chiffres, par exemple SONO-4821.":"The code has 4 digits, for example SONO-4821.",
 "Pour que l’hôte vous reconnaisse":"So the host recognizes you",
 "Il ne pourra plus être modifié une fois dans la session.":"It can’t be changed once you’re in the session.",
-"Code affiché par l’hôte":"Code shown by the host",
-"Code de la session":"Session code",
-"Session sur un autre appareil ? Lien d’invitation":"Session on another device? Invite link",
 "Vous avez le code QR ? Scannez-le simplement avec l’appareil photo.":"Got the QR code? Just scan it with your camera.",
 "Invitation de":"Invited by",
 "Comment vous appelez-vous ? Votre prénom s’affichera à côté des titres que vous proposez.":"What’s your name? Your first name will appear next to the tracks you suggest.",
@@ -156,7 +154,6 @@ export default {
 "Descendre le titre":"Move track down",
 "La musique reprendra sur son téléphone à son retour. Vous gardez les commandes de la file et des arrivées.":"The music will resume on their phone when they’re back. You keep control of the queue and arrivals.",
 "Rejoignez la file d’attente d’un proche : entrez le code affiché par l’hôte.":"Join a friend’s queue: enter the code shown by the host.",
-"Aucune session ne correspond à ce code. Si elle est hébergée sur un ordinateur, collez son lien d’invitation.":"No session matches this code. If it’s hosted on a computer, paste its invite link.",
 "Monter {0}":"Move {0} up",
 "Descendre {0}":"Move {0} down",
 "Pages du mode TV":"TV mode pages",

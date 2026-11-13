@@ -112,21 +112,6 @@ pub fn network_url(app: &Shared) -> Option<String> {
 // ───── Divers ─────
 pub async fn health() -> Response { ok(json!({ "ok": true, "service": "Sono" })) }
 
-/// Adresse du service en ligne de Sono Mobile (pour rejoindre une session iPhone avec son code), lue à la compilation :
-/// « fabriquer-tauri.sh » la prend dans « Sono Mobile/ios/Config.xcconfig », écrit par « Sono Mobile/deploy.sh ».
-const MOBILE_SERVICE: &str = match option_env!("SONO_MOBILE_SERVICE") { Some(url) => url, None => "" };
-
-pub async fn join_lookup(r: Req) -> Response {
-    let code = r.q("code").unwrap_or("").to_string();
-    let digits = regex::Regex::new(r"(?i)^SONO-(\d{4})$").unwrap().captures(&code).map(|c| c[1].to_string());
-    let Some(digits) = digits else { return err(StatusCode::BAD_REQUEST, "Code invalide.") };
-    if MOBILE_SERVICE.is_empty() { return err(StatusCode::NOT_FOUND, "Session introuvable."); }
-    match r.app.http.get(format!("{MOBILE_SERVICE}/api/sessions/SONO-{digits}")).timeout(std::time::Duration::from_secs(5)).send().await {
-        Ok(response) if response.status().is_success() => ok(json!({ "url": format!("{MOBILE_SERVICE}/{digits}") })),
-        _ => err(StatusCode::NOT_FOUND, "Session introuvable."),
-    }
-}
-
 pub async fn config(r: Req) -> Response {
     let (enabled, url) = { let s = r.app.lock(); (s.public_link_enabled, s.public_tunnel_url.clone()) };
     ok(json!({ "networkUrl": network_url(&r.app), "publicUrl": if enabled && !url.is_empty() { json!(url) } else { Value::Null } }))
