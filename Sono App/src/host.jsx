@@ -605,7 +605,10 @@ const AMBIENT_W = 640;
 
 const AMBIENT_H = 360;
 
-function composeAmbient(bitmap, palette, shade) {
+function composeAmbient(bitmap, palette, gain, saturate, base) {
+  // Gain au-dessus de 1 : la pochette est éclaircie ; en dessous : elle est assombrie par un voile noir.
+  const lift = Math.max(1, gain);
+  const shade = 1 - Math.min(1, gain);
   return new Promise((resolve) => {
     const image = new Image();
     image.onload = () => {
@@ -614,10 +617,11 @@ function composeAmbient(bitmap, palette, shade) {
         canvas.width = AMBIENT_W;
         canvas.height = AMBIENT_H;
         const context = canvas.getContext('2d');
-        context.fillStyle = '#050505';
+        // Fond : le ton moyen de la pochette (les nappes floutées sont des disques, leurs coins le laissent voir).
+        context.fillStyle = base ? `rgb(${base.map((value) => Math.min(255, Math.round(value * lift))).join(', ')})` : '#050505';
         context.fillRect(0, 0, AMBIENT_W, AMBIENT_H);
         // Nappes de la pochette : grande en haut à gauche, grande en bas à droite, petite au centre.
-        const blob = (size, x, y, alpha) => { context.globalAlpha = alpha; context.filter = 'brightness(1.45) saturate(1.15)'; context.drawImage(image, x, y, size, size); context.filter = 'none'; };
+        const blob = (size, x, y, alpha) => { context.globalAlpha = alpha; context.filter = `brightness(${lift}) saturate(${saturate})`; context.drawImage(image, x, y, size, size); context.filter = 'none'; };
         const big = AMBIENT_W * 0.95;
         blob(big, -big * 0.35, -big * 0.55, 1);
         blob(big, AMBIENT_W - big * 0.7, AMBIENT_H - big * 0.6, 1);
@@ -630,8 +634,9 @@ function composeAmbient(bitmap, palette, shade) {
           const y = cy * AMBIENT_H;
           const radius = r * AMBIENT_W;
           const gradient = context.createRadialGradient(x, y, 0, x, y, radius);
-          gradient.addColorStop(0, `rgba(${red}, ${green}, ${blue}, .62)`);
-          gradient.addColorStop(1, `rgba(${red}, ${green}, ${blue}, 0)`);
+          const [lr, lg, lb] = [red, green, blue].map((value) => Math.min(255, Math.round(value * lift)));
+          gradient.addColorStop(0, `rgba(${lr}, ${lg}, ${lb}, .72)`);
+          gradient.addColorStop(1, `rgba(${lr}, ${lg}, ${lb}, 0)`);
           context.globalAlpha = 1;
           context.fillStyle = gradient;
           context.fillRect(0, 0, AMBIENT_W, AMBIENT_H);
@@ -647,6 +652,24 @@ function composeAmbient(bitmap, palette, shade) {
   });
 }
 
+const AMBIENT_TARGET = 0.13;
+const luminance = (rgb) => {
+  const [r, g, b] = rgb.map((v) => { const c = v / 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+};
+// Le ton moyen de la pochette vise une luminance fixe, sans que ses zones les plus claires gênent la lecture du texte.
+function ambientGain(measure) {
+  if (!measure?.bright) return 0.8;
+  const toward = (target, rgb) => (target / Math.max(luminance(rgb), 0.002)) ** (1 / 2.2);
+  return Math.min(3, Math.max(0.4, Math.min(toward(AMBIENT_TARGET, measure.mid || measure.bright), toward(0.26, measure.bright))));
+}
+// Une pochette pâle ou presque grise est davantage saturée, pour que ses teintes ressortent une fois assombrie.
+function ambientSaturation(palette) {
+  const saturation = ([r, g, b]) => { const max = Math.max(r, g, b); const min = Math.min(r, g, b); return max ? (max - min) / max : 0; };
+  const most = Math.max(0, ...(palette || []).map(saturation));
+  return Math.min(2, Math.max(1.25, 1.25 + (0.55 - most) * 1.6));
+}
+
 function TvAmbient({ cover }) {
   const measure = useImageMeasure(cover);
   const [layers, setLayers] = useState([]);
@@ -654,9 +677,10 @@ function TvAmbient({ cover }) {
   useEffect(() => {
     if (!measure || !cover) return undefined;
     let live = true;
-    // Le voile du mode TV assombrit déjà d’environ 35 % : la pochette n’ajoute que le complément utile.
-    const shade = Math.max(0, 1 - (1 - (measure.shade ?? 0.45)) / 0.85);
-    composeAmbient(measure.smooth || measure.blur || cover, measure.palette || [], shade).then((picture) => {
+    // Chaque pochette est ramenée à la même intensité, assez forte pour que ses couleurs se voient (même sombre,
+    // pâle ou très claire), assez basse pour que le texte blanc reste lisible.
+    const gain = ambientGain(measure);
+    composeAmbient(measure.smooth || measure.blur || cover, measure.palette || [], gain, ambientSaturation(measure.palette), measure.mid).then((picture) => {
       if (!live || !picture) return;
       setLayers((list) => (list.at(-1)?.cover === cover ? list : [...list.slice(-1), { id: nextId.current++, cover, picture }]));
     });

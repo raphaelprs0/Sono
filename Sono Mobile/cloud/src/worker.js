@@ -176,8 +176,57 @@ const broadcast = (session) => {
   broadcastTimer ??= setTimeout(() => {
     broadcastTimer = null;
     for (const pending of pendingBroadcasts) for (const client of clients.get(pending.code) || []) if (client.readyState === WebSocket.OPEN) sendPayload(client, pending);
+    // Après l’envoi : les pochettes manquantes sont cherchées sans retarder personne.
+    for (const pending of pendingBroadcasts) fillCovers(pending);
     pendingBroadcasts.clear();
   }, 15);
+};
+// Pochettes manquantes : un titre sans pochette (ou avec l’image vide de Deezer) en reçoit une, cherchée sur
+// Deezer puis sur l’iTunes Store, à partir de l’artiste et du titre. Chaque titre n’est cherché qu’une fois.
+const coverMissing = (cover) => !String(cover || '').startsWith('https://') || /\/images\/(cover|artist)\/\//.test(cover);
+const coversTried = new Map();
+const coverKey = (item) => (item?.title && item?.artist && coverMissing(item.cover) ? `${item.artist.trim().toLowerCase()}\u001f${item.title.trim().toLowerCase()}` : null);
+const sessionTracks = (session) => [session.current, ...(session.queue || []), ...(session.history || []).slice(0, 20)].filter((item) => item && typeof item === 'object');
+const sameArtist = (a, b) => {
+  const clean = (value) => String(value || '').toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
+  const [x, y] = [clean(a), clean(b)];
+  return Boolean(x && y && (x.includes(y) || y.includes(x)));
+};
+const getJson = (url) => fetch(url, { headers: { 'user-agent': 'Sono' }, signal: AbortSignal.timeout(6000) }).then((response) => (response.ok ? response.json() : null)).catch(() => null);
+const lookupCover = async (artist, title) => {
+  for (const q of [`artist:"${artist}" track:"${title}"`, `${artist} ${title}`]) {
+    const data = await getJson(`${deezerApiBaseUrl}/search?${new URLSearchParams({ q, limit: '8' })}`);
+    const hit = (data?.data || []).find((track) => sameArtist(track?.artist?.name, artist) && !coverMissing(track?.album?.cover_xl));
+    if (hit) return hit.album.cover_xl;
+  }
+  const data = await getJson(`https://itunes.apple.com/search?${new URLSearchParams({ term: `${artist} ${title}`, entity: 'song', limit: '8' })}`);
+  const hit = (data?.results || []).find((track) => sameArtist(track?.artistName, artist) && String(track?.artworkUrl100 || '').startsWith('https://'));
+  return hit ? hit.artworkUrl100.replace('100x100bb', '1000x1000bb') : null;
+};
+const applyCovers = (session) => {
+  let changed = false;
+  for (const item of sessionTracks(session)) {
+    const cover = coversTried.get(coverKey(item));
+    if (cover) { item.cover = cover; changed = true; }
+  }
+  return changed;
+};
+const fillCovers = (session) => {
+  // Une pochette trouvée plus tôt (pour une autre session ou un titre revenu) s’applique tout de suite.
+  if (applyCovers(session)) { persist(); broadcast(session); }
+  for (const item of sessionTracks(session)) {
+    const key = coverKey(item);
+    if (!key || coversTried.has(key)) continue;
+    // Une soirée enchaîne des centaines de titres : seules les recherches récentes restent en mémoire.
+    if (coversTried.size >= 600) coversTried.clear();
+    coversTried.set(key, null);
+    lookupCover(item.artist, item.title).then((cover) => {
+      if (!cover) return;
+      coversTried.set(key, cover);
+      const live = sessions.get(session.code);
+      if (live && applyCovers(live)) { persist(); broadcast(live); }
+    });
+  }
 };
 const findSession = (req, res) => {
   const session = sessions.get(req.params.code.toUpperCase());

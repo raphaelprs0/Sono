@@ -85,6 +85,8 @@ pub struct App {
     pub engine_log_scheduled: AtomicBool,
     pub packed: Mutex<HashMap<String, Arc<Vec<u8>>>>,
     pub host_grace: Duration,
+    /// Pochettes déjà cherchées (artiste et titre) : celle trouvée, ou rien.
+    pub covers_tried: Mutex<HashMap<String, Option<String>>>,
 }
 
 pub type Shared = Arc<App>;
@@ -166,8 +168,9 @@ impl App {
             tokio::time::sleep(Duration::from_millis(15)).await;
             app.broadcast_scheduled.store(false, Ordering::SeqCst);
             let codes: Vec<String> = app.pending_broadcasts.lock().unwrap().drain().collect();
-            let mut s = app.lock();
-            for code in codes { send_all(&mut s, &code); }
+            { let mut s = app.lock(); for code in &codes { send_all(&mut s, code); } }
+            // Après l’envoi : les pochettes manquantes sont cherchées sans retarder personne.
+            for code in &codes { super::covers::fill(&app, code); }
         });
     }
 

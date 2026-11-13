@@ -247,7 +247,7 @@ function measureImage(src) {
           while (keep > 0.05 && relativeLuminance(bright.map((v) => v * keep)) > BACKDROP_MAX_LUMINANCE) keep -= 0.01;
           // Couleur moyenne de la première et de la dernière rangée : bords haut et bas du fond.
           const row = (y) => [0, 1, 2].map((c) => Math.round(Array.from({ length: 12 }, (_, x) => data[(y * 12 + x) * 4 + c]).reduce((a, b) => a + b) / 12));
-          resolve({ shade: 1 - keep, top: row(0), bottom: row(11), palette, blur: smoothBitmap(image, { size: 48, radius: 3 }), smooth: smoothBitmap(image, { size: 96, radius: 5, disc: true }) });
+          resolve({ shade: 1 - keep, bright, mid: pixels[Math.floor(pixels.length * 0.5)], top: row(0), bottom: row(11), palette, blur: smoothBitmap(image, { size: 48, radius: 3 }), smooth: smoothBitmap(image, { size: 96, radius: 5, disc: true }) });
         } catch { resolve({ shade: 0.65 }); }
       };
       image.onerror = () => resolve({ shade: 0.65 });

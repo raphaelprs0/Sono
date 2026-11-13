@@ -1,5 +1,6 @@
 // Serveur Sono : API, temps réel et interface, pour l’hôte (dans l’app) et les invités (Wi-Fi ou lien public).
 pub mod catalog;
+pub mod covers;
 pub mod deezer;
 pub mod logic;
 pub mod routes;
@@ -94,6 +95,7 @@ pub fn create(config: Config) -> Shared {
         engine_log_scheduled: AtomicBool::new(false),
         packed: Mutex::new(Default::default()),
         host_grace: Duration::from_millis(grace),
+        covers_tried: Mutex::new(Default::default()),
     })
 }
 
