@@ -28,7 +28,7 @@ struct FallbackSheet: View {
             HStack(spacing: 10) {
                 Image(systemName: "magnifyingglass").foregroundStyle(Color.sonoMuted)
                 TextField("", text: $query, prompt: Text(kind == "artist" ? L("Rechercher un artiste…") : kind == "album" ? L("Rechercher un album…") : L("Rechercher une playlist…")).foregroundColor(Color.sonoMuted.opacity(0.7)))
-                    .font(.system(size: 15)).submitLabel(.search).autocorrectionDisabled().foregroundStyle(Color.sonoText)
+                    .sonoCaret().font(.system(size: 15)).submitLabel(.search).autocorrectionDisabled().foregroundStyle(Color.sonoText)
                 if loading { ProgressView() }
             }
             .padding(.horizontal, 16).padding(.vertical, 13)
@@ -298,7 +298,7 @@ struct InputField: View {
         VStack(alignment: .leading, spacing: 7) {
             Text(title).font(.system(size: 13, weight: .medium)).foregroundStyle(Color.sonoMuted)
             TextField("", text: $text, prompt: Text(prompt).foregroundColor(Color.sonoMuted.opacity(0.6)))
-                .font(.system(size: 15))
+                .sonoCaret().font(.system(size: 15))
                 .padding(.horizontal, 14).padding(.vertical, 11)
                 .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(Color.sonoField))
                 .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).strokeBorder(Color.sonoFg.opacity(0.1)))

@@ -100,7 +100,7 @@ private struct HomeInput: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title).font(.system(size: 12.5, weight: .medium)).foregroundStyle(Color.sonoText.opacity(0.85))
             TextField("", text: $text, prompt: Text(prompt).foregroundColor(Color.sonoMuted.opacity(0.6)))
-                .font(.system(size: 14))
+                .sonoCaret().font(.system(size: 14))
                 .padding(.horizontal, 14).frame(height: 46)
                 .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Color.sonoField))
                 .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.sonoFg.opacity(0.12)))

@@ -190,7 +190,7 @@ struct SearchSheet: View {
                 HStack(spacing: 10) {
                     Image(systemName: "magnifyingglass").foregroundStyle(Color.sonoMuted)
                     TextField("", text: $query, prompt: Text(L("Titre, artiste ou album…")).foregroundColor(Color.sonoMuted.opacity(0.7)))
-                        .font(.system(size: 15)).focused($focused).submitLabel(.search).autocorrectionDisabled().foregroundStyle(Color.sonoText)
+                        .sonoCaret().font(.system(size: 15)).focused($focused).submitLabel(.search).autocorrectionDisabled().foregroundStyle(Color.sonoText)
                     if loading { ProgressView() } else if !query.isEmpty {
                         Button { query = "" } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(Color.sonoMuted) }.accessibilityLabel(L("Effacer"))
                     }

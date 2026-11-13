@@ -395,6 +395,17 @@ struct Avatar: View {
     }
 }
 
+/// Curseur d’écriture de la couleur d’accent choisie. Posé sur chaque champ : les fenêtres ouvertes par-dessus
+/// (recherche, réglages) ne reprennent pas toujours la teinte de l’app.
+private struct SonoCaret: ViewModifier {
+    @EnvironmentObject private var store: Store
+    func body(content: Content) -> some View { content.tint(store.appearance.accentText) }
+}
+
+extension View {
+    func sonoCaret() -> some View { modifier(SonoCaret()) }
+}
+
 /// Logo « sono. » de l’en-tête.
 struct Brand: View {
     @EnvironmentObject private var store: Store
@@ -412,7 +423,7 @@ struct Brand: View {
                 }
             }
             .frame(height: size * 1.04)
-            (Text("sono").foregroundColor(Color.sonoText) + Text(".").foregroundColor(store.appearance.accentText))
+            (Text("sono").foregroundColor(Color.sonoText) + Text(".").foregroundColor(store.appearance.accentColor))
                 .font(.system(size: size, weight: .heavy))
                 .tracking(-1.2)
         }

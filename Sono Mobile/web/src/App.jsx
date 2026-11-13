@@ -397,7 +397,7 @@ async function controlProvider({ track, action, playing }) {
 }
 
 function Brand() {
-  return <div className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span className="brand-name">sono<span className="brand-dot">.</span></span></div>;
+  return <div className="brand"><span className="brand-mark" aria-hidden="true"><i /><i /><i /><i /></span><span className="brand-name">sono<span className="brand-dot" /></span></div>;
 }
 
 const PROVIDER_LOGOS = { 'Apple Music': appleMusicLogo, Deezer: deezerIcon };
