@@ -170,7 +170,9 @@ struct QRScannerView: View {
         let unknown: () -> Void
 
         func makeUIViewController(context: Context) -> DataScannerViewController {
-            let scanner = DataScannerViewController(recognizedDataTypes: [.barcode(symbologies: [.qr])], qualityLevel: .balanced, isHighlightingEnabled: true)
+            // Sans l’aide d’Apple (« Recherchez un code-barres à proximité ») : elle apparaissait par moments par-dessus
+            // le titre de l’écran, qui donne déjà la consigne.
+            let scanner = DataScannerViewController(recognizedDataTypes: [.barcode(symbologies: [.qr])], qualityLevel: .balanced, isGuidanceEnabled: false, isHighlightingEnabled: true)
             scanner.delegate = context.coordinator
             try? scanner.startScanning()
             return scanner

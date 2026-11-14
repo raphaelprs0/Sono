@@ -475,11 +475,17 @@ struct SessionSettings: View {
 struct AppearanceSettings: View {
     @EnvironmentObject private var store: Store
     @State private var confirmReset = false
+    /// Langue choisie dans le sélecteur : elle change tout de suite (l’animation du sélecteur se joue en entier), puis
+    /// la langue de l’app suit, car changer de langue redessine tous les écrans et couperait l’animation.
+    @State private var pickedLanguage: String?
     var body: some View {
         VStack(spacing: 26) {
             Text(L("Ces réglages s’appliquent à ce téléphone. Les invités voient votre fond et votre couleur d’accent.")).font(.system(size: 13)).foregroundStyle(Color.sonoMuted).frame(maxWidth: .infinity, alignment: .leading)
             SettingsCard(title: L("Langue"), subtitle: L("Langue de Sono sur ce téléphone. Vos invités voient la même langue.")) {
-                Picker(L("Langue"), selection: Binding(get: { store.language }, set: { store.setLanguage($0) })) {
+                Picker(L("Langue"), selection: Binding(get: { pickedLanguage ?? store.language }, set: { value in
+                    pickedLanguage = value
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { store.setLanguage(value) }
+                })) {
                     Text("Français").tag("fr"); Text("English").tag("en")
                 }
                 .pickerStyle(.segmented)
