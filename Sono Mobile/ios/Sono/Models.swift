@@ -89,6 +89,8 @@ struct SessionTheme: Codable, Hashable {
 
 struct SessionInfo: Codable, Hashable {
     var code: String
+    /// Token du lien d’invitation court (« …/k7f2q »).
+    var token: String?
     var name: String
     var host: String
     var requireApproval: Bool?

@@ -269,9 +269,10 @@ pub fn public_session(state: &State, session: &mut Value, viewer: &Viewer) -> Va
     let mut apps = vec![];
     if state.apple_linked { apps.push("Apple Music"); }
     if state.deezer.is_some() { apps.push("Deezer"); }
+    super::links::ensure(session);
     let code = str_of(session, "code").to_string();
     let mut base = json!({
-        "code": code, "name": session.get("name"), "host": session.get("host"), "active": session.get("active"),
+        "code": code, "token": session.get("token"), "name": session.get("name"), "host": session.get("host"), "active": session.get("active"),
         "requireApproval": truthy(session.get("requireApproval")), "source": source, "apps": apps,
         "theme": clean_theme(session.get("theme")), "hostOnline": host_online(state, &code),
     });

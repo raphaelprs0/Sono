@@ -501,9 +501,9 @@ function App() {
   const params = new URLSearchParams(window.location.search);
   // Page ouverte par l’app iPhone sur l’écran de la TV (recopie de l’écran) : seulement le mode TV, en grand.
   const tvDisplay = params.get('tv') === '1';
-  // Lien court « adresse/1234 » ; l’ancien « ?invitation=SONO-1234 » reste accepté.
+  // Lien court « adresse/k7f2q » (résolu au démarrage, voir main.jsx) ; les anciens « adresse/1234 » et « ?invitation=SONO-1234 » restent acceptés.
   const shortInvite = window.location.pathname.match(/^\/(\d{4})\/?$/)?.[1];
-  const invitedCode = params.get('invitation')?.toUpperCase() || (shortInvite ? `SONO-${shortInvite}` : undefined);
+  const invitedCode = params.get('invitation')?.toUpperCase() || window.sonoInvite || (shortInvite ? `SONO-${shortInvite}` : undefined);
   const isGuest = Boolean(invitedCode);
   // Ce site ne sert plus que les invités, la page Rejoindre et l’écran TV de l’app iPhone (qui héberge les sessions).
   const [hostState, setHostState] = useState(() => isGuest ? 'guest' : tvDisplay && readStorage('sono-host-code') ? 'checking' : 'home');
@@ -734,7 +734,7 @@ function App() {
   }, [current, playing, session.name, hostState]);
 
   const inviteBase = window.location.origin;
-  const inviteUrl = `${inviteBase}/${session.code.replace(/^SONO-/, '')}`;
+  const inviteUrl = `${inviteBase}/${session.token || session.code.replace(/^SONO-/, '')}`;
   const hostHeaders = useMemo(() => ({ 'x-host-token': hostToken }), [hostToken]);
   const addTrack = useCallback(async (track) => {
     try {
@@ -1597,8 +1597,9 @@ function inviteAddress(value) {
   if (!text) return null;
   try {
     const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-    const digits = url.pathname.match(/^\/(\d{4})\/?$/)?.[1] || url.searchParams.get('invitation')?.match(/^SONO-(\d{4})$/i)?.[1];
-    return digits && /^https?:$/.test(url.protocol) ? `${url.origin}/${digits}` : null;
+    // Lien court « …/k7f2q », ou les anciens « …/1234 » et « ?invitation=SONO-1234 ».
+    const short = url.pathname.match(/^\/([a-km-np-z2-9]{5}|\d{4})\/?$/i)?.[1]?.toLowerCase() || url.searchParams.get('invitation')?.match(/^SONO-(\d{4})$/i)?.[1];
+    return short && /^https?:$/.test(url.protocol) ? `${url.origin}/${short}` : null;
   } catch { return null; }
 }
 const openInvite = (address, name) => { native ? native.call('openInvite', { url: `${address}#prenom=${encodeURIComponent(name)}` }).catch(() => {}) : window.location.assign(address); };
@@ -1629,7 +1630,7 @@ function JoinForm({ guestName, onConfirmName }) {
 // iPhone ou iPad dans un navigateur (pas dans la page ouverte par l’app Sono elle-même) : un lien propose
 // d’ouvrir la session dans l’app Sono, si elle est installée.
 const appleMobile = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-const openInAppLink = (code) => (appleMobile && /Safari\//.test(navigator.userAgent) ? `sono://open?url=${encodeURIComponent(`${window.location.origin}/${String(code).replace(/^SONO-/, '')}`)}` : null);
+const openInAppLink = (session) => (appleMobile && /Safari\//.test(navigator.userAgent) ? `sono://open?url=${encodeURIComponent(`${window.location.origin}/${session.token || String(session.code).replace(/^SONO-/, '')}`)}` : null);
 
 function NameGate({ session, onConfirm, toast, closeToast }) {
   const [name, setName] = useState('');
@@ -1651,7 +1652,7 @@ function NameGate({ session, onConfirm, toast, closeToast }) {
         <p className="form-note">{tx("Il ne pourra plus être modifié une fois dans la session.")}</p>
         {error && <p className="field-error" role="alert">{error}</p>}
         <button className="button primary join-button" type="submit">{session.requireApproval ? <ShieldCheck size={18} /> : <ArrowRight size={18} />}{session.requireApproval ? tx("Demander l’accès") : tx("Rejoindre la session")}</button>
-        {openInAppLink(session.code) && <a className="open-in-app" href={openInAppLink(session.code)}><Smartphone size={15} />{tx("Ouvrir dans l’app Sono")}</a>}
+        {openInAppLink(session) && <a className="open-in-app" href={openInAppLink(session)}><Smartphone size={15} />{tx("Ouvrir dans l’app Sono")}</a>}
       </form>
     </main>
     {toast && <Toast toast={toast} onClose={closeToast} />}

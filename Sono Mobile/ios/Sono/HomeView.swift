@@ -111,16 +111,16 @@ private struct HomeInput: View {
 
 // MARK: Appareil photo : lecture du QR code d’invitation
 
-/// Une adresse d’invitation Sono : « …/1234 » ou l’ancien « ?invitation=SONO-1234 », d’où qu’elle vienne
-/// (service en ligne, ordinateur de l’hôte sur le Wi-Fi, lien public).
+/// Une adresse d’invitation Sono : le lien court « …/k7f2q », ou les anciens « …/1234 » et « ?invitation=SONO-1234 »,
+/// d’où qu’elle vienne (service en ligne, ordinateur de l’hôte sur le Wi-Fi, lien public).
 func sonoInvite(_ text: String) -> URL? {
     guard let url = URL(string: text.trimmingCharacters(in: .whitespacesAndNewlines)), ["http", "https"].contains(url.scheme), let host = url.host else { return nil }
-    let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
-    let digits = path.range(of: "^\\d{4}$", options: .regularExpression) != nil ? path
+    let path = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")).lowercased()
+    let short = path.range(of: "^([a-km-np-z2-9]{5}|\\d{4})$", options: .regularExpression) != nil ? path
         : URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "invitation" }?.value?.uppercased().replacingOccurrences(of: "SONO-", with: "")
-    guard let digits, digits.range(of: "^\\d{4}$", options: .regularExpression) != nil else { return nil }
+    guard let short, short.range(of: "^([a-km-np-z2-9]{5}|\\d{4})$", options: .regularExpression) != nil else { return nil }
     var parts = URLComponents()
-    parts.scheme = url.scheme; parts.host = host; parts.port = url.port; parts.path = "/\(digits)"
+    parts.scheme = url.scheme; parts.host = host; parts.port = url.port; parts.path = "/\(short)"
     return parts.url
 }
 
@@ -244,18 +244,26 @@ private struct GuestWebView: UIViewRepresentable {
 
     final class Coordinator: NSObject, WKNavigationDelegate {
         let parent: GuestWebView
-        init(_ parent: GuestWebView) { self.parent = parent }
+        /// Adresse de la session affichée : celle du lien, ou celle de l’ordinateur de l’hôte vers lequel le lien court
+        /// renvoie (lien « Internet » d’une session hébergée sur un ordinateur).
+        private var home: URL
+        init(_ parent: GuestWebView) { self.parent = parent; home = parent.url }
 
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
             guard let target = action.request.url, action.targetFrame?.isMainFrame != false else { return decisionHandler(.allow) }
+            // Le lien court renvoie vers le tunnel de l’ordinateur de l’hôte : la session continue dans l’app.
+            if target.host != home.host, target.host?.hasSuffix(".trycloudflare.com") == true, action.navigationType == .other {
+                home = target
+                return decisionHandler(.allow)
+            }
             // La page quitte la session (vers l’accueil web) : on revient à l’accueil de l’app.
-            if target.host == parent.url.host, target.path != parent.url.path {
+            if target.host == home.host, target.path != home.path {
                 decisionHandler(.cancel)
                 parent.close()
                 return
             }
             // Liens externes (Deezer, Apple Music…) : dans leur app ou Safari.
-            if target.host != parent.url.host, ["http", "https"].contains(target.scheme) {
+            if target.host != home.host, ["http", "https"].contains(target.scheme) {
                 decisionHandler(.cancel)
                 UIApplication.shared.open(target)
                 return

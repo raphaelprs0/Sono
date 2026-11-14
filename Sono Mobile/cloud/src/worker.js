@@ -13,6 +13,17 @@ const WebSocket = { OPEN: 1 };
 
 const HOST_VIEW = { role: 'host' };
 const memberKey = (session, clientId) => crypto.createHash('sha256').update(`${session.code}:${clientId}`).digest('hex').slice(0, 12);
+// Liens d’invitation courts : un token unique de 5 caractères par session (« /k7f2q »), sans lettres ni chiffres
+// qui se confondent. Les ordinateurs y publient aussi le lien de leur tunnel, sous leur propre token.
+const TOKEN_ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
+const TOKEN_PATTERN = /^[a-km-np-z2-9]{5}$/;
+let links = new Map();
+const tokenTaken = (token) => links.has(token) || [...sessions.values()].some((session) => session.token === token);
+const newToken = () => {
+  let token;
+  do { token = Array.from({ length: 5 }, () => TOKEN_ALPHABET[crypto.randomInt(TOKEN_ALPHABET.length)]).join(''); } while (tokenTaken(token));
+  return token;
+};
 // Quand la validation est active, un invité n’accède à la session qu’après l’accord de l’hôte.
 // Une fois accepté, il le reste même s’il se déconnecte (écran verrouillé) ; seul l’hôte peut le retirer.
 const admissionOf = (session, viewer) => {
@@ -118,7 +129,7 @@ const cleanTheme = (theme) => (theme && typeof theme === 'object' ? {
 const publicSession = (session, viewer = HOST_VIEW) => {
   const source = session.playbackSource || 'Deezer';
   const apps = Array.isArray(session.apps) ? session.apps : [source];
-  const base = { code: session.code, name: session.name, host: session.host, active: session.active, requireApproval: Boolean(session.requireApproval), source, apps, theme: cleanTheme(session.theme), hostOnline: hostOnline(session) };
+  const base = { code: session.code, token: session.token, name: session.name, host: session.host, active: session.active, requireApproval: Boolean(session.requireApproval), source, apps, theme: cleanTheme(session.theme), hostOnline: hostOnline(session) };
   if (admissionOf(session, viewer) !== 'accepted') return { ...base, guests: 0, participants: [] };
   const participants = participantsOf(session);
   return { ...base, fallback: fallbackSummary(session, viewer), guests: participants.filter((item) => item.role !== 'host' && item.online).length, participants, ...(isController(session, viewer) ? { requests: requestsOf(session) } : {}) };
@@ -267,6 +278,32 @@ const addActivity = (session, icon, message) => {
 
 app.get('/api/health', (req, res) => res.json({ ok: true, service: 'Sono' }));
 app.get('/api/config', (req, res) => res.json({ networkUrl: null, publicUrl: null }));
+// Adresse courte « /k7f2q » : une session de ce service, ou le lien publié par un ordinateur (son tunnel).
+app.get('/api/join/:token', (req, res) => {
+  const token = String(req.params.token || '').toLowerCase();
+  const session = [...sessions.values()].find((item) => item.token === token);
+  if (session) return res.json({ code: session.code });
+  const link = links.get(token);
+  if (link) return res.json({ url: `${link.url}/${token}` });
+  res.status(404).json({ error: 'Cette session n’existe pas ou a expiré.' });
+});
+// Un ordinateur publie (ou met à jour) le lien de sa session vers son tunnel Cloudflare. Seul celui qui a créé le
+// lien peut le changer (secret), et seule une adresse de tunnel Cloudflare est acceptée.
+const LINK_DAYS = 30;
+app.post('/api/links', async (req, res) => {
+  const token = String(req.body.token || '').toLowerCase();
+  const secret = text(req.body.secret, 80);
+  const url = text(req.body.url, 200).replace(/\/+$/, '');
+  if (!TOKEN_PATTERN.test(token) || secret.length < 16 || !/^https:\/\/[a-z0-9-]+\.trycloudflare\.com$/.test(url)) return res.status(400).json({ error: 'Lien invalide.' });
+  const hash = crypto.createHash('sha256').update(secret).digest('hex');
+  const existing = links.get(token);
+  if (!existing && links.size >= 5000) return res.status(503).json({ error: 'Trop de liens pour le moment.' });
+  if ((existing && existing.hash !== hash) || [...sessions.values()].some((session) => session.token === token)) return res.status(409).json({ error: 'Ce lien est déjà pris.' });
+  const link = { url, hash, at: Date.now() };
+  links.set(token, link);
+  await storage.put(`link:${token}`, JSON.stringify(link));
+  res.json({ ok: true });
+});
 app.get('/api/sessions/:code', (req, res) => {
   const session = findSession(req, res);
   if (session) res.json(payload(session, viewerFromRequest(req, session)));
@@ -287,7 +324,7 @@ app.post('/api/sessions', async (req, res) => {
   do { code = `SONO-${crypto.randomInt(1000, 10000)}`; } while (sessions.has(code));
   const host = text(req.body.host, 30) || trustedPrevious?.host || 'Hôte';
   const requireApproval = typeof req.body.requireApproval === 'boolean' ? req.body.requireApproval : Boolean(trustedPrevious?.requireApproval);
-  const session = { code, name, host, active: true, requireApproval, playbackSource: 'Deezer', updatedAt: Date.now(), members: {}, hostToken: crypto.randomUUID(), queue: [], history: [], playing: false, current: null, activity: [{ icon: 'music', text: 'La session est prête', at: new Date().toISOString() }] };
+  const session = { code, token: newToken(), name, host, active: true, requireApproval, playbackSource: 'Deezer', updatedAt: Date.now(), members: {}, hostToken: crypto.randomUUID(), queue: [], history: [], playing: false, current: null, activity: [{ icon: 'music', text: 'La session est prête', at: new Date().toISOString() }] };
   sessions.set(code, session);
   pruneSessions();
   await persist();
@@ -856,12 +893,18 @@ export class SonoHub {
       const stored = await ctx.storage.list({ prefix: 'session:' });
       sessions = new Map();
       for (const [key, json] of stored) { sessions.set(key.slice(8), JSON.parse(json)); saved.set(key.slice(8), json); }
+      links = new Map();
+      for (const [key, json] of await ctx.storage.list({ prefix: 'link:' })) links.set(key.slice(5), JSON.parse(json));
+      // Sessions d’avant les liens courts : elles reçoivent leur token.
+      for (const session of sessions.values()) if (!session.token) session.token = newToken();
       // Le ménage passe une fois par jour, même si personne ne crée de session.
       if (!(await ctx.storage.getAlarm())) await ctx.storage.setAlarm(Date.now() + DAY_MS);
     });
   }
   async alarm() {
     pruneSessions();
+    // Liens d’ordinateur que personne n’a remis à jour depuis un mois : supprimés.
+    for (const [token, link] of links) if (Date.now() - link.at > LINK_DAYS * DAY_MS) { links.delete(token); await storage.delete(`link:${token}`); }
     await persist();
     await storage.setAlarm(Date.now() + DAY_MS);
   }

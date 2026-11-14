@@ -87,6 +87,8 @@ pub struct App {
     pub host_grace: Duration,
     /// Pochettes déjà cherchées (artiste et titre) : celle trouvée, ou rien.
     pub covers_tried: Mutex<HashMap<String, Option<String>>>,
+    /// Les liens courts des sessions sont publiés sur le service en ligne pour le tunnel actuel.
+    pub links_ready: AtomicBool,
 }
 
 pub type Shared = Arc<App>;

@@ -3,6 +3,7 @@ use super::catalog;
 use super::deezer::{self, Method};
 use super::logic::*;
 use super::state::{DeezerConn, Shared, State};
+use super::links;
 use super::tunnel;
 use axum::body::Bytes;
 use axum::extract::{ConnectInfo, FromRequest, Query, RawPathParams, Request};
@@ -114,7 +115,20 @@ pub async fn health() -> Response { ok(json!({ "ok": true, "service": "Sono" }))
 
 pub async fn config(r: Req) -> Response {
     let (enabled, url) = { let s = r.app.lock(); (s.public_link_enabled, s.public_tunnel_url.clone()) };
-    ok(json!({ "networkUrl": network_url(&r.app), "publicUrl": if enabled && !url.is_empty() { json!(url) } else { Value::Null } }))
+    let public = enabled && !url.is_empty();
+    // Liens courts publiés sur le service en ligne : c’est son adresse que les invités reçoivent.
+    let link_base = public && r.app.links_ready.load(std::sync::atomic::Ordering::SeqCst);
+    ok(json!({ "networkUrl": network_url(&r.app), "publicUrl": if public { json!(url) } else { Value::Null }, "linkBase": if link_base { json!(links::SERVICE) } else { Value::Null } }))
+}
+
+/// Adresse courte « /k7f2q » : la session qui porte ce token.
+pub async fn join_token(r: Req) -> Response {
+    let token = r.p("token").to_lowercase();
+    let s = r.app.lock();
+    match s.sessions.values().find(|session| str_of(session, "token") == token) {
+        Some(session) => ok(json!({ "code": str_of(session, "code") })),
+        None => not_found(),
+    }
 }
 
 // ───── Lien public ─────
@@ -141,7 +155,9 @@ pub async fn public_enable(r: Req) -> Response {
         Ok(url) => {
             { let mut s = r.app.lock(); s.public_link_enabled = true; s.host_prefs["publicUsed"] = json!(true); }
             r.app.persist();
-            ok(json!({ "publicUrl": url }))
+            links::publish_all(&r.app).await;
+            let link_base = r.app.links_ready.load(std::sync::atomic::Ordering::SeqCst);
+            ok(json!({ "publicUrl": url, "linkBase": if link_base { json!(links::SERVICE) } else { Value::Null } }))
         }
         Err(e) => err(StatusCode::BAD_GATEWAY, &format!("Impossible de créer le lien public : {e}")),
     }
@@ -198,10 +214,14 @@ pub async fn create_session(r: Req) -> Response {
         "members": {}, "hostToken": token, "queue": [], "history": [], "playing": false, "current": null,
         "activity": [{ "icon": "music", "text": "La session est prête", "at": now_iso() }],
     });
+    links::ensure(&mut session);
     let mut out = payload(&s, &mut session, &Viewer::host());
-    s.sessions.insert(code, session);
+    let public = s.public_link_enabled;
+    s.sessions.insert(code.clone(), session);
     drop(s);
     r.app.persist();
+    // Lien « Internet » déjà ouvert : la nouvelle session a tout de suite son lien court.
+    if public { let app = r.app.clone(); tokio::spawn(async move { links::publish(&app, &code).await; }); }
     out.as_object_mut().unwrap().shift_insert(0, "hostToken".into(), json!(token));
     created(out)
 }

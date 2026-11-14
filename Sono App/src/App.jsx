@@ -585,9 +585,9 @@ if (typeof window !== 'undefined' && window.location.hash.startsWith('#prenom=')
 
 function App() {
   const params = new URLSearchParams(window.location.search);
-  // Lien court « adresse/1234 » ; l’ancien « ?invitation=SONO-1234 » reste accepté.
+  // Lien court « adresse/k7f2q » (résolu au démarrage, voir main.jsx) ; les anciens « adresse/1234 » et « ?invitation=SONO-1234 » restent acceptés.
   const shortInvite = window.location.pathname.match(/^\/(\d{4})\/?$/)?.[1];
-  const invitedCode = params.get('invitation')?.toUpperCase() || (shortInvite ? `SONO-${shortInvite}` : undefined);
+  const invitedCode = params.get('invitation')?.toUpperCase() || window.sonoInvite || (shortInvite ? `SONO-${shortInvite}` : undefined);
   const isGuest = Boolean(invitedCode);
   const isJoinPage = !isGuest && window.location.pathname.replace(/\/+$/, '') === '/rejoindre';
   const [hostState, setHostState] = useState(() => isGuest ? 'guest' : !isJoinPage && readStorage('sono-host-code') ? 'checking' : 'home');
@@ -608,6 +608,7 @@ function App() {
   const guestReady = !isGuest || Boolean(myName);
   const [networkUrl, setNetworkUrl] = useState('');
   const [publicUrl, setPublicUrl] = useState(() => window.location.hostname.endsWith('.trycloudflare.com') ? window.location.origin : '');
+  const [linkBase, setLinkBase] = useState('');
   const [publicBusy, setPublicBusy] = useState(false);
   const [live, setLive] = useState(false);
   const [view, setView] = useState('queue');
@@ -759,7 +760,7 @@ function App() {
       };
     };
     connect();
-    fetch('/api/config').then((response) => response.json()).then((config) => { setNetworkUrl(config.networkUrl || ''); setPublicUrl(config.publicUrl || ''); }).catch(() => {});
+    fetch('/api/config').then((response) => response.json()).then((config) => { setNetworkUrl(config.networkUrl || ''); setPublicUrl(config.publicUrl || ''); setLinkBase(config.linkBase || ''); }).catch(() => {});
     return () => { closed = true; window.clearTimeout(reconnect); socket?.close(); };
   }, [session.code, isGuest, hostState, guestReady, applyPayload, notify, sessionGone]);
 
@@ -989,8 +990,9 @@ function App() {
   }, [current, playing, session.name, hostState]);
 
   const localHosts = ['localhost', '127.0.0.1', '0.0.0.0'];
-  const inviteBase = publicUrl || (localHosts.includes(window.location.hostname) && networkUrl ? networkUrl : window.location.origin);
-  const inviteUrl = `${inviteBase}/${session.code.replace(/^SONO-/, '')}`;
+  // Lien « Internet » : l’adresse courte du service en ligne quand le lien y est publié, sinon celle du tunnel.
+  const inviteBase = publicUrl ? (linkBase || publicUrl) : (localHosts.includes(window.location.hostname) && networkUrl ? networkUrl : window.location.origin);
+  const inviteUrl = `${inviteBase}/${session.token || session.code.replace(/^SONO-/, '')}`;
   const hostHeaders = useMemo(() => ({ 'x-host-token': hostToken }), [hostToken]);
   // Prépare le tunnel en arrière-plan pour que « Activer l’accès à distance » soit instantané.
   const canManagePublicLink = hostState === 'host' && Boolean(hostToken) && !window.location.hostname.endsWith('.trycloudflare.com');
@@ -1004,6 +1006,7 @@ function App() {
     try {
       const data = await apiRequest('/api/public-link', { method: 'POST', headers: hostHeaders, body: JSON.stringify({ code: session.code }) });
       setPublicUrl(data.publicUrl);
+      setLinkBase(data.linkBase || '');
       notify(tx("Le lien public est actif."));
     } catch (error) { notify(error.message, 'error'); }
     finally { setPublicBusy(false); }
@@ -1013,6 +1016,7 @@ function App() {
     try {
       await apiRequest('/api/public-link', { method: 'DELETE', headers: hostHeaders, body: JSON.stringify({ code: session.code }) });
       setPublicUrl('');
+      setLinkBase('');
       notify(tx("Le lien public a été désactivé."));
     } catch (error) { notify(error.message, 'error'); }
     finally { setPublicBusy(false); }
@@ -2179,8 +2183,9 @@ function inviteAddress(value) {
   if (!text) return null;
   try {
     const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-    const digits = url.pathname.match(/^\/(\d{4})\/?$/)?.[1] || url.searchParams.get('invitation')?.match(/^SONO-(\d{4})$/i)?.[1];
-    return digits && /^https?:$/.test(url.protocol) ? `${url.origin}/${digits}` : null;
+    // Lien court « …/k7f2q », ou les anciens « …/1234 » et « ?invitation=SONO-1234 ».
+    const short = url.pathname.match(/^\/([a-km-np-z2-9]{5}|\d{4})\/?$/i)?.[1]?.toLowerCase() || url.searchParams.get('invitation')?.match(/^SONO-(\d{4})$/i)?.[1];
+    return short && /^https?:$/.test(url.protocol) ? `${url.origin}/${short}` : null;
   } catch { return null; }
 }
 const openInvite = (address, name) => { window.location.assign(`${address}#prenom=${encodeURIComponent(name)}`); };
@@ -2211,7 +2216,7 @@ function JoinForm({ guestName, onConfirmName }) {
 // iPhone ou iPad dans un navigateur (pas dans la page ouverte par l’app Sono elle-même) : un lien propose
 // d’ouvrir la session dans l’app Sono, si elle est installée.
 const appleMobile = typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
-const openInAppLink = (code) => (appleMobile && /Safari\//.test(navigator.userAgent) ? `sono://open?url=${encodeURIComponent(`${window.location.origin}/${String(code).replace(/^SONO-/, '')}`)}` : null);
+const openInAppLink = (session) => (appleMobile && /Safari\//.test(navigator.userAgent) ? `sono://open?url=${encodeURIComponent(`${window.location.origin}/${session.token || String(session.code).replace(/^SONO-/, '')}`)}` : null);
 
 function NameGate({ session, onConfirm, toast, closeToast }) {
   const [name, setName] = useState('');
@@ -2233,7 +2238,7 @@ function NameGate({ session, onConfirm, toast, closeToast }) {
         <p className="form-note">{tx("Il ne pourra plus être modifié une fois dans la session.")}</p>
         {error && <p className="field-error" role="alert">{error}</p>}
         <button className="button primary join-button" type="submit">{session.requireApproval ? <ShieldCheck size={18} /> : <ArrowRight size={18} />}{session.requireApproval ? tx("Demander l’accès") : tx("Rejoindre la session")}</button>
-        {openInAppLink(session.code) && <a className="open-in-app" href={openInAppLink(session.code)}><Smartphone size={15} />{tx("Ouvrir dans l’app Sono")}</a>}
+        {openInAppLink(session) && <a className="open-in-app" href={openInAppLink(session)}><Smartphone size={15} />{tx("Ouvrir dans l’app Sono")}</a>}
       </form>
     </main>
     {toast && <Toast toast={toast} onClose={closeToast} />}

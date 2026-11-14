@@ -2,7 +2,7 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.6.1-7927F5)
+![Version](https://img.shields.io/badge/Version-2.7.0-7927F5)
 ![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
 ![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
 ![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.6.1 | 2.6.1 (build 24) |
+| Version | 2.7.0 | 2.7.0 (build 25) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -93,7 +93,7 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 
 ### 🙋 For guests (in the browser)
 
-- **Join in one move**: scan the QR code, or open `address/1234`. On iPhone, an « Open in the Sono app » link opens the session in the app when it is installed.
+- **Join in one move**: scan the QR code, or open the short invite link (`join.sono-app.workers.dev/k7f2q`, the same from one launch to the next). On iPhone, an « Open in the Sono app » link opens the session in the app when it is installed.
 - **First name** shown next to their tracks (it can no longer be changed once in the session).
 
 - **Track search** (by title, artist or album), on the playback app chosen by the host (Deezer or Apple Music).
@@ -472,7 +472,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.6.1**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.0**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -487,7 +487,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.6.1-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.7.0-iPhone-a-signer.ipa Payload)
 ```
 
 </details>
@@ -606,8 +606,8 @@ The browser opens: allow **Wrangler** (Cloudflare’s tool) to access your accou
 
 ### 3. (Optional) Choose the service name
 
-In `Sono Mobile/cloud/wrangler.jsonc`, `"name": "sono-mobile"` gives the address
-`https://sono-mobile.<subdomain>.workers.dev`. Change it before the first deployment if you like.
+In `Sono Mobile/cloud/wrangler.jsonc`, `"name": "join"` gives the address
+`https://join.<subdomain>.workers.dev`, and invite links such as `join.<subdomain>.workers.dev/k7f2q`. Change it before the first deployment if you like.
 
 Session storage (**Durable Object**, SQLite) is included in the free plan: nothing to turn on.
 

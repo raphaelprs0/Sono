@@ -1,6 +1,7 @@
 // Serveur Sono : API, temps réel et interface, pour l’hôte (dans l’app) et les invités (Wi-Fi ou lien public).
 pub mod catalog;
 pub mod covers;
+pub mod links;
 pub mod deezer;
 pub mod logic;
 pub mod routes;
@@ -96,6 +97,7 @@ pub fn create(config: Config) -> Shared {
         packed: Mutex::new(Default::default()),
         host_grace: Duration::from_millis(grace),
         covers_tried: Mutex::new(Default::default()),
+        links_ready: AtomicBool::new(false),
     })
 }
 
@@ -185,6 +187,7 @@ pub fn router(app: Shared) -> Router {
     Router::new()
         .route("/api/health", get(health))
         .route("/api/config", get(config))
+        .route("/api/join/{token}", get(join_token))
         .route("/api/public-link/prepare", post(public_prepare))
         .route("/api/public-link", post(public_enable).delete(public_disable))
         .route("/api/sessions", post(create_session))
