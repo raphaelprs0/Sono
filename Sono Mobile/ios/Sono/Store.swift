@@ -685,9 +685,9 @@ final class Store: ObservableObject {
     /// Les invités voient les couleurs choisies par l’hôte.
     private func pushTheme() {
         guard phase == .host, token != nil else { return }
-        let theme = SessionTheme(background: appearance.background, accent: appearance.accent, glass: appearance.glass, lang: language)
+        let theme = SessionTheme(background: appearance.background, accent: appearance.accent, lang: language)
         guard theme != session.theme else { return }
-        Task { try? await perform("/api/sessions/\(session.code)", method: "PATCH", body: ["theme": ["background": appearance.background, "accent": appearance.accent, "glass": appearance.glass, "lang": language]]) }
+        Task { try? await perform("/api/sessions/\(session.code)", method: "PATCH", body: ["theme": ["background": appearance.background, "accent": appearance.accent, "lang": language]]) }
     }
 
     // MARK: Écran de la voiture

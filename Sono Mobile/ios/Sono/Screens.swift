@@ -119,7 +119,7 @@ struct ActivityScreen: View {
                         }
                     }
                 }
-                .padding(16).frame(maxWidth: .infinity, alignment: .leading).glassCard()
+                .padding(16).frame(maxWidth: .infinity, alignment: .leading).sonoCard()
             }
             .padding(.horizontal, 20).padding(.bottom, 30)
         }
@@ -132,7 +132,7 @@ struct ActivityScreen: View {
             Text("\(value)").font(.system(size: 23, weight: .bold)).foregroundStyle(Color.sonoText).contentTransition(.numericText())
             Text(label).font(.system(size: 11.5)).foregroundStyle(Color.sonoMuted).lineLimit(2, reservesSpace: true)
         }
-        .padding(14).frame(maxWidth: .infinity, alignment: .leading).glassCard(radius: 20)
+        .padding(14).frame(maxWidth: .infinity, alignment: .leading).sonoCard(radius: 20)
     }
 
     private var people: some View {
@@ -171,7 +171,7 @@ struct ActivityScreen: View {
             }
             if participants.filter({ !$0.isHost }).isEmpty { Text(L("Personne n’a encore rejoint.")).font(.system(size: 14)).foregroundStyle(Color.sonoMuted) }
         }
-        .padding(16).frame(maxWidth: .infinity, alignment: .leading).glassCard()
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).sonoCard()
     }
 }
 
@@ -241,7 +241,7 @@ struct ConnectionsScreen: View {
                 .buttonStyle(AccentButtonStyle()).disabled(busy != nil)
             }
         }
-        .padding(16).frame(maxWidth: .infinity, alignment: .leading).glassCard()
+        .padding(16).frame(maxWidth: .infinity, alignment: .leading).sonoCard()
     }
 }
 
@@ -490,9 +490,6 @@ struct AppearanceSettings: View {
                 }
                 .pickerStyle(.segmented)
             }
-            SettingsCard(title: "Style") {
-                toggle("Liquid Glass", L("Panneaux translucides façon verre, qui laissent voir l’arrière-plan."), \.glass)
-            }
             SettingsCard(title: L("Arrière-plan")) {
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 12) {
                     ForEach(Backdrop.all) { backdrop in
@@ -537,7 +534,7 @@ struct AppearanceSettings: View {
                     }
                     Button(L("Annuler"), role: .cancel) {}
                 } message: {
-                    Text(L("Le fond, la couleur d’accent, le style verre et les réglages du lecteur en grand reviennent à ceux d’origine."))
+                    Text(L("Le fond, la couleur d’accent et les réglages du lecteur en grand reviennent à ceux d’origine."))
                 }
         }
     }

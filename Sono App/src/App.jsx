@@ -34,7 +34,7 @@ const NAV_ITEMS = [
 // ───────────── Apparence (réglages de l’appareil hôte, gardés dans le navigateur) ─────────────
 const APPEARANCE_KEY = 'sono-appearance';
 const DEFAULT_APPEARANCE = {
-  background: 'black', accent: '#d7f75b', glass: false,
+  background: 'black', accent: '#d7f75b',
   widgets: { nowPlaying: true, progress: true, queue: true, fallback: true, invite: true, participants: true, stats: false, activity: false },
   // Mode TV : chaque widget est placé dans une zone d’une grille 3 × 3, ou masqué.
   tvPlacement: { cover: 'left', info: 'center', player: 'center', next: 'center', qr: 'right' },
@@ -918,9 +918,8 @@ function App() {
     const theme = look.background === 'white' ? 'light' : 'dark';
     document.documentElement.dataset.theme = theme;
     applyAccent(look.accent, theme);
-    document.documentElement.toggleAttribute('data-glass', look.glass);
     document.documentElement.toggleAttribute('data-custom-bg', look.background !== 'default');
-  }, [look.accent, look.glass, look.background]);
+  }, [look.accent, look.background]);
   useEffect(() => {
     if (isGuest) return;
     try { localStorage.setItem(APPEARANCE_KEY, JSON.stringify(appearance)); } catch {}
@@ -947,7 +946,7 @@ function App() {
     return () => window.clearTimeout(timer);
   }, [appearanceJson, isGuest]);
   // L’hôte envoie ses couleurs à la session dès qu’elles changent.
-  const sharedTheme = JSON.stringify({ background: appearance.background, accent: appearance.accent, glass: appearance.glass, lang });
+  const sharedTheme = JSON.stringify({ background: appearance.background, accent: appearance.accent, lang });
   useEffect(() => {
     if (isGuest || hostState !== 'host' || !hostToken || sharedTheme === JSON.stringify(session.theme)) return undefined;
     const timer = window.setTimeout(() => {

@@ -123,7 +123,6 @@ const THEME_BACKGROUNDS = ['black', 'white', 'auto', 'cover'];
 const cleanTheme = (theme) => (theme && typeof theme === 'object' ? {
   background: THEME_BACKGROUNDS.includes(theme.background) ? theme.background : 'black',
   accent: /^#[0-9a-f]{6}$/i.test(theme.accent) ? theme.accent.toLowerCase() : '#d7f75b',
-  glass: theme.glass === true,
   lang: theme.lang === 'en' ? 'en' : 'fr',
 } : null);
 const publicSession = (session, viewer = HOST_VIEW) => {

@@ -49,7 +49,7 @@ struct HomeView: View {
                     .opacity(trimmed(name).isEmpty ? 0.5 : 1)
                 }
                 .padding(18)
-                .glassCard()
+                .sonoCard()
 
                 // Rejoindre la session d’un proche : uniquement en scannant son QR code.
                 Button { focus = nil; scanning = true } label: {

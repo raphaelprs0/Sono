@@ -258,7 +258,6 @@ pub fn clean_theme(theme: Option<&Value>) -> Value {
     json!({
         "background": if THEME_BACKGROUNDS.contains(&background) { background } else { "black" },
         "accent": if valid_accent { accent.to_lowercase() } else { "#d7f75b".into() },
-        "glass": theme.get("glass") == Some(&json!(true)),
         "lang": if str_of(theme, "lang") == "en" { "en" } else { "fr" },
     })
 }

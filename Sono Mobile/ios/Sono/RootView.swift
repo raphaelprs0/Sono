@@ -108,7 +108,7 @@ struct ScreenHeader: View {
             Button { sheet = .qr } label: {
                 Image(systemName: "qrcode").font(.system(size: 15.5, weight: .medium)).foregroundStyle(Color.sonoText).frame(width: 42, height: 42)
             }
-            .glassCard(radius: 21)
+            .sonoCard(radius: 21)
             .accessibilityLabel(L("Afficher le code QR"))
         }
     }
@@ -135,7 +135,7 @@ struct ToastView: View {
                 Text(toast.message).font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoText).multilineTextAlignment(.leading)
             }
             .padding(.horizontal, 18).padding(.vertical, 13)
-            .glassCard(radius: 22)
+            .sonoCard(radius: 22)
             .padding(.horizontal, 20)
             .onTapGesture { withAnimation { store.toast = nil } }
             .transition(.move(edge: .bottom).combined(with: .opacity))

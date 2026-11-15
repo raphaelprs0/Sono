@@ -101,7 +101,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .icon-button { border: 0; background: transparent; width: 36px; height: 36px; padding: 0; display: inline-grid; place-items: center; border-radius: 50%; color: var(--muted); transition: background .15s, color .15s; flex-shrink: 0; }
 .icon-button:not(:disabled):hover { background: rgba(var(--fg-rgb), .07); color: var(--text); }
 
-.text-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 500; padding: 6px 8px; }
+.text-button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 99px; background: transparent; color: var(--muted); font-size: 13.5px; font-weight: 500; padding: 6px 8px; }
 .text-button:hover { color: var(--lime-text); }
 
 .count-pill { font-family: var(--font-body); font-size: 12px; font-weight: 600; background: var(--surface-3); color: var(--text-2); padding: 2px 8px; border-radius: 99px; margin-left: 6px; vertical-align: 2px; }
@@ -278,8 +278,8 @@ div.guest-name { padding: 10px 12px; cursor: default; }
 .guest-name input { flex: 1; min-width: 0; height: 34px; padding: 0 10px; border: 1px solid transparent; border-radius: 8px; background: var(--bg); color: var(--text); font-size: 14.5px; font-weight: 600; }
 .guest-name input:focus { outline: 0; border-color: var(--lime-line); }
 
-.guest-tabs { position: sticky; top: 8px; z-index: 10; display: flex; background: rgba(24, 24, 21, .9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); padding: 4px; border-radius: 12px; margin-bottom: 18px; }
-.guest-tabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border: 0; background: transparent; color: var(--muted); font-size: 14.5px; font-weight: 600; border-radius: 9px; transition: .15s; }
+.guest-tabs { position: sticky; top: 8px; z-index: 10; display: flex; background: rgba(24, 24, 21, .9); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); padding: 4px; border-radius: 99px; margin-bottom: 18px; }
+.guest-tabs button { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; border: 0; background: transparent; color: var(--muted); font-size: 14.5px; font-weight: 600; border-radius: 99px; transition: .15s; }
 .guest-tabs button.active { background: var(--surface-3); color: var(--text); box-shadow: 0 2px 8px rgba(0, 0, 0, .25); }
 .guest-tabs button span { font-size: 12px; background: var(--surface-3); padding: 1px 8px; border-radius: 99px; }
 .guest-tabs button.active span { background: var(--lime); color: var(--lime-ink); }
@@ -421,36 +421,13 @@ a.button { text-decoration: none; }
 .app-backdrop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .app-backdrop.blurred img { inset: -8%; width: 116%; height: 116%; filter: blur(70px) saturate(1.4); }
 .app-backdrop.has-image::after { content: ''; position: absolute; inset: 0; background: rgba(8, 8, 7, var(--shade, .5)); transition: background .6s; }
-/* Sur un fond personnalisé, les textes secondaires s’éclaircissent pour rester lisibles sur toutes les teintes. */ :root[data-custom-bg], :root[data-glass], .tv-view { --text-2: #dedcd2; --muted: #c4c3b9; --faint: #b0afa5; }
+/* Sur un fond personnalisé, les textes secondaires s’éclaircissent pour rester lisibles sur toutes les teintes. */ :root[data-custom-bg], .tv-view { --text-2: #dedcd2; --muted: #c4c3b9; --faint: #b0afa5; }
 
 :root[data-custom-bg] body { background: transparent; }
 
 input[type="range"] { width: 100%; accent-color: var(--lime); }
 
-/* ───────────── Liquid Glass ───────────── */ :root[data-glass] { --glass-fill: linear-gradient(135deg, rgba(var(--fg-rgb), .11), rgba(var(--fg-rgb), .02) 55%, rgba(var(--fg-rgb), .06)), rgba(14, 14, 12, .48); --glass-fill-solid: linear-gradient(135deg, rgba(var(--fg-rgb), .11), rgba(var(--fg-rgb), .02) 55%, rgba(var(--fg-rgb), .06)), rgba(14, 14, 12, .68); --glass-edge: rgba(var(--fg-rgb), .2); --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .32), inset 0 -1px 0 rgba(255, 255, 255, .06), inset 1px 0 0 rgba(255, 255, 255, .08), 0 18px 50px rgba(0, 0, 0, .3); }
 
- :root[data-glass] .join-requests, :root[data-glass] .modal, :root[data-glass] .empty-state, :root[data-glass] .home-panel, :root[data-glass] .tv-exit, :root[data-glass] .tv-alerts .join-requests, :root[data-glass] .guest-now, :root[data-glass] .join-card {
-  background: var(--glass-fill); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow);
-  backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%);
-}
- :root[data-glass] .modal { border-radius: 26px; }
-
-:root[data-glass] .button.secondary, :root[data-glass] .search-input, :root[data-glass] .icon-button.skip-button {
-  background: linear-gradient(rgba(var(--fg-rgb), .08), rgba(var(--fg-rgb), .08)), rgba(var(--panel-rgb), .3); border-color: rgba(var(--fg-rgb), .18); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22);
-  backdrop-filter: blur(16px) saturate(170%); -webkit-backdrop-filter: blur(16px) saturate(170%);
-}
-:root[data-glass] .button { border-radius: 99px; }
-
-
-:root[data-glass] .queue-item:hover { background: rgba(var(--fg-rgb), .06); }
-:root[data-glass] .modal-backdrop { background: rgba(0, 0, 0, .58); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
-/* Fenêtres (QR code, recherche…) : le reflet du verre reste, mais le fond est presque opaque pour bien lire. */ :root[data-glass] .modal { background: linear-gradient(135deg, rgba(var(--fg-rgb), .1), rgba(var(--fg-rgb), .02) 55%, rgba(var(--fg-rgb), .06)), rgba(var(--panel-rgb), .88); }
-
-:root[data-glass] .toast { background: rgba(28, 28, 26, .62); color: var(--text); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%); }
-:root[data-glass] .toast > span { background: rgba(var(--accent-rgb), .22); color: var(--lime-text); }
-:root[data-glass] .toast.error > span { background: var(--danger-soft); color: var(--danger); }
-:root[data-glass] .toast button { color: var(--text-2); }
-:root[data-glass] .toast button:hover { background: rgba(var(--fg-rgb), .1); }
 
 /* Barre de progression (tableau de bord et mode TV) */ .progress { --rail: 4px; display: grid; grid-template-columns: 3.2em minmax(0, 1fr) 3.2em; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
 .progress-time:first-child { text-align: right; }
@@ -543,22 +520,16 @@ span.tv-cover { display: grid; place-items: center; background: var(--surface-2)
 .admin-card .button { flex: none; min-height: 36px; padding: 0 14px; }
 @media (max-width: 480px) { .admin-card { flex-wrap: wrap; } .admin-card .button { width: 100%; } }
 
-:root[data-glass] .admin-card { background: var(--glass-fill); border: 1px solid var(--glass-edge); box-shadow: var(--glass-shadow); backdrop-filter: blur(28px) saturate(185%); -webkit-backdrop-filter: blur(28px) saturate(185%); }
-
 /* Admin qui a la main : commandes de lecture sur sa page d’invité */ .guest-controls { display: flex; justify-content: center; align-items: center; gap: 14px; margin: -2px 0 16px; }
 .guest-controls .play-button { width: 56px; height: 56px; }
 .guest-controls .skip-button { width: 44px; height: 44px; }
 
 /* Fenêtre de l’app cachée ou réduite : plus aucune animation */ :root[data-window-hidden] *, :root[data-window-hidden] *::before, :root[data-window-hidden] *::after { animation-play-state: paused !important; }
 
-/* Performances du verre : un flou « en direct » est recalculé à chaque fois que quelque chose bouge dans sa zone.
-   La carte « En lecture » contient l’égaliseur et la barre de progression : elle garde le reflet et la teinte du verre,
-   sans flou en direct (le fond derrière elle est déjà flouté). Les fenêtres, presque opaques, n’ont pas besoin de flou. */  :root[data-glass] .guest-now { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--glass-fill-solid); }
-:root[data-glass] .modal { backdrop-filter: none; -webkit-backdrop-filter: none; }
 /* Une fenêtre ouverte : plus rien ne bouge dessous, pour que son fond flouté ne soit pas recalculé en continu. */ body.modal-open .equalizer i { animation-play-state: paused; }
 
 /* Mode TV : menu du clic droit (masquer le code QR) */ .tv-menu { position: fixed; z-index: 60; min-width: 220px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 10px; background: rgba(20, 20, 18, .94); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
-.tv-menu button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 7px; background: transparent; color: var(--text); font-size: 13.5px; text-align: left; }
+.tv-menu button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 12px; border: 0; border-radius: 99px; background: transparent; color: var(--text); font-size: 13.5px; text-align: left; }
 .tv-menu button:hover { background: rgba(var(--fg-rgb), .1); }
 
 /* App iPhone : pas de zoom dans les champs, appui immédiat, encoche et barre d’accueil respectées */ html { -webkit-text-size-adjust: 100%; }
@@ -570,11 +541,6 @@ body { padding-top: env(safe-area-inset-top); }
 /* iPhone : la barre native remplace la barre web ; verre plus proche d’iOS 26 */ @media (max-width: 680px) {
 
   :root[data-native-tabs] .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
-}
-:root[data-native-tabs][data-glass] {
-  --glass-fill: linear-gradient(145deg, rgba(var(--fg-rgb), .16), rgba(var(--fg-rgb), .03) 48%, rgba(var(--fg-rgb), .09)), rgba(16, 16, 14, .38);
-  --glass-edge: rgba(var(--fg-rgb), .22);
-  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 0 -1px 0 rgba(255, 255, 255, .06), 0 14px 40px rgba(0, 0, 0, .3);
 }
 
 /* Mode TV sur téléphone : deux pages à faire glisser */ .tv-pager { position: absolute; inset: 0; z-index: 1; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior: contain; }
@@ -640,7 +606,6 @@ body { padding-top: env(safe-area-inset-top); }
 .queue-list .queue-item.touch-settling { position: relative; z-index: 5; border-radius: 16px; transition: transform .2s cubic-bezier(.32, .72, 0, 1), background .2s ease, box-shadow .2s ease; background: transparent; box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
 /* Les lignes restent sur leur propre couche : le texte ne change pas de rendu au moment de les déposer. */ :root[data-native-tabs] .queue-list.is-host .queue-item { will-change: transform; }
 
-:root[data-native-tabs][data-glass] { --glass-fill: linear-gradient(145deg, rgba(var(--fg-rgb), .15), rgba(var(--fg-rgb), .04) 48%, rgba(var(--fg-rgb), .09)), rgba(22, 22, 20, .62); }
 :root[data-native-tabs] .modal-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .68); }
 /* Réponse immédiate au doigt, et pages qui apparaissent en douceur */ * { -webkit-tap-highlight-color: transparent; }
 :root[data-native-tabs] button { transition: transform .12s ease, background .15s, color .15s, opacity .15s; }
@@ -723,7 +688,6 @@ html { touch-action: manipulation; }
 .progress .progress-tip { display: none; }
 .tv-progress { font-size: 12px; }
 
-
 /* Fonds tirés de la pochette : l’ancien reste dessous pendant que le nouveau apparaît, sans trou ni saut */
 @keyframes fade-only { from { opacity: 0; } }
 .now-backdrop { transition: opacity .6s ease; }
@@ -744,7 +708,6 @@ html { touch-action: manipulation; }
   .modal { will-change: transform; overscroll-behavior: contain; }
 }
 
-
 .tv-airplay { position: absolute; top: calc(env(safe-area-inset-top) - 8px); right: 14px; z-index: 4; display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid rgba(var(--fg-rgb), .22); border-radius: 99px; background: rgba(20, 20, 18, .45); color: #fff; -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 
 /* Écran de la TV (recopie depuis l’iPhone) : seulement l’affichage, sans boutons */ .tv-display .tv-exit, .tv-display .tv-player-buttons, .tv-display .tv-grabber, .tv-display .tv-page-nav, .tv-display .tv-menu { display: none !important; }
@@ -760,7 +723,7 @@ html { touch-action: manipulation; }
 .sheet-scroller { display: contents; }
 .sheet-gap, .sheet-dim { display: none; }
 @media (max-width: 680px) {
-  .modal-backdrop, :root[data-glass] .modal-backdrop, :root[data-native-tabs] .modal-backdrop { display: block; background: transparent; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .modal-backdrop, :root[data-native-tabs] .modal-backdrop{ display: block; background: transparent; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .sheet-dim { display: block; position: absolute; inset: 0; background: rgba(0, 0, 0, .68); pointer-events: none; }
   .sheet-scroller { display: block; position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .sheet-scroller::-webkit-scrollbar { display: none; }
@@ -795,7 +758,6 @@ html { touch-action: manipulation; }
 .tv-sheet .tv-view .tv-page-nav, .tv-sheet .tv-view .tv-airplay { background: rgba(28, 28, 26, .72); }
 .tv-sheet .tv-view .tv-player-buttons .icon-button.tv-play { background: rgba(var(--fg-rgb), .16); }
 
-
 /* ───────────── Thème clair (fond Blanc, ou Automatique quand le système est en clair) ───────────── */
 :root[data-theme="light"] {
   color-scheme: light;
@@ -816,9 +778,6 @@ html { touch-action: manipulation; }
   --text: #f4f2eb; --text-2: #dedcd2; --muted: #c4c3b9; --faint: #b0afa5;
   --danger: #ff8278; --danger-soft: rgba(255, 130, 120, .1);
   --fg-rgb: 255, 255, 255; --panel-rgb: 12, 12, 11;
-  --glass-fill: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .62);
-  --glass-fill-solid: linear-gradient(135deg, rgba(255, 255, 255, .11), rgba(255, 255, 255, .02) 55%, rgba(255, 255, 255, .06)), rgba(14, 14, 12, .78);
-  --glass-edge: rgba(255, 255, 255, .2);
   --accent-rgb: var(--dark-accent-rgb); --lime: var(--dark-lime); --lime-hover: var(--dark-lime-hover); --lime-ink: var(--dark-lime-ink); --lime-text: var(--dark-lime-text);
   --lime-soft: rgba(var(--dark-accent-rgb), .1); --lime-line: rgba(var(--dark-accent-rgb), .28);
   color: var(--text);
@@ -839,16 +798,6 @@ html { touch-action: manipulation; }
 :root[data-theme="light"] .danger-button:hover { background: #b3261e; }
 /* Accents : pastilles et bord du bouton principal visibles même pour Blanc sur fond clair. */
 :root[data-theme="light"] .button.primary { box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .06); }
-/* Liquid Glass en clair : verre dépoli blanc, bords clairs et ombre douce. */
-:root[data-theme="light"][data-glass] {
-  --glass-fill: linear-gradient(135deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .45) 55%, rgba(255, 255, 255, .6)), rgba(255, 255, 255, .35);
-  --glass-fill-solid: linear-gradient(135deg, rgba(255, 255, 255, .85), rgba(255, 255, 255, .7) 55%, rgba(255, 255, 255, .8)), rgba(255, 255, 255, .6);
-  --glass-edge: rgba(0, 0, 0, .08);
-  --glass-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(0, 0, 0, .04), 0 18px 50px rgba(0, 0, 0, .1);
-}
-:root[data-theme="light"][data-glass] .modal { background: rgba(255, 255, 255, .86); }
-:root[data-theme="light"][data-glass] .toast { background: rgba(28, 28, 25, .82); color: #f4f2eb; }
-:root[data-theme="light"][data-glass] .modal-backdrop { background: rgba(30, 30, 26, .3); }
 
 /* « Ouvrir dans l’app Sono » (iPhone, page d’un invité) */ .open-in-app { display: inline-flex; align-items: center; justify-content: center; gap: 7px; width: 100%; margin-top: 14px; font-size: 13.5px; font-weight: 600; color: var(--lime-text); text-decoration: none; }
 

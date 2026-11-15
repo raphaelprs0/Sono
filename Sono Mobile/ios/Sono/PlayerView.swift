@@ -156,7 +156,7 @@ struct PlayerView: View {
             }
         }
         .padding(4)
-        .glassCard(radius: 24)
+        .sonoCard(radius: 24)
     }
 }
 
@@ -281,8 +281,8 @@ struct QRSheet: View {
                         Spacer()
                         Image(systemName: "doc.on.doc").foregroundStyle(Color.sonoText)
                     }
-                    .padding(.horizontal, 16).padding(.vertical, 14)
-                    .background(RoundedRectangle(cornerRadius: 16, style: .continuous).fill(Color.white.opacity(0.08)))
+                    .padding(.horizontal, 18).padding(.vertical, 14)
+                    .background(Capsule().fill(Color.white.opacity(0.08)))
                 }
                 .accessibilityLabel(L("Copier le lien"))
                 Toggle(isOn: Binding(get: { store.carInvite }, set: { store.setCarInvite($0) })) {

@@ -28,8 +28,8 @@ const defaultSession = { name: tx("Session Sono"), code: 'SONO-4821', host: 'Hô
 // ───────────── Apparence (réglages de l’appareil hôte, gardés dans le navigateur) ─────────────
 const APPEARANCE_KEY = 'sono-appearance';
 const DEFAULT_APPEARANCE = {
-  // Thème par défaut : fond noir et accent citron, sans Liquid Glass.
-  background: 'black', accent: '#d7f75b', glass: false,
+  // Thème par défaut : fond noir et accent citron.
+  background: 'black', accent: '#d7f75b',
   widgets: { nowPlaying: true, progress: true, queue: true, fallback: true, invite: true, participants: true, stats: false, activity: false },
   // Mode TV : chaque widget est placé dans une zone d’une grille 3 × 3, ou masqué.
   tvPlacement: { cover: 'left', info: 'center', player: 'center', next: 'center', qr: 'right' },
@@ -716,9 +716,8 @@ function App() {
     const theme = look.background === 'white' ? 'light' : 'dark';
     document.documentElement.dataset.theme = theme;
     applyAccent(look.accent, theme);
-    document.documentElement.toggleAttribute('data-glass', look.glass);
     document.documentElement.toggleAttribute('data-custom-bg', look.background !== 'default');
-  }, [look.accent, look.glass, look.background]);
+  }, [look.accent, look.background]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const socket = socketRef.current;

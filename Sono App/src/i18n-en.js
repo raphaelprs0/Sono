@@ -303,7 +303,6 @@ export default {
 "{0} — glissez pour déplacer":"{0} — drag to move",
 "RÉGLAGES":"SETTINGS",
 "Ces réglages s’appliquent à cet appareil : tableau de bord et mode TV. Les invités gardent l’affichage habituel.":"These settings apply to this device: dashboard and TV mode. Guests keep the usual display.",
-"Panneaux translucides façon verre, qui laissent voir l’arrière-plan. Plus beau avec un fond coloré ou une image.":"Translucent glass-like panels that let the background show through. Looks best with a colored background or an image.",
 "Arrière-plan":"Background",
 "Pochette en cours":"Current cover",
 "Couleur d’accent":"Accent color",

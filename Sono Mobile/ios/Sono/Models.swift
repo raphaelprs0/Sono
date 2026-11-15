@@ -83,7 +83,6 @@ struct FallbackQueue: Codable, Hashable {
 struct SessionTheme: Codable, Hashable {
     var background: String?
     var accent: String?
-    var glass: Bool?
     var lang: String?
 }
 

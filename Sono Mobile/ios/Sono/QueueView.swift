@@ -87,7 +87,7 @@ struct QueueView: View {
             .frame(maxWidth: .infinity).padding(.vertical, 26)
         }
         .buttonStyle(StillButtonStyle())
-        .glassCard(radius: 20)
+        .sonoCard(radius: 20)
     }
 
     private func groupLabel(_ title: String, count: Int) -> some View {
@@ -255,7 +255,7 @@ struct NowPlayingCard: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
         }
-        .glassCard(radius: 28, solid: true)
+        .sonoCard(radius: 28, solid: true)
         // Carte du titre en cours : toujours sombre (comme sur l’ordinateur), même sur le thème clair.
         .environment(\.colorScheme, .dark)
         .contentShape(Rectangle())
@@ -373,7 +373,7 @@ struct FallbackRow: View {
                 }
             }
             .padding(12)
-            .glassCard(radius: 18)
+            .sonoCard(radius: 18)
         } else {
             Button(action: choose) {
                 Label(L("Ajouter une musique de fond"), systemImage: "plus").font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoMuted)
@@ -395,7 +395,7 @@ struct SourceNotice: View {
         }
         .padding(15)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard()
+        .sonoCard()
     }
 }
 
@@ -418,7 +418,7 @@ struct JoinRequestsBanner: View {
             }
         }
         .padding(16)
-        .glassCard(radius: 20)
+        .sonoCard(radius: 20)
         .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
@@ -444,7 +444,7 @@ struct JoinNoticesBanner: View {
             }
         }
         .padding(14)
-        .glassCard(radius: 18)
+        .sonoCard(radius: 18)
     }
 }
 

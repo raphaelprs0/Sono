@@ -352,10 +352,6 @@ function AppearanceView({ appearance, onChange, onReset, onOpenTv, onSection }) 
       </div>
     </div>
     <div className="settings-card">
-      <h2>Style</h2>
-      <SwitchRow title="Liquid Glass" description={tx("Panneaux translucides façon verre, qui laissent voir l’arrière-plan. Plus beau avec un fond coloré ou une image.")} checked={appearance.glass} onChange={(glass) => onChange({ glass })} />
-    </div>
-    <div className="settings-card">
       <h2>{tx("Arrière-plan")}</h2>
       <div className="swatches">
         {BACKGROUNDS.map((item) => <button key={item.id} type="button" title={item.title || item.label} className={appearance.background === item.id ? 'swatch active' : 'swatch'} aria-pressed={appearance.background === item.id} onClick={() => onChange({ background: item.id })}><span className="swatch-preview" style={{ background: item.css }} />{item.label}</button>)}
@@ -943,7 +939,7 @@ function CacheCard({ notify }) {
     <p className="field-help">{tx("Efface tout ce que l’app garde en cache (pochettes, pages, anciennes données). La session en cours est fermée et Sono se ferme ; vos comptes connectés sont conservés.")}</p>
     <p className="cache-size">{size === null ? tx("Calcul de la taille…") : tx("Taille du cache : {0}", formatBytes(size))}</p>
     <div className="form-actions"><button type="button" className="button secondary" onClick={() => { measure(); setConfirming(true); }}><Trash2 size={15} />{tx("Vider le cache")}</button></div>
-    {/* Attachée à la page : dans la carte (effet verre), elle serait centrée sur la carte et non sur la fenêtre. */}
+    {/* Attachée à la page : dans la carte, elle serait centrée sur la carte et non sur la fenêtre. */}
     {confirming && createPortal(<Modal onClose={() => !busy && setConfirming(false)} className="confirm-modal">
       <div className="modal-symbol danger"><Trash2 size={22} /></div>
       <h2>{tx("Vider le cache ?")}</h2>

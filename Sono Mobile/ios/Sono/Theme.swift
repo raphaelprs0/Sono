@@ -3,12 +3,11 @@ import CoreImage.CIFilterBuiltins
 import ImageIO
 import SwiftUI
 
-// MARK: Apparence (gardée sur ce téléphone, envoyée aux invités pour le fond, l’accent et le verre)
+// MARK: Apparence (gardée sur ce téléphone, envoyée aux invités pour le fond et l’accent)
 
 struct Appearance: Codable, Equatable {
     var background = "black"
     var accent = "#d7f75b"
-    var glass = false
     var tvBackground = "cover"
     var tvShowAddedBy = true
     var tvShowQrText = true
@@ -19,7 +18,6 @@ struct Appearance: Codable, Equatable {
         let base = Appearance()
         background = (try? c.decode(String.self, forKey: .background)) ?? base.background
         accent = (try? c.decode(String.self, forKey: .accent)) ?? base.accent
-        glass = (try? c.decode(Bool.self, forKey: .glass)) ?? base.glass
         tvBackground = (try? c.decode(String.self, forKey: .tvBackground)) ?? base.tvBackground
         tvShowAddedBy = (try? c.decode(Bool.self, forKey: .tvShowAddedBy)) ?? base.tvShowAddedBy
         tvShowQrText = (try? c.decode(Bool.self, forKey: .tvShowQrText)) ?? base.tvShowQrText
@@ -107,7 +105,6 @@ extension Color {
     static let sonoLine = themed(dark: UIColor(hex: "#2a2a25"), light: UIColor(hex: "#e2e2da"))
     static let sonoLineStrong = themed(dark: UIColor(hex: "#3a3a33"), light: UIColor(hex: "#d4d4cb"))
     static let sonoGlass = themed(dark: UIColor(red: 22 / 255, green: 22 / 255, blue: 20 / 255, alpha: 0.62), light: UIColor.white.withAlphaComponent(0.6))
-    static let sonoGlassSolid = themed(dark: UIColor(red: 14 / 255, green: 14 / 255, blue: 12 / 255, alpha: 0.68), light: UIColor.white.withAlphaComponent(0.78))
     static let sonoGlassEdge = themed(dark: UIColor.white.withAlphaComponent(0.24), light: UIColor.black.withAlphaComponent(0.08))
     static let sonoGlassHighlight = themed(dark: UIColor.white.withAlphaComponent(0.42), light: UIColor.white.withAlphaComponent(0.95))
 }
@@ -180,41 +177,22 @@ struct CoverView: View {
     }
 }
 
-// MARK: Cartes en verre (même rendu que l’ancienne interface : teinte sombre translucide, reflet en diagonale, liseré clair)
+// MARK: Cartes (surface sombre unie et liseré fin ; les boutons, eux, gardent leur effet de verre)
 
-/// Dégradé CSS « 145deg » : de haut-gauche vers bas-droite, à peu près.
-private let glassSheen = LinearGradient(stops: [
-    .init(color: .white.opacity(0.15), location: 0), .init(color: .white.opacity(0.04), location: 0.48), .init(color: .white.opacity(0.09), location: 1),
-], startPoint: UnitPoint(x: 0.21, y: 0), endPoint: UnitPoint(x: 0.79, y: 1))
-
-/// Liseré du verre, plus marqué en haut (reflet de la lumière) ; sombre et discret sur le thème clair.
-private let glassEdge = LinearGradient(stops: [
-    .init(color: .sonoGlassHighlight, location: 0), .init(color: .sonoGlassEdge, location: 0.12), .init(color: .sonoGlassEdge, location: 0.9), .init(color: .sonoGlassEdge, location: 1),
-], startPoint: .top, endPoint: .bottom)
-
-struct GlassCard: ViewModifier {
-    @EnvironmentObject private var store: Store
+struct SonoCard: ViewModifier {
     var radius: CGFloat = 24
-    /// Fond plus opaque (lecteur) : « glass-fill-solid ».
+    /// Fond plus marqué (lecteur).
     var solid = false
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
-        if store.appearance.glass {
-            content
-                .background(shape.fill(solid ? Color.sonoGlassSolid : Color.sonoGlass).overlay(shape.fill(glassSheen)))
-                .overlay(shape.strokeBorder(glassEdge, lineWidth: 1))
-                // Ombre douce : une image calculée une fois (aucun flou recalculé en défilant ou en glissant).
-                .background(SoftShadow(radius: radius, blur: 20, opacity: 0.3).offset(y: 14))
-        } else {
-            content
-                .background(shape.fill(solid ? AnyShapeStyle(LinearGradient(colors: [Color.sonoSurfaceTop, Color.sonoSurfaceBottom], startPoint: .topLeading, endPoint: .bottomTrailing)) : AnyShapeStyle(Color.sonoSurface)))
-                .overlay(shape.strokeBorder(solid ? Color.sonoLineStrong : Color.sonoLine, lineWidth: 1))
-        }
+        content
+            .background(shape.fill(solid ? AnyShapeStyle(LinearGradient(colors: [Color.sonoSurfaceTop, Color.sonoSurfaceBottom], startPoint: .topLeading, endPoint: .bottomTrailing)) : AnyShapeStyle(Color.sonoSurface)))
+            .overlay(shape.strokeBorder(solid ? Color.sonoLineStrong : Color.sonoLine, lineWidth: 1))
     }
 }
 
 extension View {
-    func glassCard(radius: CGFloat = 24, solid: Bool = false) -> some View { modifier(GlassCard(radius: radius, solid: solid)) }
+    func sonoCard(radius: CGFloat = 24, solid: Bool = false) -> some View { modifier(SonoCard(radius: radius, solid: solid)) }
 }
 
 /// Bouton principal, aux couleurs de l’accent (reflet clair en haut, comme avant).
