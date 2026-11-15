@@ -104,9 +104,6 @@ extension Color {
     static let sonoSurfaceBottom = themed(dark: UIColor(hex: "#191916"), light: UIColor(hex: "#f7f7f3"))
     static let sonoLine = themed(dark: UIColor(hex: "#2a2a25"), light: UIColor(hex: "#e2e2da"))
     static let sonoLineStrong = themed(dark: UIColor(hex: "#3a3a33"), light: UIColor(hex: "#d4d4cb"))
-    static let sonoGlass = themed(dark: UIColor(red: 22 / 255, green: 22 / 255, blue: 20 / 255, alpha: 0.62), light: UIColor.white.withAlphaComponent(0.6))
-    static let sonoGlassEdge = themed(dark: UIColor.white.withAlphaComponent(0.24), light: UIColor.black.withAlphaComponent(0.08))
-    static let sonoGlassHighlight = themed(dark: UIColor.white.withAlphaComponent(0.42), light: UIColor.white.withAlphaComponent(0.95))
 }
 
 // MARK: Pochettes : téléchargées une fois, réduites à la taille affichée (peu de mémoire), gardées en cache
@@ -195,7 +192,7 @@ extension View {
     func sonoCard(radius: CGFloat = 24, solid: Bool = false) -> some View { modifier(SonoCard(radius: radius, solid: solid)) }
 }
 
-/// Bouton principal, aux couleurs de l’accent (reflet clair en haut, comme avant).
+/// Bouton principal, aux couleurs de l’accent (couleur unie, comme sur l’ordinateur).
 struct AccentButtonStyle: ButtonStyle {
     @EnvironmentObject private var store: Store
     var danger = false
@@ -210,7 +207,6 @@ struct AccentButtonStyle: ButtonStyle {
             .frame(minHeight: 42)
             .frame(maxWidth: wide ? .infinity : nil)
             .background(Capsule().fill(danger ? Color.sonoDanger : store.appearance.accentColor))
-            .overlay(Capsule().strokeBorder(LinearGradient(colors: [.white.opacity(0.5), .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.25)), lineWidth: 1))
     }
 }
 
@@ -219,7 +215,7 @@ struct StillButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View { configuration.label.contentShape(Rectangle()) }
 }
 
-/// Bouton secondaire en verre.
+/// Bouton secondaire : surface unie et liseré fin, comme sur l’ordinateur.
 struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -228,8 +224,8 @@ struct SecondaryButtonStyle: ButtonStyle {
             .lineLimit(1)
             .padding(.horizontal, 14)
             .frame(minHeight: 36)
-            .background(Capsule().fill(Color.sonoGlass).overlay(Capsule().fill(Color.sonoFg.opacity(0.06))))
-            .overlay(Capsule().strokeBorder(LinearGradient(colors: [.sonoGlassHighlight, .sonoGlassEdge], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.3)), lineWidth: 1))
+            .background(Capsule().fill(Color.sonoSurfaceTop))
+            .overlay(Capsule().strokeBorder(Color.sonoLineStrong, lineWidth: 1))
     }
 }
 

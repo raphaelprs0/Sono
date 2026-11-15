@@ -295,8 +295,8 @@ struct Controls: View {
             Image(systemName: symbol).font(.system(size: side * 0.36, weight: .semibold))
                 .foregroundStyle(Color.sonoText.opacity(enabled ? 0.9 : 0.3))
                 .frame(width: side, height: side)
-                .background(Circle().fill(Color(red: 14 / 255, green: 14 / 255, blue: 12 / 255).opacity(0.3)).overlay(Circle().fill(Color.sonoFg.opacity(0.08))))
-                .overlay(Circle().strokeBorder(LinearGradient(colors: [Color.sonoFg.opacity(0.3), Color.sonoFg.opacity(0.15)], startPoint: .top, endPoint: .bottom), lineWidth: 1))
+                .background(Circle().fill(Color.sonoFg.opacity(0.08)))
+                .overlay(Circle().strokeBorder(Color.sonoFg.opacity(0.15), lineWidth: 1))
                 .opacity(enabled ? 1 : 0.6)
         }
         .buttonStyle(PressStyle())
