@@ -67,15 +67,24 @@ function ActivityView({ activity, participants, guests, queue, onRemove, onToggl
   </section>;
 }
 
-function IntegrationsView({ notify, hostToken, sessionCode, source, onSourceChange, onAppleLinked }) {
+// Dernier état connu des comptes, affiché tout de suite à l’ouverture de « Connexions » ; les vérifications
+// (Apple Music et Deezer, en parallèle) le confirment ou le corrigent juste après.
+const ACCOUNTS_KEY = 'sono-accounts';
+const readAccounts = () => { try { return JSON.parse(readStorage(ACCOUNTS_KEY, 'null')) || {}; } catch { return {}; } };
+
+function IntegrationsView({ notify, hostToken, sessionCode, source, apps = [], onSourceChange, onAppleLinked }) {
   const [open, setOpen] = useState(null);
   const [musicKitReady, setMusicKitReady] = useState(false);
   const [deezerMethod, setDeezerMethod] = useState('browser');
   const [deezerArl, setDeezerArl] = useState('');
   const [deezerUrl, setDeezerUrl] = useState(readStorage('sono-deezer-url', 'http://127.0.0.1:7654'));
   const [deezerToken, setDeezerToken] = useState('');
-  const [connected, setConnected] = useState({ 'Apple Music': false, Deezer: false });
-  const [proofs, setProofs] = useState({});
+  const [connected, setConnected] = useState(() => {
+    const known = readAccounts().connected || {};
+    return { 'Apple Music': Boolean(known['Apple Music'] ?? apps.includes('Apple Music')), Deezer: Boolean(known.Deezer ?? apps.includes('Deezer')) };
+  });
+  const [proofs, setProofs] = useState(() => readAccounts().proofs || {});
+  useEffect(() => { writeStorage(ACCOUNTS_KEY, JSON.stringify({ connected, proofs })); }, [connected, proofs]);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(null);
 
@@ -98,7 +107,7 @@ function IntegrationsView({ notify, hostToken, sessionCode, source, onSourceChan
 
 
   useEffect(() => {
-    const authenticate = async () => {
+    const checkApple = async () => {
       try {
         const music = await getAppleMusic();
         onAppleLinked(music.isAuthorized);
@@ -112,7 +121,9 @@ function IntegrationsView({ notify, hostToken, sessionCode, source, onSourceChan
         setConnected((state) => ({ ...state, 'Apple Music': false }));
         showError('Apple Music', tx("Compte Apple Music indisponible : {0}", error.message), false);
       }
-      // Le serveur garde la connexion Deezer : on lui demande directement son état.
+    };
+    // Le serveur garde la connexion Deezer : on lui demande directement son état, sans attendre Apple Music.
+    const checkDeezer = async () => {
       if (hostToken) {
         try {
           const data = await apiRequest(`/api/integrations/opendeezer/status?code=${encodeURIComponent(sessionCode)}`, { headers: { 'x-host-token': hostToken } });
@@ -125,7 +136,8 @@ function IntegrationsView({ notify, hostToken, sessionCode, source, onSourceChan
         }
       }
     };
-    authenticate();
+    checkApple();
+    checkDeezer();
   }, []);
 
   const connectApplePlayback = async () => {

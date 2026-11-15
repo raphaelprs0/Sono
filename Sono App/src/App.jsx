@@ -1471,7 +1471,7 @@ function App() {
         </section>}
       </div>}
       {view === 'activity' && <ActivityView activity={activity} participants={session.participants || []} guests={session.guests} queue={queue} onRemove={(person) => setModal({ type: 'kick', person })} onToggleAdmin={(person) => (person.admin ? setAdmin(person, false) : setModal({ type: 'admin', person }))} />}
-      {view === 'integrations' && <IntegrationsView notify={notify} hostToken={hostToken} sessionCode={session.code} source={session.source} onSourceChange={setSource} onAppleLinked={setAppleLinked} />}
+      {view === 'integrations' && <IntegrationsView notify={notify} hostToken={hostToken} sessionCode={session.code} source={session.source} apps={session.apps || []} onSourceChange={setSource} onAppleLinked={setAppleLinked} />}
       {view === 'appearance' && <AppearanceView appearance={appearance} onChange={updateAppearance} onReset={() => setAppearance(DEFAULT_APPEARANCE)} onOpenTv={() => setTv({ tools: true, origin: ['.tv-preview'] })} onSection={setView} />}
       {view === 'settings' && <SettingsView session={session} hostToken={hostToken} notify={notify} inviteUrl={inviteUrl} onCopy={copyInvite} onSave={saveSettings} onDelete={() => setModal('delete')} onSection={setView} />}
     </main>
