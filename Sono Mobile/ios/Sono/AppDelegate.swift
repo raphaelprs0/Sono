@@ -7,8 +7,21 @@ import WebKit
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        UNUserNotificationCenter.current().delegate = self
+        let center = UNUserNotificationCenter.current()
+        center.delegate = self
+        center.setNotificationCategories([UNNotificationCategory(identifier: "sono-request", actions: [
+            UNNotificationAction(identifier: "accept", title: L("Accepter")),
+            UNNotificationAction(identifier: "refuse", title: L("Refuser"), options: .destructive),
+        ], intentIdentifiers: [])])
         return true
+    }
+
+    /// Accepter ou Refuser depuis la notification d’une demande.
+    @MainActor
+    func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
+        let info = response.notification.request.content.userInfo
+        guard ["accept", "refuse"].contains(response.actionIdentifier), let id = info["id"] as? String else { return }
+        await SonoApp.store.answer(JoinRequest(id: id, name: info["name"] as? String ?? ""), accept: response.actionIdentifier == "accept")
     }
 
     /// Sono n’envoie ses notifications qu’en arrière-plan : iOS peut toujours les afficher.

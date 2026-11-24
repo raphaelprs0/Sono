@@ -275,7 +275,7 @@ final class Store: ObservableObject {
         if let known = knownRequests {
             let fresh = requests.filter { !known.contains($0.id) }
             let message = fresh.count == 1 ? L("{0} demande à rejoindre la session.", fresh[0].name) : L("{0} personnes demandent à rejoindre la session.", fresh.count)
-            if !fresh.isEmpty { notify(message); systemNotify(message) }
+            if !fresh.isEmpty { notify(message); systemNotify(message, request: fresh.count == 1 ? fresh[0] : nil) }
             if !fresh.isEmpty { UINotificationFeedbackGenerator().notificationOccurred(.success) }
         }
         knownRequests = ids
@@ -307,13 +307,15 @@ final class Store: ObservableObject {
     }
 
     /// Notification iOS, seulement quand l’app n’est pas affichée et que l’hôte ne les a pas coupées.
-    private func systemNotify(_ message: String) {
+    /// Une demande seule porte les boutons Accepter et Refuser (appui long sur la notification).
+    private func systemNotify(_ message: String, request: JoinRequest? = nil) {
         guard !isActive, notificationsOn else { return }
         let content = UNMutableNotificationContent()
         content.title = session.name
         content.body = message
         content.sound = .default
-        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+        if let request { content.categoryIdentifier = "sono-request"; content.userInfo = ["id": request.id, "name": request.name] }
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request?.id ?? UUID().uuidString, content: content, trigger: nil))
     }
 
     /// Active ou coupe les notifications ; iOS demande l’autorisation la première fois.
@@ -645,13 +647,15 @@ final class Store: ObservableObject {
 
     // MARK: Invités
 
-    func decide(_ request: JoinRequest, accept: Bool) {
-        Task {
-            do {
-                try await perform("/api/sessions/\(session.code)/admissions", body: ["id": request.id, "decision": accept ? "accept" : "refuse"])
-                notify(accept ? L("{0} a rejoint la session.", request.name) : L("La demande de {0} a été refusée.", request.name))
-            } catch { notify(error.localizedDescription, error: true) }
-        }
+    func decide(_ request: JoinRequest, accept: Bool) { Task { await answer(request, accept: accept) } }
+
+    /// Aussi appelé depuis la notification (appui long : Accepter ou Refuser), même app en arrière-plan.
+    func answer(_ request: JoinRequest, accept: Bool) async {
+        UNUserNotificationCenter.current().removeDeliveredNotifications(withIdentifiers: [request.id])
+        do {
+            try await perform("/api/sessions/\(session.code)/admissions", body: ["id": request.id, "decision": accept ? "accept" : "refuse"])
+            notify(accept ? L("{0} a rejoint la session.", request.name) : L("La demande de {0} a été refusée.", request.name))
+        } catch { notify(error.localizedDescription, error: true) }
     }
 
     func removeMember(_ person: Participant) {

@@ -309,20 +309,25 @@ struct QRCodeView: View {
 
 // MARK: AirPlay
 
-/// Le vrai bouton AirPlay d’iOS : il ouvre la liste des TV et enceintes.
-/// Bouton AirPlay : une icône fixe (blanche, ou à la couleur d’accent quand la musique part sur une TV ou une enceinte),
-/// et par-dessus le vrai bouton d’iOS, invisible, qui ouvre la liste des appareils. L’icône animée d’iOS n’est pas affichée.
+/// Bouton AirPlay : une icône fixe (blanche, ou à la couleur d’accent quand la musique part sur une TV ou une enceinte).
+/// Un appui ouvre la liste des appareils d’iOS, via son vrai bouton AirPlay, caché.
 struct AirPlayButton: View {
     @EnvironmentObject private var store: Store
     @State private var active = AirPlayRoute.isActive
+    @State private var picker = AVRoutePickerView()
 
     var body: some View {
-        ZStack {
+        Button {
+            picker.subviews.lazy.compactMap { $0 as? UIButton }.first?.sendActions(for: .touchUpInside)
+        } label: {
             Image(systemName: "airplay.audio")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(active ? store.appearance.accentText : Color.sonoText)
-            RoutePicker().opacity(0.02)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .background(RoutePicker(view: picker).frame(width: 1, height: 1).opacity(0.02).allowsHitTesting(false))
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification).receive(on: RunLoop.main)) { _ in active = AirPlayRoute.isActive }
         .accessibilityLabel("AirPlay")
     }
@@ -333,12 +338,10 @@ enum AirPlayRoute {
     static var isActive: Bool { AVAudioSession.sharedInstance().currentRoute.outputs.contains { $0.portType == .airPlay } }
 }
 
+/// Le bouton d’iOS doit être dans la fenêtre pour que sa liste s’ouvre.
 private struct RoutePicker: UIViewRepresentable {
-    func makeUIView(context: Context) -> AVRoutePickerView {
-        let view = AVRoutePickerView()
-        view.prioritizesVideoDevices = false
-        return view
-    }
+    let view: AVRoutePickerView
+    func makeUIView(context: Context) -> AVRoutePickerView { view.prioritizesVideoDevices = false; return view }
     func updateUIView(_ view: AVRoutePickerView, context: Context) {}
 }
 

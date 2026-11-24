@@ -135,10 +135,6 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .queue-item { display: grid; grid-template-columns: var(--cols); align-items: center; gap: 14px; }
 .queue-item { position: relative; padding: 9px 12px; border-radius: 10px; transition: background .15s, opacity .15s; min-width: 0; }
 .queue-item:hover { background: var(--surface); }
-.queue-item.dragging { opacity: .4; }
-.queue-item.drop-before::before, .queue-item.drop-after::after { content: ''; position: absolute; left: 12px; right: 12px; height: 2px; border-radius: 2px; background: var(--lime); }
-.queue-item.drop-before::before { top: -2px; }
-.queue-item.drop-after::after { bottom: -2px; }
 .drag-handle { color: var(--faint); display: flex; cursor: grab; opacity: .6; }
 .queue-item:hover .drag-handle { opacity: 1; }
 .track-number { color: var(--faint); font-size: 13px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -573,6 +569,8 @@ body { padding-top: env(safe-area-inset-top); }
 .queue-list.is-reordering .queue-item { transition: transform .18s cubic-bezier(.32, .72, 0, 1); }
 .queue-list .queue-item.touch-lifted { position: relative; z-index: 5; transition: none; border-radius: 16px; background: #2e2e2a; box-shadow: 0 8px 20px rgba(0, 0, 0, .45); }
 .queue-list .queue-item.touch-settling { position: relative; z-index: 5; border-radius: 16px; transition: transform .2s cubic-bezier(.32, .72, 0, 1), background .2s ease, box-shadow .2s ease; background: transparent; box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
+/* À la souris : on attrape une ligne pour la déplacer */ .queue-list.is-host .queue-item[data-reorder] { cursor: grab; }
+.queue-list.is-reordering, .queue-list.is-reordering .queue-item[data-reorder] { cursor: grabbing; }
 
 /* Réponse immédiate au doigt, et pages qui apparaissent en douceur */ * { -webkit-tap-highlight-color: transparent; }
 

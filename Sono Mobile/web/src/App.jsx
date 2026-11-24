@@ -1289,26 +1289,27 @@ function useTouchReorder(onDrop, enabled) {
         other.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
       });
     };
+    const lift = (row, y) => {
+      const all = [...list.querySelectorAll('[data-reorder]')];
+      const rects = all.map((item) => { const rect = item.getBoundingClientRect(); return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY, height: rect.height }; });
+      active = { row, all, rects, from: all.indexOf(row), to: all.indexOf(row), startY: y + window.scrollY, y };
+      row.classList.add('touch-lifted');
+      list.classList.add('is-reordering');
+      native?.call('haptic').catch(() => {});
+      place(y);
+      // Près du haut ou du bas de l’écran, la page défile toute seule.
+      scroller = window.setInterval(() => {
+        const margin = 90;
+        const speed = active.y < margin ? -7 : active.y > window.innerHeight - margin - 90 ? 7 : 0;
+        if (speed) { window.scrollBy(0, speed); place(active.y); }
+      }, 16);
+    };
     const cancel = () => { window.clearTimeout(timer); timer = null; start = null; };
     const onStart = (event) => {
       const row = event.target.closest?.('[data-reorder]');
       if (!row || event.touches.length !== 1 || event.target.closest('button, a, input')) return;
       start = { x: event.touches[0].clientX, y: event.touches[0].clientY };
-      timer = window.setTimeout(() => {
-        const all = [...list.querySelectorAll('[data-reorder]')];
-        const rects = all.map((item) => { const rect = item.getBoundingClientRect(); return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY, height: rect.height }; });
-        active = { row, all, rects, from: all.indexOf(row), to: all.indexOf(row), startY: start.y + window.scrollY, y: start.y };
-        row.classList.add('touch-lifted');
-        list.classList.add('is-reordering');
-        native?.call('haptic').catch(() => {});
-        place(start.y);
-        // Près du haut ou du bas de l’écran, la page défile toute seule.
-        scroller = window.setInterval(() => {
-          const margin = 90;
-          const speed = active.y < margin ? -7 : active.y > window.innerHeight - margin - 90 ? 7 : 0;
-          if (speed) { window.scrollBy(0, speed); place(active.y); }
-        }, 16);
-      }, 260);
+      timer = window.setTimeout(() => lift(row, start.y), 260);
     };
     const onMove = (event) => {
       if (active) {
@@ -1337,6 +1338,30 @@ function useTouchReorder(onDrop, enabled) {
         all.forEach((item) => { item.style.transition = ''; });
       }, 200);
     };
+    // À la souris (comme sur l’ordinateur), pas besoin d’attendre : le titre se soulève dès qu’il bouge de quelques pixels,
+    // et ne se déplace que de haut en bas dans la liste.
+    let press = null;
+    const onMouseMove = (event) => {
+      if (active) {
+        active.y = event.clientY;
+        if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (active) place(active.y); });
+      } else if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 4) lift(press.row, press.y);
+    };
+    const onMouseUp = () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      press = null;
+      onEnd();
+    };
+    const onMouseDown = (event) => {
+      const row = event.button === 0 && event.target.closest?.('[data-reorder]');
+      if (!row || event.target.closest('button, a, input')) return;
+      event.preventDefault();
+      press = { row, x: event.clientX, y: event.clientY };
+      window.addEventListener('mousemove', onMouseMove);
+      window.addEventListener('mouseup', onMouseUp);
+    };
+    list.addEventListener('mousedown', onMouseDown);
     list.addEventListener('touchstart', onStart, { passive: true });
     list.addEventListener('touchmove', onMove, { passive: false });
     list.addEventListener('touchend', onEnd);
@@ -1344,6 +1369,9 @@ function useTouchReorder(onDrop, enabled) {
     return () => {
       window.clearTimeout(timer);
       window.clearInterval(scroller);
+      list.removeEventListener('mousedown', onMouseDown);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
       list.removeEventListener('touchstart', onStart);
       list.removeEventListener('touchmove', onMove);
       list.removeEventListener('touchend', onEnd);
@@ -1378,7 +1406,7 @@ function useListMotion(list, keys, skip) {
     if (animate) for (const [id, { top, row }] of positions.current) {
       if (next.has(id)) continue;
       const ghost = row.cloneNode(true);
-      ['data-track', 'data-reorder', 'draggable'].forEach((name) => ghost.removeAttribute(name));
+      ['data-track', 'data-reorder'].forEach((name) => ghost.removeAttribute(name));
       ghost.classList.add('row-ghost');
       ghost.style.top = `${top}px`;
       list.append(ghost);
@@ -1411,9 +1439,6 @@ const QueueList = memo(function QueueList({ queue, host, fallback, onRemove, onR
   const skipFlip = useRef(false);
   const [reorderRef, listElement] = useTouchReorder((from, to) => { skipFlip.current = true; onReorder(from, to); }, Boolean(host && onReorder));
   useListMotion(listElement, queue.map((track) => track.id).join(','), skipFlip);
-  const [dragIndex, setDragIndex] = useState(null);
-  const [overIndex, setOverIndex] = useState(null);
-  const endDrag = () => { setDragIndex(null); setOverIndex(null); };
 
   if (!queue.length && fallback) return <p className="queue-empty-inline">{host ? tx("Aucun titre proposé pour l’instant. Les titres ajoutés passeront avant la musique de fond.") : tx("Aucun titre proposé : ajoutez-en un, il passera avant la musique de fond.")}</p>;
   if (!queue.length) return <div className="empty-state">
@@ -1425,12 +1450,8 @@ const QueueList = memo(function QueueList({ queue, host, fallback, onRemove, onR
 
   return <div ref={reorderRef} className={host ? 'queue-list is-host' : 'queue-list is-guest'}>
     {queue.map((track, index) => {
-      const classes = ['queue-item', index === 0 && 'is-next', dragIndex === index && 'dragging', overIndex === index && dragIndex !== index && (dragIndex < index ? 'drop-after' : 'drop-before')].filter(Boolean).join(' ');
-      return <article key={track.id} className={classes} data-track={track.id} data-reorder={host ? '' : undefined} draggable={host && !native}
-        onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', track.id); setDragIndex(index); }}
-        onDragOver={(event) => { if (!host || dragIndex === null) return; event.preventDefault(); if (overIndex !== index) setOverIndex(index); }}
-        onDrop={(event) => { event.preventDefault(); if (dragIndex !== null) onReorder(dragIndex, index); endDrag(); }}
-        onDragEnd={endDrag}>
+      const classes = ['queue-item', index === 0 && 'is-next'].filter(Boolean).join(' ');
+      return <article key={track.id} className={classes} data-track={track.id} data-reorder={host ? '' : undefined}>
         {host && <span className="drag-handle" aria-hidden="true"><GripVertical size={16} /></span>}
         {host && <span className="track-number">{index + 1}</span>}
         <TrackCover track={track} />
@@ -1697,9 +1718,6 @@ const FallbackList = memo(function FallbackList({ tracks, total, host, startInde
   const [reorderRef, listElement] = useTouchReorder((from, to) => { skipFlip.current = true; onMove(visibleRef.current[from], to); }, Boolean(host && moveTrack));
   const visibleRef = useRef([]);
   const [limit, setLimit] = useState(10);
-  const [dragIndex, setDragIndex] = useState(null);
-  const [overIndex, setOverIndex] = useState(null);
-  const endDrag = () => { setDragIndex(null); setOverIndex(null); };
   const [all, setAll] = useState(null);
   const [loading, setLoading] = useState(false);
   const needsAll = limit > tracks.length && total > tracks.length;
@@ -1720,12 +1738,8 @@ const FallbackList = memo(function FallbackList({ tracks, total, host, startInde
   visibleRef.current = visible;
   useListMotion(listElement, visible.map((track) => track.id).join(','), skipFlip);
   return <div ref={reorderRef} className={host ? 'queue-list fallback-list is-host' : 'queue-list fallback-list is-guest'}>
-    {visible.map((track, index) => <article key={track.id} data-track={track.id} data-reorder={host && onMove ? '' : undefined} draggable={host && !native}
-      className={['queue-item is-fallback', startIndex === 0 && index === 0 && 'is-next', dragIndex === index && 'dragging', overIndex === index && dragIndex !== index && (dragIndex < index ? 'drop-after' : 'drop-before')].filter(Boolean).join(' ')}
-      onDragStart={(event) => { event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', track.id); setDragIndex(index); }}
-      onDragOver={(event) => { if (!host || dragIndex === null) return; event.preventDefault(); if (overIndex !== index) setOverIndex(index); }}
-      onDrop={(event) => { event.preventDefault(); if (dragIndex !== null && dragIndex !== index) onMove(visible[dragIndex], index); endDrag(); }}
-      onDragEnd={endDrag}>
+    {visible.map((track, index) => <article key={track.id} data-track={track.id} data-reorder={host && onMove ? '' : undefined}
+      className={['queue-item is-fallback', startIndex === 0 && index === 0 && 'is-next'].filter(Boolean).join(' ')}>
       {host && <span className="drag-handle" aria-hidden="true"><GripVertical size={16} /></span>}
       {host && <span className="track-number">{startIndex + index + 1}</span>}
       <TrackCover track={track} />

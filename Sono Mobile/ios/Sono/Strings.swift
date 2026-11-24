@@ -233,6 +233,8 @@ private let english: [String: String] = [
     "{0} titres ajoutés à la file.": "{0} tracks added to the queue.",
     "Autorisez les notifications de Sono dans les Réglages de l’iPhone.": "Allow Sono notifications in the iPhone Settings.",
     "Prévenir sur ce téléphone": "Notify on this phone",
+    "Accepter": "Accept",
+    "Refuser": "Decline",
     "Quand quelqu’un rejoint, demande à rejoindre ou ajoute un titre, pendant que Sono est en arrière-plan.": "When someone joins, asks to join or adds a track, while Sono is in the background.",
     "Un abonnement Apple Music actif et l’app Musique connectée sur ce téléphone sont nécessaires.": "An active Apple Music subscription and the Music app signed in on this phone are required.",
     "Utiliser pour la lecture": "Use for playback",
