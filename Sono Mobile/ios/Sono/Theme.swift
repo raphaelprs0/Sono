@@ -392,9 +392,16 @@ extension Color {
 }
 
 /// Interrupteurs iOS exactement de la couleur d’accent choisie, quel que soit le fond (clair, sombre ou pochette).
+/// Avec « Natif » sur fond sombre, l’accent est blanc comme la pastille de l’interrupteur : il est alors très légèrement
+/// assombri pour que la pastille reste visible.
 private struct AccentToggle: ViewModifier {
     @EnvironmentObject private var store: Store
-    func body(content: Content) -> some View { content.tint(store.appearance.accentColor) }
+    private var tint: Color {
+        let accent = store.appearance.accent
+        guard Accent.all.first(where: { $0.hex == accent })?.native == true else { return store.appearance.accentColor }
+        return Color(UIColor { $0.userInterfaceStyle == .light ? UIColor(hex: Accent.nativeOnLight.hex) : UIColor(hex: "#cfcfcb") })
+    }
+    func body(content: Content) -> some View { content.tint(tint) }
 }
 
 extension View {

@@ -350,6 +350,15 @@ struct SessionSettings: View {
                 }
                 .accentToggle()
             }
+            SettingsCard(title: L("Notifications")) {
+                Toggle(isOn: Binding(get: { store.notificationsOn }, set: { store.setNotifications($0) })) {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(L("Prévenir sur ce téléphone")).font(.system(size: 15, weight: .medium)).foregroundStyle(Color.sonoText)
+                        Text(L("Quand quelqu’un rejoint, demande à rejoindre ou ajoute un titre, pendant que Sono est en arrière-plan.")).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
+                    }
+                }
+                .accentToggle()
+            }
             if let sound { soundCard(sound) }
             SettingsCard(title: L("Lien d’invitation"), subtitle: L("Partagez ce lien avec les invités qui ne peuvent pas scanner le code QR.")) {
                 HStack {

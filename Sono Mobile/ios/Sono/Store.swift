@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import UserNotifications
 
 /// Erreur renvoyée par le service, avec son message en français.
 struct APIError: LocalizedError {
@@ -103,6 +104,11 @@ final class Store: ObservableObject {
     private var history: [Track] = []
     private var knownRequests: Set<String>?
     private var knownGuests: (code: String, ids: Set<String>)?
+    private var knownTracks: Set<String>?
+    /// App au premier plan : ses propres messages suffisent ; en arrière-plan, les nouveautés passent par des notifications iOS.
+    private var isActive: Bool { UIApplication.shared.applicationState == .active }
+    /// Notifications iOS (arrivées, demandes, titres ajoutés), activées par défaut et désactivables dans les réglages.
+    @Published var notificationsOn = UserDefaults.standard.object(forKey: "sono-notifications") as? Bool ?? true
     private var toastTask: Task<Void, Never>?
     private var pollTask: Task<Void, Never>?
     private var syncTask: Task<Void, Never>?
@@ -198,11 +204,16 @@ final class Store: ObservableObject {
 
     private func reset() {
         queue = []; current = nil; previous = nil; history = []; fallbackQueue = nil; activity = []; playing = false
-        knownRequests = nil; knownGuests = nil; joinNotices = []; progress = Progress()
+        knownRequests = nil; knownGuests = nil; knownTracks = nil; joinNotices = []; progress = Progress()
     }
 
     private func enterHost() {
         phase = .host
+        // Première session hébergée : iOS demande une fois s’il peut afficher les notifications.
+        if notificationsOn { UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .notDetermined else { return }
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+        } }
         driver.follow(code: session.code, token: token)
         updateCarInvite()
         startPolling()
@@ -223,7 +234,7 @@ final class Store: ObservableObject {
 
     func apply(_ payload: Payload) {
         if let incoming = payload.session, incoming != session { session = incoming; noticeArrivals() }
-        if let incoming = payload.queue, incoming != queue { queue = incoming }
+        if let incoming = payload.queue, incoming != queue { queue = incoming; noticeTracks() }
         if payload.hasCurrent, payload.current != current {
             current = payload.current
             if let cover = current?.cover, !cover.isEmpty { defaults.set(cover, forKey: "sono-last-cover") }
@@ -263,8 +274,8 @@ final class Store: ObservableObject {
         let ids = Set(requests.map(\.id))
         if let known = knownRequests {
             let fresh = requests.filter { !known.contains($0.id) }
-            if fresh.count == 1 { notify(L("{0} demande à rejoindre la session.", fresh[0].name)) }
-            else if fresh.count > 1 { notify(L("{0} personnes demandent à rejoindre la session.", fresh.count)) }
+            let message = fresh.count == 1 ? L("{0} demande à rejoindre la session.", fresh[0].name) : L("{0} personnes demandent à rejoindre la session.", fresh.count)
+            if !fresh.isEmpty { notify(message); systemNotify(message) }
             if !fresh.isEmpty { UINotificationFeedbackGenerator().notificationOccurred(.success) }
         }
         knownRequests = ids
@@ -272,6 +283,7 @@ final class Store: ObservableObject {
         if let known = knownGuests, known.code == session.code, session.requireApproval != true {
             let fresh = guests.filter { !known.ids.contains($0.id) }
             if !fresh.isEmpty {
+                systemNotify(fresh.count == 1 ? L("{0} a rejoint la session.", fresh[0].name) : L("{0} personnes ont rejoint la session.", fresh.count))
                 joinNotices = joinNotices.filter { notice in !fresh.contains { $0.id == notice.id } } + fresh.map { JoinNotice(id: $0.id, name: $0.name) }
                 let ids = fresh.map(\.id)
                 Task { [weak self] in
@@ -281,6 +293,41 @@ final class Store: ObservableObject {
             }
         }
         knownGuests = (session.code, Set(guests.map(\.id)))
+    }
+
+    /// Titres ajoutés par les invités (pas par l’hôte lui-même) : notification quand l’app est en arrière-plan.
+    private func noticeTracks() {
+        let ids = Set(queue.map(\.id))
+        if let known = knownTracks, !isActive {
+            let fresh = queue.filter { !known.contains($0.id) && $0.addedBy != nil && $0.addedBy != session.host }
+            if fresh.count == 1, let track = fresh.first { systemNotify(L("{0} a ajouté « {1} ».", track.addedBy ?? "", track.title)) }
+            else if fresh.count > 1 { systemNotify(L("{0} titres ajoutés à la file.", fresh.count)) }
+        }
+        knownTracks = ids
+    }
+
+    /// Notification iOS, seulement quand l’app n’est pas affichée et que l’hôte ne les a pas coupées.
+    private func systemNotify(_ message: String) {
+        guard !isActive, notificationsOn else { return }
+        let content = UNMutableNotificationContent()
+        content.title = session.name
+        content.body = message
+        content.sound = .default
+        UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil))
+    }
+
+    /// Active ou coupe les notifications ; iOS demande l’autorisation la première fois.
+    func setNotifications(_ on: Bool) {
+        notificationsOn = on
+        defaults.set(on, forKey: "sono-notifications")
+        if on { requestNotificationPermission() }
+    }
+
+    private func requestNotificationPermission() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+            guard !granted else { return }
+            Task { @MainActor in self?.notify(L("Autorisez les notifications de Sono dans les Réglages de l’iPhone."), error: true) }
+        }
     }
 
     // MARK: Messages

@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.7.4 | 2.7.4 (build 29) |
+| Version | 2.7.4 | 2.7.5 (build 30) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -161,6 +161,7 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 - **TV mirroring** (AirPlay or cable): the TV shows TV mode full size while the iPhone stays usable.
 - **Join with a QR code**: Sono’s camera reads a session’s QR code; the session opens inside the app.
 - **Background music**: playback continues with the screen off.
+- **Notifications**: while Sono is in the background (during playback), an iOS notification tells you when someone joins, asks to join or adds a track. They can be turned off in Settings → Session.
 
 ---
 
@@ -319,7 +320,7 @@ Sono is made of **three parts** that share the same guest pages.
 | Public link | **cloudflared** (Cloudflare Quick Tunnel), downloaded and checked (SHA-256) on first use |
 | Translations | Home-made dictionaries, no library: `i18n.js` and `i18n-en.js` (web pages), `Strings.swift` (iPhone) |
 | Deezer engine | **Go**, **OpenDeezer** library with patches (buffers, equalizer, gain, skip), **oto** audio output |
-| iPhone app | **SwiftUI**, **AVFoundation**, **MediaPlayer**, **CarPlay**, **VisionKit** (QR code), **WebKit**, **Security** |
+| iPhone app | **SwiftUI**, **AVFoundation**, **MediaPlayer**, **CarPlay**, **UserNotifications**, **VisionKit** (QR code), **WebKit**, **Security** |
 | Online service | **Cloudflare Workers** + **Durable Objects** (SQLite), **Wrangler** tool, a small home-made Express-style router |
 | Build | **cargo**, **@tauri-apps/cli**; Windows from Mac with **cargo-xwin**, **LLVM**, **NSIS** and **Zig**; iPhone with **Xcode** |
 
@@ -472,7 +473,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.4**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.5**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -487,7 +488,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.4-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.7.5-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

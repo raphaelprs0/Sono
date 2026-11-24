@@ -25,7 +25,6 @@ struct RootView: View {
     @State private var tab: Tab = .queue
     @State private var sheet: Sheet?
     @State private var confirmation: Confirmation?
-    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         ZStack {
@@ -72,9 +71,10 @@ struct RootView: View {
         }
         .onChange(of: store.phase) { _, phase in if phase != .host { sheet = nil; tab = .queue } }
         // Retour dans l’app : l’état de la session est relu (la connexion a pu être coupée en arrière-plan).
-        .onChange(of: scenePhase) { _, phase in
-            if phase == .background { store.setForeground(false) }
-            if phase == .active, store.phase == .host { store.setForeground(true); Task { await store.refresh() } }
+        // (Événements UIKit : avec le cycle de vie par scènes, le scenePhase de SwiftUI ne change pas.)
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in store.setForeground(false) }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            if store.phase == .host { store.setForeground(true); Task { await store.refresh() } }
         }
     }
 

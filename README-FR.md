@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.7.4 | 2.7.4 (build 29) |
+| Version | 2.7.4 | 2.7.5 (build 30) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
@@ -139,6 +139,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **TV en recopie** (AirPlay ou câble) : la TV affiche le mode TV en grand pendant que l’iPhone reste utilisable.
 - **Rejoindre avec un QR code** : l’appareil photo de Sono lit le QR code d’une session ; elle s’ouvre dans l’app.
 - **Musique en arrière-plan** : la lecture continue écran éteint.
+- **Notifications** : quand Sono est en arrière-plan (pendant la musique), une notification iOS prévient quand quelqu’un rejoint, demande à rejoindre ou ajoute un titre. Désactivables dans Réglages → Session.
 
 ---
 
@@ -292,7 +293,7 @@ Sono se compose de **trois parties** qui partagent les mêmes pages pour les inv
 | Lien public | **cloudflared** (Cloudflare Quick Tunnel), téléchargé et vérifié (SHA-256) au premier usage |
 | Traductions | Dictionnaires maison, sans bibliothèque : `i18n.js` et `i18n-en.js` (pages web), `Strings.swift` (iPhone) |
 | Moteur Deezer | **Go**, bibliothèque **OpenDeezer** avec correctifs (tampons, égaliseur, gain, saut), sortie audio **oto** |
-| App iPhone | **SwiftUI**, **AVFoundation**, **MediaPlayer**, **CarPlay**, **VisionKit** (QR code), **WebKit**, **Security** |
+| App iPhone | **SwiftUI**, **AVFoundation**, **MediaPlayer**, **CarPlay**, **UserNotifications**, **VisionKit** (QR code), **WebKit**, **Security** |
 | Service en ligne | **Cloudflare Workers** + **Durable Objects** (SQLite), outil **Wrangler**, mini-routeur maison façon Express |
 | Fabrication | **cargo**, **@tauri-apps/cli** ; Windows depuis Mac avec **cargo-xwin**, **LLVM**, **NSIS** et **Zig** ; iPhone avec **Xcode** |
 
@@ -445,7 +446,7 @@ Le script :
 La première fois prend quelques minutes, les suivantes sont plus rapides. En cas d’erreur, le script affiche seulement
 les lignes `error:` de la compilation.
 
-La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.7.4**). Elle n’a **aucune
+La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.7.5**). Elle n’a **aucune
 signature** et ne contient aucune information personnelle : elle doit être signée avec votre propre compte Apple
 pour s’installer.
 
@@ -461,7 +462,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. L’IPA : le dossier Payload/ compressé
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.4-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.7.5-iPhone-a-signer.ipa Payload)
 ```
 
 </details>
