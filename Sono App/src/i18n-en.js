@@ -58,7 +58,6 @@ export default {
 "Reconnexion…":"Reconnecting…",
 "Navigation principale":"Main navigation",
 "Réglages":"Settings",
-"Modifier mon profil":"Edit my profile",
 "Ajoutez votre nom":"Add your name",
 "Hôte de la session":"Session host",
 "Afficher le code QR":"Show the QR code",

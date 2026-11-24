@@ -352,20 +352,33 @@ struct Equalizer: View {
     }
 }
 
-/// Initiale dans un rond coloré.
+/// Initiale dans un rond coloré. Même couleur que sur l’ordinateur et les pages web pour un même prénom : une teinte
+/// calculée à partir de ses lettres, en sombre pour le rond et en clair pour l’initiale.
 struct Avatar: View {
     let name: String
     var size: CGFloat = 34
-    private var color: Color {
-        let palette = ["#5a3a2a", "#2a4a5a", "#4a2a5a", "#2a5a3a", "#5a4a2a", "#5a2a3a"]
-        return Color(hex: palette[abs(name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) }) % palette.count])
+    private var label: String { let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines); return trimmed.isEmpty ? "?" : trimmed }
+    /// Même calcul que la page web : pour chaque caractère, teinte = (teinte × 31 + code du caractère) modulo 360.
+    private var hue: Double {
+        var value = 0
+        for character in label { value = (value * 31 + Int(character.utf16.first ?? 0)) % 360 }
+        return Double(value)
     }
     var body: some View {
-        Text(String(name.first ?? "?").uppercased())
+        Text(String(label.first ?? "?").uppercased())
             .font(.system(size: size * 0.42, weight: .semibold))
-            .foregroundStyle(Color(hex: "#ffd9c7"))
+            .foregroundStyle(Color(hsl: hue, saturation: 0.75, lightness: 0.84))
             .frame(width: size, height: size)
-            .background(Circle().fill(color))
+            .background(Circle().fill(Color(hsl: hue, saturation: 0.28, lightness: 0.26)))
+    }
+}
+
+extension Color {
+    /// Couleur décrite comme en CSS : hsl(teinte, saturation, luminosité).
+    init(hsl hue: Double, saturation: Double, lightness: Double) {
+        let brightness = lightness + saturation * min(lightness, 1 - lightness)
+        let hsbSaturation = brightness == 0 ? 0 : 2 * (1 - lightness / brightness)
+        self.init(hue: hue / 360, saturation: hsbSaturation, brightness: brightness)
     }
 }
 

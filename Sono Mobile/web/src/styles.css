@@ -86,7 +86,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 /* ───────────── Primitives ───────────── */ .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); display: inline-block; flex-shrink: 0; }
 .live-dot.offline { background: var(--peach); animation: none; }
 
-.avatar { font-style: normal; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: hsl(var(--hue, 40) 28% 26%); color: hsl(var(--hue, 40) 75% 84%); font-size: 11px; font-weight: 700; font-family: var(--font-display); }
+.avatar { font-style: normal; flex-shrink: 0; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: hsl(var(--hue, 40) 28% 26%); color: hsl(var(--hue, 40) 75% 84%); font-size: 11px; font-weight: 600; font-family: var(--font-body); }
 
 .button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 36px; padding: 0 16px; border-radius: 99px; border: 1px solid transparent; font-size: 14px; font-weight: 600; white-space: nowrap; transition: background .15s, border-color .15s, transform .15s; }
 .button:not(:disabled):active { transform: scale(.98); }

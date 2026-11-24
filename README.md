@@ -2,16 +2,16 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.7.2-7927F5)
-![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?logo=windows)
-![macOS](https://img.shields.io/badge/macOS-12%2B-black?logo=apple)
-![iOS](https://img.shields.io/badge/iOS-17%2B-black?logo=apple)
+![Version](https://img.shields.io/badge/Version-2.7.3-7927F5?style=flat)
+![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?style=flat)
+![macOS](https://img.shields.io/badge/macOS-12%2B-6E6E73?logo=apple&logoColor=white&style=flat)
+![iOS](https://img.shields.io/badge/iOS-17%2B-6E6E73?logo=apple&logoColor=white&style=flat)
 
-![Rust](https://img.shields.io/badge/Server-Rust-FF2E2E?logo=rust&logoColor=white)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-Native-FF4A17?logo=swift&logoColor=white)
-![Go](https://img.shields.io/badge/Engine-Go-00ADD8?logo=go&logoColor=white)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-FF7C00?logo=cloudflare&logoColor=white)
-![License](https://img.shields.io/badge/License-AGPL--3.0-29A825)
+![Rust](https://img.shields.io/badge/Server-Rust-FF2E2E?logo=rust&logoColor=white&style=flat)
+![SwiftUI](https://img.shields.io/badge/SwiftUI-Native-FF4A17?logo=swift&logoColor=white&style=flat)
+![Go](https://img.shields.io/badge/Engine-Go-00ADD8?logo=go&logoColor=white&style=flat)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-FF7C00?logo=cloudflare&logoColor=white&style=flat)
+![License](https://img.shields.io/badge/License-AGPL--3.0-29A825?style=flat)
 
 **Your guests pick the music, your speaker plays it.** The host starts a session, guests scan a QR code with their phone and
 suggest tracks: everyone sees the queue, the music plays on **Deezer** or **Apple Music**, and nobody has to install
@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.7.2 | 2.7.2 (build 27) |
+| Version | 2.7.3 | 2.7.3 (build 28) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -472,7 +472,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.2**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.3**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -487,7 +487,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.2-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.7.3-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

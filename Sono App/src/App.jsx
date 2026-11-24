@@ -1442,7 +1442,7 @@ function App() {
         </button>)}
         <button className={view === 'settings' || view === 'appearance' ? 'nav-settings active' : 'nav-settings'} aria-current={view === 'settings' || view === 'appearance' ? 'page' : undefined} onClick={() => setView('settings')}><Settings size={19} /><span className="nav-label">{tx("Réglages")}</span></button>
       </nav>
-      <button type="button" className="host-profile" onClick={() => setView('settings')} title={tx("Modifier mon profil")}><Avatar name={session.host} /><div><strong>{session.host}</strong><span><ShieldCheck size={12} />{session.host === 'Hôte' ? tx("Ajoutez votre nom") : tx("Hôte de la session")}</span></div></button>
+      <button type="button" className={view === 'settings' || view === 'appearance' ? 'host-profile active' : 'host-profile'} aria-current={view === 'settings' || view === 'appearance' ? 'page' : undefined} onClick={() => setView('settings')} title={tx("Réglages")}><Avatar name={session.host} /><div><strong>{session.host}</strong><span><ShieldCheck size={12} />{session.host === 'Hôte' ? tx("Ajoutez votre nom") : tx("Hôte de la session")}</span></div></button>
     </aside>
 
     <main className="main-content">
