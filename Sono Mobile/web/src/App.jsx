@@ -1279,8 +1279,10 @@ function useTouchReorder(onDrop, enabled) {
       const moved = clientY + window.scrollY - active.startY;
       active.row.style.transform = `translate3d(0, ${moved}px, 0) scale(1.02)`;
       const center = active.rects[active.from].top + active.rects[active.from].height / 2 + moved;
-      let to = active.rects.findIndex((rect) => center >= rect.top && center < rect.bottom);
-      if (to < 0) to = center < active.rects[0].top ? 0 : active.rects.length - 1;
+      // L’espace entre deux lignes compte pour la suivante : sans ça, au passage de cet espace, la place visée
+      // sautait à la fin de la liste et les dernières lignes faisaient un aller-retour.
+      let to = active.rects.findIndex((rect) => center < rect.bottom);
+      if (to < 0) to = active.rects.length - 1;
       active.to = to;
       const height = active.rects[active.from].height + (active.rects[1] ? active.rects[1].top - active.rects[0].bottom : 0);
       active.all.forEach((other, index) => {
@@ -1511,13 +1513,15 @@ function SearchPanel({ addTrack, compact = false, source, showSource = false }) 
 
   return <div className={`search-panel ${compact ? 'compact' : ''}`}>
     {!compact && <div className="search-title"><div className="modal-symbol lime"><Music2 size={22} /></div><div><h2>{tx("Ajouter un titre")}</h2><p>{tx("Le titre rejoindra la fin de la file.")}</p></div></div>}
-    <label className="search-input"><Search size={19} /><input autoFocus={!compact} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tx("Titre, artiste ou album…")} aria-label={tx("Rechercher un titre")} enterKeyHint="search" />{loading && <LoaderCircle className="spin" size={18} />}{query && !loading && <button type="button" aria-label={tx("Effacer la recherche")} onClick={() => setQuery('')}><X size={17} /></button>}</label>
+    <label className="search-input"><Search size={19} /><input autoFocus={!compact} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={tx("Titre, artiste ou album…")} aria-label={tx("Rechercher un titre")} enterKeyHint="search" autoComplete="off" autoCorrect="off" autoCapitalize="off" spellcheck={false} />{loading && <LoaderCircle className="spin" size={18} />}{query && !loading && <button type="button" aria-label={tx("Effacer la recherche")} onClick={() => setQuery('')}><X size={17} /></button>}</label>
     {showSource && <p className="search-source-label"><ProviderLogo provider={source} size={16} />{tx("Recherche sur")} <strong>{source}</strong></p>}
     {error && <div className="inline-error" role="alert"><CircleAlert size={16} />{error}</div>}
     {!loading && !error && !query && <div className="search-empty"><Search size={26} /><strong>{showSource ? tx("Rechercher sur {0}", source) : tx("Rechercher un titre")}</strong><span>{tx("Tapez le nom d’un titre, d’un artiste ou d’un album.")}</span></div>}
     {!loading && !error && query && results.length === 0 && <div className="search-empty"><Disc3 size={26} /><strong>{tx("Aucun titre trouvé")}</strong><span>{tx("Essayez une autre orthographe ou une autre source.")}</span></div>}
-    {loading && <div className="search-results" aria-hidden="true">{[0, 1, 2, 3].map((item) => <div className="search-skeleton" key={item}><i /><span><b /><b /></span></div>)}</div>}
-    {!loading && results.length > 0 && <div className="search-results">{results.map((track) => {
+    {/* Pendant une nouvelle recherche, les résultats déjà affichés restent là (et restent cliquables) : un appui juste
+        après la frappe, clavier encore ouvert, n’arrive plus sur la liste de chargement. */}
+    {loading && results.length === 0 && <div className="search-results" aria-hidden="true">{[0, 1, 2, 3].map((item) => <div className="search-skeleton" key={item}><i /><span><b /><b /></span></div>)}</div>}
+    {results.length > 0 && <div className="search-results">{results.map((track) => {
       const isAdded = added.includes(track.id);
       return <div className={isAdded ? 'search-result added' : 'search-result'} key={track.id}>
         <TrackCover track={track} />

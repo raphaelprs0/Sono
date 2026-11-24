@@ -95,6 +95,10 @@ fn hello(app: &Shared, code: &str, id: u64, message: &Value) {
                     set("since", json!(now), &mut session);
                     add_activity(&mut session, "user", &format!("{name} demande à revenir"));
                 }
+            } else if status == "left" && truthy(session.get("requireApproval")) {
+                set("status", json!("pending"), &mut session);
+                set("since", json!(now), &mut session);
+                add_activity(&mut session, "user", &format!("{name} demande à revenir"));
             } else if status == "left" {
                 set("status", json!("accepted"), &mut session);
                 add_activity(&mut session, "user", &format!("{name} est de retour"));

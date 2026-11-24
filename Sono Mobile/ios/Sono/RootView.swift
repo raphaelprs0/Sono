@@ -7,6 +7,11 @@ enum Sheet: Identifiable {
 }
 
 /// Demande de confirmation (retirer un titre, un invité, nommer un admin).
+extension Binding where Value == Confirmation? {
+    /// Depuis un menu : la demande s’ouvre une fois le menu refermé, avec son animation (sinon iOS l’affiche d’un coup).
+    func ask(_ value: Confirmation) { DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { wrappedValue = value } }
+}
+
 enum Confirmation: Identifiable {
     case removeTrack(Track), kick(Participant), admin(Participant)
     var id: String {
@@ -55,7 +60,8 @@ struct RootView: View {
             case .delete: DeleteSheet().presentationDetents([.height(380)]).presentationDragIndicator(.visible)
             }
         }
-        .confirmationDialog(confirmationTitle, isPresented: Binding(get: { confirmation != nil }, set: { if !$0 { confirmation = nil } }), titleVisibility: .visible, presenting: confirmation) { item in
+        // Alerte d’iOS : elle s’ouvre avec son animation (la fenêtre de choix, posée sur tout l’écran, apparaissait d’un coup).
+        .alert(confirmationTitle, isPresented: Binding(get: { confirmation != nil }, set: { if !$0 { confirmation = nil } }), presenting: confirmation) { item in
             switch item {
             case .removeTrack(let track): Button(L("Retirer le titre"), role: .destructive) { store.remove(track) }
             case .kick(let person): Button(L("Retirer de la session"), role: .destructive) { store.removeMember(person) }

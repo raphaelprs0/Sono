@@ -158,10 +158,10 @@ struct ActivityScreen: View {
                     Spacer()
                     if !person.isHost {
                         Menu {
-                            Button { person.admin == true ? store.setAdmin(person, false) : (confirmation = .admin(person)) } label: {
+                            Button { person.admin == true ? store.setAdmin(person, false) : $confirmation.ask(.admin(person)) } label: {
                                 Label(person.admin == true ? L("Retirer des admins") : L("Nommer admin"), systemImage: "checkmark.shield")
                             }
-                            Button(role: .destructive) { confirmation = .kick(person) } label: { Label(L("Retirer de la session"), systemImage: "person.badge.minus") }
+                            Button(role: .destructive) { $confirmation.ask(.kick(person)) } label: { Label(L("Retirer de la session"), systemImage: "person.badge.minus") }
                         } label: {
                             Image(systemName: "ellipsis").font(.system(size: 15, weight: .semibold)).foregroundStyle(Color.sonoText).frame(width: 36, height: 36).background(Circle().fill(Color.sonoFg.opacity(0.08)))
                         }

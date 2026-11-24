@@ -456,7 +456,7 @@ struct JoinNoticesBanner: View {
                     Spacer()
                     Menu {
                         Button(role: .destructive) {
-                            if let person = store.session.participants?.first(where: { $0.id == notice.id }) { confirmation = .kick(person) }
+                            if let person = store.session.participants?.first(where: { $0.id == notice.id }) { $confirmation.ask(.kick(person)) }
                         } label: { Label(L("Retirer de la session"), systemImage: "person.badge.minus") }
                     } label: { Image(systemName: "ellipsis").foregroundStyle(Color.sonoMuted).frame(width: 30, height: 30) }
                     Button { store.joinNotices.removeAll { $0.id == notice.id } } label: { Image(systemName: "xmark").font(.system(size: 11.5, weight: .bold)).foregroundStyle(Color.sonoMuted).frame(width: 30, height: 30) }
@@ -497,8 +497,50 @@ struct LiftGesture: UIGestureRecognizerRepresentable {
     let moved: (CGFloat) -> Void
     let ended: () -> Void
 
-    final class Start { var y: CGFloat = 0 }
-    func makeCoordinator(converter: CoordinateSpaceConverter) -> Start { Start() }
+    /// Suit le doigt en coordonnées d’écran, et fait défiler la page quand il s’approche du haut ou du bas
+    /// (titre emmené du bas de la file tout en haut, ou l’inverse). Le défilement compte dans le déplacement :
+    /// le titre reste sous le doigt.
+    final class Drag: NSObject {
+        var startY: CGFloat = 0, startOffset: CGFloat = 0
+        weak var recognizer: UIGestureRecognizer?
+        weak var scroll: UIScrollView?
+        var link: CADisplayLink?
+        var moved: (CGFloat) -> Void = { _ in }
+
+        func begin(_ recognizer: UIGestureRecognizer, moved: @escaping (CGFloat) -> Void) {
+            self.recognizer = recognizer
+            self.moved = moved
+            // La zone qui défile est retrouvée sous le doigt (le geste, lui, est posé plus haut dans l’écran).
+            let window = recognizer.view?.window
+            var view = window?.hitTest(recognizer.location(in: window), with: nil) ?? recognizer.view
+            while let current = view, !(current is UIScrollView) { view = current.superview }
+            scroll = view as? UIScrollView
+            startY = recognizer.location(in: nil).y
+            startOffset = scroll?.contentOffset.y ?? 0
+            link = CADisplayLink(target: self, selector: #selector(step))
+            link?.add(to: .main, forMode: .common)
+        }
+        var translation: CGFloat {
+            guard let recognizer else { return 0 }
+            return recognizer.location(in: nil).y - startY + (scroll?.contentOffset.y ?? startOffset) - startOffset
+        }
+        @objc private func step() {
+            guard let recognizer, let scroll, let window = scroll.window else { return }
+            let y = recognizer.location(in: nil).y
+            let top = window.safeAreaInsets.top + 80, bottom = window.bounds.height - window.safeAreaInsets.bottom - 150
+            let depth = y < top ? y - top : y > bottom ? y - bottom : 0
+            guard depth != 0 else { return }
+            let speed = max(-14, min(14, depth / 4))
+            let lowest = -scroll.adjustedContentInset.top
+            let highest = max(lowest, scroll.contentSize.height - scroll.bounds.height + scroll.adjustedContentInset.bottom)
+            let next = min(highest, max(lowest, scroll.contentOffset.y + speed))
+            guard next != scroll.contentOffset.y else { return }
+            scroll.contentOffset.y = next
+            moved(translation)
+        }
+        func end() { link?.invalidate(); link = nil }
+    }
+    func makeCoordinator(converter: CoordinateSpaceConverter) -> Drag { Drag() }
 
     func makeUIGestureRecognizer(context: Context) -> UILongPressGestureRecognizer {
         let recognizer = UILongPressGestureRecognizer()
@@ -508,11 +550,11 @@ struct LiftGesture: UIGestureRecognizerRepresentable {
     }
 
     func handleUIGestureRecognizerAction(_ recognizer: UILongPressGestureRecognizer, context: Context) {
-        let y = context.converter.localLocation.y
+        let drag = context.coordinator
         switch recognizer.state {
-        case .began: context.coordinator.y = y; began()
-        case .changed: moved(y - context.coordinator.y)
-        case .ended, .cancelled, .failed: ended()
+        case .began: drag.begin(recognizer, moved: moved); began()
+        case .changed: moved(drag.translation)
+        case .ended, .cancelled, .failed: drag.end(); ended()
         default: break
         }
     }

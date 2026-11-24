@@ -83,7 +83,8 @@ pub fn admission_of(session: &Value, viewer: &Viewer) -> &'static str {
     let member = session.get("members").and_then(|m| m.get(&viewer.client_id));
     let status = member.map(|m| str_of(m, "status")).unwrap_or("");
     if status == "removed" { return "removed"; }
-    if status == "left" { return "accepted"; }
+    // Parti de lui-même : il revient librement, sauf si l’hôte valide chaque invité (il redemande alors l’accès).
+    if status == "left" { return if truthy(session.get("requireApproval")) { "pending" } else { "accepted" }; }
     let must_ask = member.map(|m| truthy(m.get("mustAsk"))).unwrap_or(false);
     if !truthy(session.get("requireApproval")) && !must_ask { return "accepted"; }
     match status { "accepted" => "accepted", "refused" => "refused", _ => "pending" }

@@ -122,6 +122,8 @@ final class Store: ObservableObject {
     // Suivant / précédent appuyés plusieurs fois : une seule commande, une fois le choix arrêté.
     private var skipDelta = 0
     private var skipActive = false
+    /// Juste après un déplacement dans le titre, le moteur n’y est pas encore : ses relevés ne ramènent pas la barre en arrière.
+    private var seekSettle = Date.distantPast
     private var skipWasPlaying = false
     private var skipTask: Task<Void, Never>?
     private var skipSending = false
@@ -467,6 +469,7 @@ final class Store: ObservableObject {
 
     func seek(to ms: Int) {
         progress = Progress(positionMs: ms, durationMs: progress.durationMs, at: Date(), running: progress.running)
+        seekSettle = Date().addingTimeInterval(2)
         Task {
             // Titre terminé : un appui sur la barre le relance, puis va à l’endroit choisi.
             if !playing, current != nil, status.state == "stopped" { togglePlayback() }
@@ -494,7 +497,9 @@ final class Store: ObservableObject {
                     let stale = status.trackId != nil && current.source == self.session.source && status.trackId != current.provider
                     if !stale, status.durationMs > 0 || status.positionMs > 0 {
                         let next = Progress(positionMs: status.positionMs, durationMs: status.durationMs, at: Date(), running: !["loading", "stopped"].contains(status.state.lowercased()) && self.playing)
-                        if abs(next.position(at: Date()) - self.progress.position(at: Date())) > 400 || next.running != self.progress.running || next.durationMs != self.progress.durationMs { self.progress = next }
+                        let drift = abs(next.position(at: Date()) - self.progress.position(at: Date()))
+                        let settling = Date() < self.seekSettle && drift > 700
+                        if !settling, drift > 400 || next.running != self.progress.running || next.durationMs != self.progress.durationMs { self.progress = next }
                     }
                 }
                 try? await Task.sleep(for: .milliseconds(Date() < self.watchUntil ? 200 : 1000))

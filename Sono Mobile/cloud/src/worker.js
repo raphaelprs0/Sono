@@ -40,7 +40,8 @@ const admissionOf = (session, viewer) => {
   if (!viewer || viewer.role === 'host') return 'accepted';
   const member = session.members?.[viewer.clientId];
   if (member?.status === 'removed') return 'removed';
-  if (member?.status === 'left') return 'accepted';
+  // Parti de lui-même : il revient librement, sauf si l’hôte valide chaque invité (il redemande alors l’accès).
+  if (member?.status === 'left') return session.requireApproval ? 'pending' : 'accepted';
   // Un invité retiré qui demande à revenir passe toujours par l’hôte.
   if (!session.requireApproval && !member?.mustAsk) return 'accepted';
   return member?.status === 'accepted' || member?.status === 'refused' ? member.status : 'pending';
@@ -882,6 +883,10 @@ const onConnection = (socket, code) => {
         current.since = now;
         addActivity(session, 'user', `${lockedName} demande à revenir`);
       }
+    } else if (current.status === 'left' && session.requireApproval) {
+      current.status = 'pending';
+      current.since = now;
+      addActivity(session, 'user', `${lockedName} demande à revenir`);
     } else if (current.status === 'left') {
       current.status = 'accepted';
       addActivity(session, 'user', `${lockedName} est de retour`);
