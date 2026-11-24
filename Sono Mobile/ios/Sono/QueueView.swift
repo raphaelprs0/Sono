@@ -11,8 +11,13 @@ struct QueueView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 ScreenHeader(sheet: $sheet).padding(.top, 14)
-                if !(store.session.requests ?? []).isEmpty { JoinRequestsBanner() }
-                if !store.joinNotices.isEmpty { JoinNoticesBanner(confirmation: $confirmation) }
+                // Demandes et arrivées glissent en place (et la suite de la page avec elles) au lieu d’apparaître d’un coup.
+                Group {
+                    if !(store.session.requests ?? []).isEmpty { JoinRequestsBanner() }
+                    if !store.joinNotices.isEmpty { JoinNoticesBanner(confirmation: $confirmation) }
+                }
+                .animation(.spring(response: 0.38, dampingFraction: 0.86), value: store.session.requests)
+                .animation(.spring(response: 0.38, dampingFraction: 0.86), value: store.joinNotices)
                 if !store.live {
                     HStack(spacing: 6) { Circle().fill(Color.orange).frame(width: 7, height: 7); Text(L("RECONNEXION…")).font(.system(size: 11.5, weight: .bold)).tracking(1.5).foregroundStyle(.orange) }
                 }
@@ -134,11 +139,13 @@ struct ReorderableRows<Item: Identifiable & Equatable, Row: View>: View {
     @State private var dragging: Item.ID?
     @State private var translation: CGFloat = 0
     @State private var target = 0
+    /// Le titre lâché glisse jusqu’à sa place en reprenant sa taille : plus d’effet soulevé pendant ce temps.
+    @State private var dropping = false
 
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                let lifted = dragging == item.id
+                let lifted = dragging == item.id && !dropping
                 SwipeToAct(swipe: swipe.map { swipe in (swipe.label, swipe.symbol, swipe.color, { swipe.action(item) }) }) { row(item, index) }
                     .frame(height: rowHeight)
                     .background {
@@ -152,7 +159,7 @@ struct ReorderableRows<Item: Identifiable & Equatable, Row: View>: View {
                     }
                     .scaleEffect(lifted ? 1.03 : 1)
                     .offset(y: offset(for: index, item: item))
-                    .zIndex(lifted ? 1 : 0)
+                    .zIndex(dragging == item.id ? 1 : 0)
                     // Ligne retirée : elle a déjà quitté l’écran, pas de fondu qui laisserait une trace.
                     .transition(.identity)
                     .modifier(LiftModifier(
@@ -189,14 +196,16 @@ struct ReorderableRows<Item: Identifiable & Equatable, Row: View>: View {
         guard dragging != nil else { return }
         guard items.indices.contains(index) else { dragging = nil; translation = 0; return }
         let to = target
-        // La ligne glisse jusqu’à sa place, puis la liste réordonnée prend le relais sans saut.
-        withAnimation(.spring(response: 0.22, dampingFraction: 0.9)) { translation = CGFloat(to - index) * rowHeight }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        // La ligne glisse jusqu’à sa place (durée fixe, sans rebond), puis la liste réordonnée prend le relais
+        // exactement là où elle s’est posée : aucun saut.
+        withAnimation(.easeOut(duration: 0.2)) { translation = CGFloat(to - index) * rowHeight; dropping = true }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
             var transaction = Transaction()
             transaction.disablesAnimations = true
             withTransaction(transaction) {
                 if to != index { onMove(index, to) }
                 dragging = nil
+                dropping = false
                 translation = 0
             }
         }
@@ -307,39 +316,59 @@ struct ProgressBar: View {
     @EnvironmentObject private var store: Store
     var compact = false
     @State private var dragging: Double?
+    /// Largeur affichée : posée sur la position du moment, puis une seule animation linéaire jusqu’à la fin du titre
+    /// (comme sur l’ordinateur). Fluide à chaque image, sans recalcul de la vue entre deux relevés.
+    @State private var shown: Double = 0
+
+    private var duration: Int { max(store.progress.durationMs, store.current?.durationMillis ?? 0) }
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 0.5, paused: !store.progress.running)) { context in
-            let progress = store.progress
-            let duration = max(progress.durationMs, store.current?.durationMillis ?? 0)
-            let position = dragging.map { Int($0 * Double(duration)) } ?? progress.position(at: context.date)
-            let fraction = duration > 0 ? min(1, Double(position) / Double(duration)) : 0
-            VStack(spacing: 6) {
-                GeometryReader { geometry in
-                    ZStack(alignment: .leading) {
-                        Capsule().fill(Color.sonoFg.opacity(0.14))
-                        Capsule().fill(compact ? store.appearance.accentColor : Color.sonoText).frame(width: max(0, geometry.size.width * fraction))
-                            .animation(dragging == nil ? .linear(duration: 0.5) : nil, value: fraction)
-                    }
-                    .frame(height: dragging == nil ? 5 : 9)
-                    .frame(maxHeight: .infinity)
-                    .contentShape(Rectangle())
-                    .gesture(DragGesture(minimumDistance: 0)
-                        .onChanged { value in dragging = min(1, max(0, value.location.x / geometry.size.width)) }
-                        .onEnded { value in
-                            let fraction = min(1, max(0, value.location.x / geometry.size.width))
-                            store.seek(to: Int(fraction * Double(duration)))
-                            dragging = nil
-                        })
-                    .animation(.easeOut(duration: 0.15), value: dragging == nil)
+        let duration = duration
+        VStack(spacing: 6) {
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.sonoFg.opacity(0.14))
+                    Capsule().fill(compact ? store.appearance.accentColor : Color.sonoText)
+                        .frame(width: max(0, geometry.size.width * (dragging ?? shown)))
                 }
-                .frame(height: 18)
+                .frame(height: dragging == nil ? 5 : 9)
+                .frame(maxHeight: .infinity)
+                .contentShape(Rectangle())
+                .gesture(DragGesture(minimumDistance: 0)
+                    .onChanged { value in dragging = min(1, max(0, value.location.x / geometry.size.width)) }
+                    .onEnded { value in
+                        let fraction = min(1, max(0, value.location.x / geometry.size.width))
+                        store.seek(to: Int(fraction * Double(duration)))
+                        dragging = nil
+                    })
+                .animation(.easeOut(duration: 0.15), value: dragging == nil)
+            }
+            .frame(height: 18)
+            // Les minutes ne changent qu’une fois par seconde : seul ce texte se redessine.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                let position = dragging.map { Int($0 * Double(duration)) } ?? store.progress.position(at: context.date)
                 HStack {
                     Text(clock(position)); Spacer(); Text(duration > 0 ? clock(duration) : "—:—")
                 }
                 .font(.system(size: 11.5, weight: .medium).monospacedDigit()).foregroundStyle(Color.sonoMuted)
             }
         }
+        .onAppear(perform: sync)
+        .onChange(of: store.progress) { sync() }
+        .onChange(of: duration) { sync() }
+        .onChange(of: dragging == nil) { sync() }
+    }
+
+    private func sync() {
+        let duration = duration
+        let position = store.progress.position(at: .now)
+        let fraction = duration > 0 ? min(1, Double(position) / Double(duration)) : 0
+        var reset = Transaction()
+        reset.disablesAnimations = true
+        withTransaction(reset) { shown = fraction }
+        guard store.progress.running, dragging == nil, duration > position else { return }
+        let remaining = Double(duration - position) / 1000
+        DispatchQueue.main.async { withAnimation(.linear(duration: remaining)) { shown = 1 } }
     }
 }
 
@@ -436,6 +465,7 @@ struct JoinNoticesBanner: View {
         }
         .padding(14)
         .sonoCard(radius: 18)
+        .transition(.move(edge: .top).combined(with: .opacity))
     }
 }
 

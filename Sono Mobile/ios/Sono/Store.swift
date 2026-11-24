@@ -107,6 +107,7 @@ final class Store: ObservableObject {
     private var knownTracks: Set<String>?
     /// App au premier plan : ses propres messages suffisent ; en arrière-plan, les nouveautés passent par des notifications iOS.
     private var isActive: Bool { UIApplication.shared.applicationState == .active }
+    private var badge = 0
     /// Notifications iOS (arrivées, demandes, titres ajoutés), activées par défaut et désactivables dans les réglages.
     @Published var notificationsOn = UserDefaults.standard.object(forKey: "sono-notifications") as? Bool ?? true
     private var toastTask: Task<Void, Never>?
@@ -212,7 +213,7 @@ final class Store: ObservableObject {
         // Première session hébergée : iOS demande une fois s’il peut afficher les notifications.
         if notificationsOn { UNUserNotificationCenter.current().getNotificationSettings { settings in
             guard settings.authorizationStatus == .notDetermined else { return }
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
         } }
         driver.follow(code: session.code, token: token)
         updateCarInvite()
@@ -234,7 +235,8 @@ final class Store: ObservableObject {
 
     func apply(_ payload: Payload) {
         if let incoming = payload.session, incoming != session { session = incoming; noticeArrivals() }
-        if let incoming = payload.queue, incoming != queue { queue = incoming; noticeTracks() }
+        // Premier état reçu : la file sert de point de départ, même vide (sinon le premier titre ajouté passerait sans notification).
+        if let incoming = payload.queue, incoming != queue || knownTracks == nil { queue = incoming; noticeTracks() }
         if payload.hasCurrent, payload.current != current {
             current = payload.current
             if let cover = current?.cover, !cover.isEmpty { defaults.set(cover, forKey: "sono-last-cover") }
@@ -315,6 +317,9 @@ final class Store: ObservableObject {
         content.body = message
         content.sound = .default
         if let request { content.categoryIdentifier = "sono-request"; content.userInfo = ["id": request.id, "name": request.name] }
+        // Pastille rouge sur l’icône : le nombre de nouveautés depuis le dernier retour dans l’app.
+        badge += 1
+        content.badge = NSNumber(value: badge)
         UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: request?.id ?? UUID().uuidString, content: content, trigger: nil))
     }
 
@@ -326,7 +331,7 @@ final class Store: ObservableObject {
     }
 
     private func requestNotificationPermission() {
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { [weak self] granted, _ in
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
             guard !granted else { return }
             Task { @MainActor in self?.notify(L("Autorisez les notifications de Sono dans les Réglages de l’iPhone."), error: true) }
         }
@@ -335,7 +340,8 @@ final class Store: ObservableObject {
     // MARK: Messages
 
     func notify(_ message: String, error: Bool = false) {
-        toast = Toast(message: message, isError: error)
+        // Le message glisse depuis le bas au lieu d’apparaître d’un coup.
+        withAnimation(.spring(response: 0.38, dampingFraction: 0.86)) { toast = Toast(message: message, isError: error) }
         toastTask?.cancel()
         toastTask = Task { [weak self] in
             try? await Task.sleep(for: .seconds(error ? 5.5 : 3.5))
@@ -498,6 +504,7 @@ final class Store: ObservableObject {
 
     /// App en arrière-plan : plus de relevé (la position se déduit de l’heure), il reprend au retour.
     func setForeground(_ active: Bool) {
+        if active, badge > 0 { badge = 0; UNUserNotificationCenter.current().setBadgeCount(0) }
         if !active { pollTask?.cancel(); pollTask = nil }
         else if phase == .host, pollTask == nil { startPolling() }
     }

@@ -314,11 +314,11 @@ struct QRCodeView: View {
 struct AirPlayButton: View {
     @EnvironmentObject private var store: Store
     @State private var active = AirPlayRoute.isActive
-    @State private var picker = AVRoutePickerView()
+    @StateObject private var picker = RoutePickerHolder()
 
     var body: some View {
         Button {
-            picker.subviews.lazy.compactMap { $0 as? UIButton }.first?.sendActions(for: .touchUpInside)
+            picker.view.subviews.lazy.compactMap { $0 as? UIButton }.first?.sendActions(for: .touchUpInside)
         } label: {
             Image(systemName: "airplay.audio")
                 .font(.system(size: 16, weight: .semibold))
@@ -327,7 +327,7 @@ struct AirPlayButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .background(RoutePicker(view: picker).frame(width: 1, height: 1).opacity(0.02).allowsHitTesting(false))
+        .background(RoutePicker(view: picker.view).frame(width: 1, height: 1).opacity(0.02).allowsHitTesting(false))
         .onReceive(NotificationCenter.default.publisher(for: AVAudioSession.routeChangeNotification).receive(on: RunLoop.main)) { _ in active = AirPlayRoute.isActive }
         .accessibilityLabel("AirPlay")
     }
@@ -337,6 +337,9 @@ enum AirPlayRoute {
     /// La musique sort-elle sur un appareil AirPlay ?
     static var isActive: Bool { AVAudioSession.sharedInstance().currentRoute.outputs.contains { $0.portType == .airPlay } }
 }
+
+/// Créé une seule fois par bouton (et non à chaque redessin de l’écran).
+private final class RoutePickerHolder: ObservableObject { let view = AVRoutePickerView() }
 
 /// Le bouton d’iOS doit être dans la fenêtre pour que sa liste s’ouvre.
 private struct RoutePicker: UIViewRepresentable {

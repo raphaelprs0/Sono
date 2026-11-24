@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.7.6 | 2.7.6 (build 31) |
+| Version | 2.7.7 | 2.7.7 (build 32) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -161,7 +161,7 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 - **TV mirroring** (AirPlay or cable): the TV shows TV mode full size while the iPhone stays usable.
 - **Join with a QR code**: Sono’s camera reads a session’s QR code; the session opens inside the app.
 - **Background music**: playback continues with the screen off.
-- **Notifications**: while Sono is in the background (during playback), an iOS notification tells you when someone joins, asks to join or adds a track; a long press on a request accepts or declines it. They can be turned off in Settings → Session.
+- **Notifications**: while Sono is in the background (during playback), an iOS notification tells you when someone joins, asks to join or adds a track; a long press on a request accepts or declines it, and a red badge on the icon counts what is new. They can be turned off in Settings → Session.
 
 ---
 
@@ -473,7 +473,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.6**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.7**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -488,7 +488,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.6-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.7.7-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

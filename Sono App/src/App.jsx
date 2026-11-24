@@ -1816,17 +1816,20 @@ function useTouchReorder(onDrop, enabled) {
         other.style.transform = shift ? `translate3d(0, ${shift}px, 0)` : '';
       });
     };
-    const lift = (row, y) => {
+    const lift = (row, y, mouse = false) => {
       const all = [...list.querySelectorAll('[data-reorder]')];
       const rects = all.map((item) => { const rect = item.getBoundingClientRect(); return { top: rect.top + window.scrollY, bottom: rect.bottom + window.scrollY, height: rect.height }; });
-      active = { row, all, rects, from: all.indexOf(row), to: all.indexOf(row), startY: y + window.scrollY, y };
+      active = { row, all, rects, from: all.indexOf(row), to: all.indexOf(row), startY: y + window.scrollY, y, mouse };
       row.classList.add('touch-lifted');
       list.classList.add('is-reordering');
       place(y);
-      // Près du haut ou du bas de l’écran, la page défile toute seule.
+      // Près du haut ou du bas de l’écran, la page défile toute seule. À la souris, seulement tout contre le bord
+      // et de plus en plus vite en s’en approchant : la file ne part plus sous le curseur dès qu’on descend.
       scroller = window.setInterval(() => {
-        const margin = 90;
-        const speed = active.y < margin ? -7 : active.y > window.innerHeight - margin ? 7 : 0;
+        const margin = active.mouse ? 36 : 90;
+        const bottom = window.innerHeight - margin;
+        const depth = active.y < margin ? active.y - margin : active.y > bottom ? active.y - bottom : 0;
+        const speed = active.mouse ? Math.max(-12, Math.min(12, depth / 3)) : Math.sign(depth) * 7;
         if (speed) { window.scrollBy(0, speed); place(active.y); }
       }, 16);
     };
@@ -1870,7 +1873,7 @@ function useTouchReorder(onDrop, enabled) {
       if (active) {
         active.y = event.clientY;
         if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (active) place(active.y); });
-      } else if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 4) lift(press.row, press.y);
+      } else if (press && Math.hypot(event.clientX - press.x, event.clientY - press.y) > 4) lift(press.row, press.y, true);
     };
     const onMouseUp = () => {
       window.removeEventListener('mousemove', onMouseMove);
