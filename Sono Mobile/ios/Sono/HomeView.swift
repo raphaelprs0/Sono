@@ -37,6 +37,7 @@ struct HomeView: View {
                             Text(L("Chaque personne qui rejoint doit être acceptée par vous.")).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
                         }
                     }
+                    .accentToggle()
                     Button {
                         busy = true
                         focus = nil

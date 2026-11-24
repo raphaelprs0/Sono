@@ -89,24 +89,14 @@ pub fn admission_of(session: &Value, viewer: &Viewer) -> &'static str {
     match status { "accepted" => "accepted", "refused" => "refused", _ => "pending" }
 }
 
-pub fn admin_by_key(session: &Value, key: &str) -> Option<(String, Value)> {
-    if key.is_empty() { return None; }
-    let members = session.get("members")?.as_object()?;
-    for (client_id, member) in members {
-        if truthy(member.get("admin")) && !str_of(member, "adminKey").is_empty() && str_of(member, "adminKey") == key {
-            return Some((client_id.clone(), member.clone()));
-        }
-    }
-    None
-}
-
 pub enum Access { Owner, Admin }
 
 pub fn host_access(session: &Value, key: &str) -> Option<Access> {
     if key.is_empty() { return None; }
     if key == str_of(session, "hostToken") { return Some(Access::Owner); }
     // Un admin désigné par l’hôte a toujours les commandes (lecture, file, arrivées).
-    admin_by_key(session, key).map(|_| Access::Admin)
+    let admin = session.get("members").and_then(Value::as_object).map(|m| m.values().any(|member| truthy(member.get("admin")) && !str_of(member, "adminKey").is_empty() && str_of(member, "adminKey") == key)).unwrap_or(false);
+    admin.then_some(Access::Admin)
 }
 
 pub fn is_controller(session: &Value, viewer: &Viewer) -> bool {
@@ -190,12 +180,13 @@ pub fn fallback_upcoming(session: &mut Value) -> Vec<usize> {
     if length == 0 { return vec![]; }
     let blocked: std::collections::HashSet<i64> = fallback.get("blocked").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_i64).collect()).unwrap_or_default();
     let playable = |v: &Value| v.as_f64().map(|f| f.fract() == 0.0 && f >= 0.0 && (f as usize) < length && !blocked.contains(&(f as i64))).unwrap_or(false);
-    let mut upcoming: Vec<Value> = fallback.get("upcoming").and_then(Value::as_array).cloned().unwrap_or_default();
-    upcoming.retain(|v| playable(v));
-    if upcoming.is_empty() { upcoming = fallback_order(fallback).into_iter().filter(|v| playable(v)).collect(); }
-    let list: Vec<usize> = upcoming.iter().filter_map(|v| v.as_f64()).map(|f| f as usize).collect();
-    fallback["upcoming"] = Value::Array(upcoming);
-    list
+    // Filtrée sur place, sans copie ; rechargée seulement si elle est vide ou absente.
+    let refill = match fallback.get_mut("upcoming").and_then(Value::as_array_mut) {
+        Some(upcoming) => { upcoming.retain(|v| playable(v)); upcoming.is_empty() }
+        None => true,
+    };
+    if refill { fallback["upcoming"] = Value::Array(fallback_order(fallback).into_iter().filter(|v| playable(v)).collect()); }
+    fallback["upcoming"].as_array().map(|a| a.iter().filter_map(Value::as_f64).map(|f| f as usize).collect()).unwrap_or_default()
 }
 
 pub fn set_upcoming(session: &mut Value, list: &[usize]) {
@@ -307,9 +298,10 @@ pub fn payload(state: &State, session: &mut Value, viewer: &Viewer) -> Value {
     let fallback_queue = if session.get("fallback").map(|f| f.is_object()).unwrap_or(false) { fallback_queue_of(session) } else { Value::Null };
     out.insert("fallbackQueue".into(), fallback_queue);
     if is_controller(session, viewer) {
-        let history = session.get("history").and_then(Value::as_array).cloned().unwrap_or_default();
+        // Seuls les 5 derniers titres sont copiés, pas tout l’historique.
+        let history = session.get("history").and_then(Value::as_array).map(|h| h.as_slice()).unwrap_or_default();
         out.insert("previous".into(), history.first().cloned().unwrap_or(Value::Null));
-        out.insert("history".into(), Value::Array(history.into_iter().take(5).collect()));
+        out.insert("history".into(), Value::Array(history.iter().take(5).cloned().collect()));
     }
     out.insert("current".into(), session.get("current").cloned().unwrap_or(Value::Null));
     out.insert("playing".into(), session.get("playing").cloned().unwrap_or(json!(false)));

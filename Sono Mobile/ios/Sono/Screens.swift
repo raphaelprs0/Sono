@@ -341,13 +341,14 @@ struct SessionSettings: View {
             }
             SettingsCard(title: L("Accès à la session")) {
                 Toggle(isOn: Binding(get: { store.session.requireApproval == true }, set: { value in
-                    Task { await store.saveSettings(["requireApproval": value], message: value ? L("Vous validerez désormais chaque nouvel invité.") : L("Tout le monde peut rejoindre avec le code.")) }
+                    Task { await store.saveSettings(["requireApproval": value], message: value ? L("Vous validerez désormais chaque nouvel invité.") : L("Tout le monde peut rejoindre avec le lien.")) }
                 })) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(L("Valider chaque invité")).font(.system(size: 15, weight: .medium)).foregroundStyle(Color.sonoText)
                         Text(L("Chaque personne qui rejoint doit être acceptée par vous. Les invités déjà présents restent dans la session.")).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
                     }
                 }
+                .accentToggle()
             }
             if let sound { soundCard(sound) }
             SettingsCard(title: L("Lien d’invitation"), subtitle: L("Partagez ce lien avec les invités qui ne peuvent pas scanner le code QR.")) {
@@ -546,6 +547,7 @@ struct AppearanceSettings: View {
                 Text(description).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
             }
         }
+        .accentToggle()
     }
 
     private func swatch<Preview: View>(id: String, label: String, @ViewBuilder preview: () -> Preview) -> some View {

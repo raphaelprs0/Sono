@@ -1,6 +1,6 @@
 [package]
 name = "sono"
-version = "2.7.3"
+version = "2.7.4"
 description = "Sono, la file musicale collaborative pour vos soirées."
 authors = ["Sono"]
 edition = "2021"
@@ -29,7 +29,7 @@ regex = "1"
 if-addrs = "0.13"
 base64 = "0.22"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
-brotli = "7"
+brotli = "9"
 flate2 = "1"
 futures-util = "0.3"
 tower = { version = "0.5", features = ["util"] }

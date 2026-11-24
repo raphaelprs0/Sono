@@ -26,10 +26,7 @@ struct QueueView: View {
                         if store.session.fallback != nil { groupLabel(L("Proposés par les invités"), count: store.queue.count) }
                         ReorderableRows(items: store.queue, swipe: (L("Retirer"), "trash.fill", Color.sonoDanger, { store.remove($0) }), onMove: { store.move(from: IndexSet(integer: $0), to: $1 > $0 ? $1 + 1 : $1) }) { track, index in
                             TrackRow(track: track, number: index + 1) {
-                                Button { confirmation = .removeTrack(track) } label: {
-                                    Image(systemName: "trash").font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoMuted).frame(width: 36, height: 36).contentShape(Rectangle())
-                                }
-                                .accessibilityLabel(L("Retirer {0}", track.title))
+                                trashButton(L("Retirer {0}", track.title)) { confirmation = .removeTrack(track) }
                             }
                         }
                     }
@@ -38,10 +35,7 @@ struct QueueView: View {
                         groupLabel(L("Musique de fond"), count: fallback.total)
                         ReorderableRows(items: fallback.tracks, swipe: (L("Ne pas jouer"), "trash.fill", Color.sonoDanger, { store.skipFallback($0) }), onMove: { store.moveFallback(from: IndexSet(integer: $0), to: $1 > $0 ? $1 + 1 : $1) }) { track, index in
                             TrackRow(track: track, number: store.queue.count + index + 1, dim: true) {
-                                Button { store.skipFallback(track) } label: {
-                                    Image(systemName: "trash").font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoMuted).frame(width: 36, height: 36).contentShape(Rectangle())
-                                }
-                                .accessibilityLabel(L("Ne pas jouer {0}", track.title))
+                                trashButton(L("Ne pas jouer {0}", track.title)) { store.skipFallback(track) }
                             }
                         }
                     }
@@ -93,16 +87,13 @@ struct QueueView: View {
     private func groupLabel(_ title: String, count: Int) -> some View {
         Text("\(title.uppercased()) · \(count)").font(.system(size: 11.5, weight: .bold)).tracking(1.4).foregroundStyle(Color.sonoMuted).padding(.top, 6)
     }
-}
 
-extension View {
-    /// Ligne de liste sans séparateur ni fond, avec des marges régulières.
-    func row(top: CGFloat = 8, bottom: CGFloat = 8) -> some View {
-        // Style « plain » : chaque bouton de la ligne réagit seul (sinon un appui sur la ligne déclenche son premier bouton).
-        buttonStyle(StillButtonStyle())
-            .listRowInsets(EdgeInsets(top: top, leading: 20, bottom: bottom, trailing: 20))
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
+    /// Corbeille au bout d’une ligne de la file.
+    private func trashButton(_ label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "trash").font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoMuted).frame(width: 36, height: 36).contentShape(Rectangle())
+        }
+        .accessibilityLabel(label)
     }
 }
 
@@ -318,7 +309,7 @@ struct ProgressBar: View {
     @State private var dragging: Double?
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.5)) { context in
+        TimelineView(.animation(minimumInterval: 0.5, paused: !store.progress.running)) { context in
             let progress = store.progress
             let duration = max(progress.durationMs, store.current?.durationMillis ?? 0)
             let position = dragging.map { Int($0 * Double(duration)) } ?? progress.position(at: context.date)

@@ -18,6 +18,8 @@ final class Driver {
     private var code: String?
     private var token: String?
     private var socket: URLSessionWebSocketTask?
+    /// Délai avant de rouvrir la connexion : il double à chaque échec (2,5 s à 30 s), remis à zéro dès qu’un message arrive.
+    private var reconnectDelay = 2.5
     private var current: Track?
     private var nextProviderId: String?
     private var playing = false
@@ -138,8 +140,10 @@ final class Driver {
         self.token = token
         socket?.cancel(with: .goingAway, reason: nil)
         socket = nil
+        reconnectDelay = 2.5
         current = nil
         playing = false
+        if code == nil { ping?.invalidate(); ping = nil }
         if code != nil { openSocket(); startTicking(); Task { await applySound() } }
         else { Task { await reconcile() } }
     }
@@ -167,13 +171,16 @@ final class Driver {
                 switch result {
                 case .success(.string(let text)):
                     self.onLive?(true)
+                    self.reconnectDelay = 2.5
                     if let json = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any] { self.apply(json); self.onPayload?(json) }
                     self.receive(on: task)
                 case .success: self.receive(on: task)
                 case .failure:
                     self.socket = nil
                     self.onLive?(false)
-                    try? await Task.sleep(for: .seconds(2.5))
+                    let delay = self.reconnectDelay
+                    self.reconnectDelay = min(delay * 2, 30)
+                    try? await Task.sleep(for: .seconds(delay))
                     if self.code != nil && self.socket == nil { self.openSocket() }
                 }
             }
@@ -640,14 +647,11 @@ final class Driver {
 
 /// QR code noir sur blanc, avec une marge blanche pour qu’un téléphone le lise bien sur un écran de voiture.
 func inviteQRCode(_ address: String) -> UIImage? {
-    guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
-    filter.setValue(Data(address.utf8), forKey: "inputMessage")
-    filter.setValue("M", forKey: "inputCorrectionLevel")
-    guard let code = filter.outputImage else { return nil }
+    // Le code en cache (12 px par module) : dessiné sans lissage, chaque module garde un nombre entier de pixels.
+    guard let bitmap = QRCode.image(address, level: "M")?.cgImage else { return nil }
     let side: CGFloat = 1000
-    let scale = floor(side * 0.86 / code.extent.width)
-    let inset = (side - code.extent.width * scale) / 2
-    guard let bitmap = CIContext().createCGImage(code.transformed(by: CGAffineTransform(scaleX: scale, y: scale)), from: code.extent.applying(CGAffineTransform(scaleX: scale, y: scale))) else { return nil }
+    let modules = CGFloat(bitmap.width / 12)
+    let inset = (side - modules * floor(side * 0.86 / modules)) / 2
     let format = UIGraphicsImageRendererFormat()
     format.scale = 1
     format.opaque = true

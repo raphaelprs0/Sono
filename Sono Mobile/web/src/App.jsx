@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react';
 import { tx, txServer, locale, setLang } from './i18n.js';
 import {
-  ArrowDown, ArrowRight, ArrowUp, Check, CircleAlert, Clock3, Disc3, Airplay, GripVertical, Link2, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, ShieldCheck, SkipBack, Smartphone, SkipForward, Trash2, UserRound, UsersRound, X,
+  ArrowDown, ArrowRight, ArrowUp, Check, CircleAlert, Clock3, Disc3, Airplay, GripVertical, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, ShieldCheck, SkipBack, Smartphone, SkipForward, Trash2, UserRound, UsersRound, X,
 } from 'lucide-react';
 import { flushSync } from 'react-dom';
 import appleMusicLogo from './assets/apple-music.webp';
@@ -22,7 +22,7 @@ const hostPart = (name) => {
 const TvView = hostPart('TvView');
 
 
-const defaultSession = { name: tx("Session Sono"), code: 'SONO-4821', host: 'Hôte', guests: 0, active: true, source: null };
+const defaultSession = { name: tx("Session Sono"), code: 'SONO-4821', host: 'Hôte', guests: 0, source: null };
 
 
 // ───────────── Apparence (réglages de l’appareil hôte, gardés dans le navigateur) ─────────────
@@ -225,22 +225,30 @@ function measureImage(src) {
           const data = context.getImageData(0, 0, 12, 12).data;
           const pixels = [];
           for (let i = 0; i < data.length; i += 4) pixels.push([data[i], data[i + 1], data[i + 2]]);
-          // Palette : échantillon plus fin (24 × 24) pour retrouver les vraies couleurs dominantes.
-          const fine = document.createElement('canvas');
-          fine.width = fine.height = 24;
-          const fineContext = fine.getContext('2d', { willReadFrequently: true });
-          fineContext.drawImage(image, 0, 0, 24, 24);
-          const fineData = fineContext.getImageData(0, 0, 24, 24).data;
-          const finePixels = [];
-          for (let i = 0; i < fineData.length; i += 4) finePixels.push([fineData[i], fineData[i + 1], fineData[i + 2]]);
-          const palette = coverPalette(finePixels);
           pixels.sort((a, b) => relativeLuminance(a) - relativeLuminance(b));
           const bright = pixels[Math.floor(pixels.length * 0.9)];
           let keep = 1;
           while (keep > 0.05 && relativeLuminance(bright.map((v) => v * keep)) > BACKDROP_MAX_LUMINANCE) keep -= 0.01;
           // Couleur moyenne de la première et de la dernière rangée : bords haut et bas du fond.
           const row = (y) => [0, 1, 2].map((c) => Math.round(Array.from({ length: 12 }, (_, x) => data[(y * 12 + x) * 4 + c]).reduce((a, b) => a + b) / 12));
-          resolve({ shade: 1 - keep, bright, mid: pixels[Math.floor(pixels.length * 0.5)], top: row(0), bottom: row(11), palette, blur: smoothBitmap(image, { size: 48, radius: 3 }), smooth: smoothBitmap(image, { size: 96, radius: 5, disc: true }) });
+          const measure = { shade: 1 - keep, bright, mid: pixels[Math.floor(pixels.length * 0.5)], top: row(0), bottom: row(11), blur: smoothBitmap(image, { size: 48, radius: 3 }) };
+          // Palette et nappe floutée ne servent qu’au fond du mode TV : calculées à la première lecture, puis gardées.
+          const lazy = (name, compute) => Object.defineProperty(measure, name, { configurable: true, enumerable: true, get() { const value = compute(); Object.defineProperty(measure, name, { value, enumerable: true }); return value; } });
+          lazy('palette', () => {
+            try {
+              // Échantillon plus fin (24 × 24) pour retrouver les vraies couleurs dominantes.
+              const fine = document.createElement('canvas');
+              fine.width = fine.height = 24;
+              const fineContext = fine.getContext('2d', { willReadFrequently: true });
+              fineContext.drawImage(image, 0, 0, 24, 24);
+              const fineData = fineContext.getImageData(0, 0, 24, 24).data;
+              const finePixels = [];
+              for (let i = 0; i < fineData.length; i += 4) finePixels.push([fineData[i], fineData[i + 1], fineData[i + 2]]);
+              return coverPalette(finePixels);
+            } catch { return undefined; }
+          });
+          lazy('smooth', () => smoothBitmap(image, { size: 96, radius: 5, disc: true }));
+          resolve(measure);
         } catch { resolve({ shade: 0.65 }); }
       };
       image.onerror = () => resolve({ shade: 0.65 });
@@ -266,16 +274,16 @@ const SCRIM = [8, 8, 7];
 const toHex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
 function useBackdropEdges(look, cover) {
   const preset = BACKGROUNDS.find((item) => item.id === look.background) || BACKGROUNDS[0];
-  const src = look.background === 'cover' ? cover : preset.image;
+  const src = look.background === 'cover' ? cover : undefined;
   const measure = useImageMeasure(src);
   const last = useRef(null);
   if (!src || !measure?.top) {
     // Pochette en cours d’analyse : on garde les bords précédents plutôt que d’afficher un éclair de couleur par défaut.
     if (src && look.background === 'cover' && last.current) return last.current;
-    return preset.id === 'cover' || !preset.edges ? ['#0f0f0d', '#0f0f0d'] : preset.edges;
+    return preset.edges;
   }
-  // Même assombrissement que l’arrière-plan : au moins 50 % pour une pochette, juste le complément pour l’image déjà assombrie.
-  const shade = look.background === 'cover' ? Math.max(0.5, measure.shade) : Math.max(measure.shade, preset.minShade ?? 0);
+  // Même assombrissement que l’arrière-plan de la pochette : au moins 50 %.
+  const shade = Math.max(0.5, measure.shade);
   last.current = [measure.top, measure.bottom].map((rgb) => toHex(rgb.map((v, i) => v * (1 - shade) + SCRIM[i] * shade)));
   return last.current;
 }
@@ -306,15 +314,14 @@ function applyEdges(edges) {
 function AppBackdrop({ appearance, cover }) {
   const { background } = appearance;
   const preset = BACKGROUNDS.find((item) => item.id === background);
-  const measure = useImageMeasure(background === 'cover' ? cover : preset?.image);
+  const measure = useImageMeasure(background === 'cover' ? cover : undefined);
   const shade = measure?.shade ?? 0.65;
   // Le temps d’analyser la nouvelle pochette, l’ancienne reste en place.
   const shownCover = useRef(null);
   if (background === 'cover' && cover && measure) shownCover.current = { cover, measure };
-  if (background === 'default') return null;
   // Pochette en cours : au moins l’assombrissement d’origine (50 %), davantage pour les pochettes claires.
   if (background === 'cover') return <div className={shownCover.current?.cover ? 'app-backdrop blurred has-image' : 'app-backdrop'} style={{ '--shade': Math.max(0.5, shownCover.current?.measure?.shade ?? shade) }} aria-hidden="true">{shownCover.current && <FadeCover className={shownCover.current.measure.blur ? 'soft' : ''} src={shownCover.current.measure.blur || shownCover.current.cover} />}</div>;
-  return <div className={preset?.image ? 'app-backdrop has-image' : 'app-backdrop'} style={{ '--photo': preset?.image ? `url(${preset.image})` : undefined, background: preset?.css || 'var(--bg)', backgroundColor: 'var(--edge-bottom)', '--shade': preset?.image ? Math.max(shade, preset.minShade ?? 0) : 0 }} aria-hidden="true" />;
+  return <div className="app-backdrop" style={{ background: preset?.css || 'var(--bg)', backgroundColor: 'var(--edge-bottom)', '--shade': 0 }} aria-hidden="true" />;
 }
 
 function formatDuration(ms) {
@@ -465,10 +472,6 @@ function Equalizer({ playing }) {
   return <span className={playing ? 'equalizer' : 'equalizer paused'} aria-hidden="true"><i /><i /><i /></span>;
 }
 
-// App de bureau : quand la fenêtre est cachée ou réduite, les animations et le fond du mode TV se mettent en pause
-// (la page continue de tourner pour la musique et les invités, mais ne dessine plus rien).
-if (typeof window !== 'undefined') window.sonoDesktop?.onVisibility?.((visible) => document.documentElement.toggleAttribute('data-window-hidden', !visible));
-
 // Au doigt, le navigateur peut attendre avant de valider un appui (il guette un double appui).
 // Les boutons réagissent donc dès que le doigt se lève, sauf si le doigt a glissé ou si la page défilait encore.
 if (typeof document !== 'undefined') {
@@ -530,11 +533,9 @@ function App() {
   const [ended, setEnded] = useState(false);
   const knownRequests = useRef(null);
   const [appearance] = useState(readAppearance);
-  const resumeHostingRef = useRef(() => {});
   const playbackBusyRef = useRef(false);
   const dropUnavailableRef = useRef(() => {});
   const playbackRef = useRef(() => {});
-  const preloadedRef = useRef(null);
   const historyRef = useRef([]);
   const skipState = useRef({ delta: 0, timer: 0, active: false, sending: false, toggle: false, watchUntil: 0 });
   // Mode TV ouvert par-dessus le tableau de bord : origin est l’élément d’où il s’agrandit (lecteur ou aperçu des réglages).
@@ -544,6 +545,8 @@ function App() {
   const toastTimer = useRef();
   const socketRef = useRef(null);
   const helloRef = useRef({});
+  // Dernier « hello » envoyé sur la connexion en cours : un message identique n’est pas renvoyé.
+  const lastHelloRef = useRef('');
   helloRef.current = { type: 'hello', clientId: clientId(), name: isGuest ? myName.trim() : '', hostToken: isGuest ? undefined : hostToken };
 
   const notify = useCallback((message, type = 'success') => {
@@ -648,7 +651,8 @@ function App() {
       socketRef.current = socket;
       socket.onopen = () => {
         setLive(true);
-        socket.send(JSON.stringify(helloRef.current));
+        lastHelloRef.current = JSON.stringify(helloRef.current);
+        socket.send(lastHelloRef.current);
       };
       socket.onmessage = (event) => applyBroadcast(JSON.parse(event.data));
       socket.onclose = (event) => {
@@ -715,13 +719,16 @@ function App() {
   useEffect(() => {
     const theme = look.background === 'white' ? 'light' : 'dark';
     document.documentElement.dataset.theme = theme;
+    // Fond Noir : noir pur pour les écrans OLED (pixels éteints), voir styles.css.
+    document.documentElement.dataset.background = look.background;
     applyAccent(look.accent, theme);
-    document.documentElement.toggleAttribute('data-custom-bg', look.background !== 'default');
+    document.documentElement.setAttribute('data-custom-bg', '');
   }, [look.accent, look.background]);
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const socket = socketRef.current;
-      if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify(helloRef.current));
+      const hello = JSON.stringify(helloRef.current);
+      if (socket?.readyState === WebSocket.OPEN && hello !== lastHelloRef.current) { lastHelloRef.current = hello; socket.send(hello); }
     }, 500);
     return () => window.clearTimeout(timer);
   }, [myName, hostToken]);
@@ -737,13 +744,13 @@ function App() {
   const hostHeaders = useMemo(() => ({ 'x-host-token': hostToken }), [hostToken]);
   const addTrack = useCallback(async (track) => {
     try {
-      const addedBy = isGuest ? myName : session.host;
-      const data = await apiRequest(`/api/sessions/${session.code}/tracks`, { method: 'POST', headers: isGuest ? {} : { 'x-host-token': hostToken }, body: JSON.stringify({ track, addedBy }) });
+      // Le nom affiché à côté du titre est fixé par le serveur.
+      const data = await apiRequest(`/api/sessions/${session.code}/tracks`, { method: 'POST', headers: isGuest ? {} : { 'x-host-token': hostToken }, body: JSON.stringify({ track }) });
       applyPayload(data);
       notify(tx("« {0} » a rejoint la file.", track.title));
       return true;
     } catch (error) { notify(error.message, 'error'); return false; }
-  }, [session.code, session.host, isGuest, myName, hostToken, applyPayload, notify]);
+  }, [session.code, isGuest, hostToken, applyPayload, notify]);
 
   const confirmGuestName = (name) => {
     setGuestName(name.trim());
@@ -815,7 +822,6 @@ function App() {
     let data = null;
     try {
       if (delta) {
-        preloadedRef.current = null;
         // Le moteur démarre sans attendre le serveur, qui est prévenu en même temps.
         if (native && !isGuest) {
           state.watchUntil = Date.now() + 5000;
@@ -896,8 +902,6 @@ function App() {
       setProgress({ positionMs: 0, durationMs: trackDurationMs(track), at: Date.now() });
     }
     try {
-      // Une lecture lancée à la main remplace le titre préchargé dans le moteur.
-      if (!alreadyPlaying && action !== 'toggle') preloadedRef.current = null;
       // Le moteur est commandé en premier ; le serveur est prévenu en même temps, sans se faire attendre l’un l’autre.
       const [, data] = await Promise.all([
         action !== 'ended' && !alreadyPlaying && !isGuest ? controlProvider({ track, action: action === 'previous' ? 'next' : action, playing, source: session.source, hostToken, sessionCode: session.code }) : null,
@@ -949,20 +953,8 @@ function App() {
       notify(tx("« {0} » ne passera pas.", track.title));
     } catch (error) { notify(error.message, 'error'); }
   };
-  const resumeHosting = (code) => {
-    writeStorage('sono-host-code', code);
-    setHostToken(readStorage(`sono-host-${code}`));
-    setSession((state) => ({ ...state, code }));
-    setHostState('checking');
-  };
-  resumeHostingRef.current = resumeHosting;
-  useEffect(() => {
-    if (hostState === 'host' && hostToken && session.code) rememberHostSession(session.code, hostToken);
-  }, [hostState, session.code, hostToken]);
   // L’hôte est là : ses écrans (paramètres, connexions, mode TV…) sont préchargés pour s’ouvrir sans attente.
   useEffect(() => { if (hostState === 'host') loadHostParts().catch(() => {}); }, [hostState]);
-  // La session animée est retenue par le serveur pour cet ordinateur ; oubliée quand l’hôte la quitte.
-  const rememberHostSession = () => Promise.resolve();
   // L’invité apprend qu’il vient d’être nommé admin (ou ne l’est plus).
   const wasAdmin = useRef(null);
   useEffect(() => {
@@ -998,7 +990,7 @@ function App() {
   if (tvDisplay) {
     if (hostState !== 'host') return <div className="tv-display-idle"><Brand /><p>{tx("Ouvrez une session dans Sono sur l’iPhone.")}</p></div>;
     return <TvView display origin={[]} current={current} previousKey={previous && trackKey(previous)} next={nextUp} playing={playing} inviteUrl={inviteUrl}
-      controls={{ canPrevious: false, canNext: false, onToggle: () => {}, onNext: () => {}, onPrevious: () => {} }} appearance={appearance} onAppearance={() => {}} showTools={false}
+      controls={{ canPrevious: false, canNext: false, onToggle: () => {}, onNext: () => {}, onPrevious: () => {} }} appearance={appearance} onAppearance={() => {}}
       progressBar={current && <ProgressBar className="tv-progress" track={current} progress={progress} playing={playing} onSeek={() => {}} />} onExit={() => {}} toast={null} closeToast={() => {}} />;
   }
   if (hostState === 'checking') return <><AppBackdrop appearance={look} cover={backdropCover} /><div className="guest-shell boot-screen"><Brand /><LoaderCircle className="spin" size={22} /></div></>;
@@ -1456,7 +1448,7 @@ const QueueList = memo(function QueueList({ queue, host, fallback, onRemove, onR
   </div>;
 });
 
-function SearchPanel({ addTrack, compact = false, source, showSource = false, onConnect }) {
+function SearchPanel({ addTrack, compact = false, source, showSource = false }) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1483,8 +1475,7 @@ function SearchPanel({ addTrack, compact = false, source, showSource = false, on
     <div className="search-empty no-source">
       <span className="logo-pair"><ProviderLogo provider="Apple Music" size={34} /><ProviderLogo provider="Deezer" size={34} /></span>
       <strong>{tx("Aucune app de lecture connectée")}</strong>
-      <span>{onConnect ? tx("Connectez Apple Music ou Deezer pour chercher et lancer des titres.") : tx("L’hôte doit d’abord connecter Apple Music ou Deezer.")}</span>
-      {onConnect && <button type="button" className="button primary" onClick={onConnect}><Link2 size={16} />{tx("Connecter une app")}</button>}
+      <span>{tx("L’hôte doit d’abord connecter Apple Music ou Deezer.")}</span>
     </div>
   </div>;
 
@@ -1580,7 +1571,7 @@ function HomeView({ guestName, onConfirmName, toast, closeToast }) {
     <main className="home-main">
       <section className="home-hero">
         <h1 aria-label="Sono"><Brand /></h1>
-        <p>{tx("Rejoignez la file d’attente d’un proche : entrez le code affiché par l’hôte.")}</p>
+        <p>{tx("Rejoignez la file d’attente d’un proche : scannez le code QR de l’hôte ou ouvrez son lien d’invitation.")}</p>
       </section>
       <div className="home-panel"><JoinForm guestName={guestName} onConfirmName={onConfirmName} /></div>
     </main>
@@ -1716,12 +1707,13 @@ const FallbackList = memo(function FallbackList({ tracks, total, host, startInde
     if (!needsAll) { setAll(null); return undefined; }
     let cancelled = false;
     setLoading(true);
-    apiRequest(`/api/sessions/${sessionCode}/fallback/upcoming`, { headers })
+    // Seulement les titres affichés : la suite est demandée quand on en affiche davantage.
+    apiRequest(`/api/sessions/${sessionCode}/fallback/upcoming?limit=${limit}`, { headers })
       .then((data) => { if (!cancelled) setAll(data.tracks); })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [needsAll, total, sessionCode]);
+  }, [needsAll, total, sessionCode, limit]);
   const items = (needsAll && all) || tracks;
   const visible = items.slice(0, limit);
   const remaining = total - visible.length;
@@ -1763,7 +1755,7 @@ function SessionEndedView() {
       <div className="join-card waiting-card">
         <div className="modal-symbol danger"><X size={22} /></div>
         <h1>{tx("Session terminée")}</h1>
-        <p>{tx("L’hôte a supprimé cette session. Vous pouvez en rejoindre une autre avec un nouveau code.")}</p>
+        <p>{tx("L’hôte a supprimé cette session. Vous pouvez en rejoindre une autre avec son lien d’invitation ou son code QR.")}</p>
         <a className="button primary join-button" href="/rejoindre">{tx("Rejoindre une autre session")}</a>
       </div>
     </main>

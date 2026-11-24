@@ -22,6 +22,6 @@ for target in ${1:-sim ios}; do
   mkdir -p build/$target
   CC="$(xcrun --sdk $sdk -f clang) -target $tgt -isysroot $sysroot" CGO_ENABLED=1 GOOS=ios GOARCH=arm64 \
     CGO_CFLAGS="-target $tgt -isysroot $sysroot" CGO_LDFLAGS="-target $tgt -isysroot $sysroot" \
-    go build -modfile="$work/go.mod" -trimpath -ldflags "-s -w" -buildmode=c-archive -tags ios -o build/$target/libsonoengine.a .
+    go build -modfile="$work/go.mod" -trimpath -ldflags "-s -w" -buildmode=c-archive -o build/$target/libsonoengine.a .
   echo "ok $target"
 done

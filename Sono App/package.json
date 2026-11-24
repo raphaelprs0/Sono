@@ -1,7 +1,7 @@
 {
   "name": "sono",
   "private": true,
-  "version": "2.7.3",
+  "version": "2.7.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "preact": "^10.29.8",
-    "vite": "latest"
+    "vite": "8.3.5"
   },
   "productName": "Sono",
   "description": "Sono, la file musicale collaborative pour vos soirées.",

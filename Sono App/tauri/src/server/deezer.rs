@@ -1,5 +1,5 @@
 // Moteur Deezer (programme Go à côté de l’app) : démarrage avec l’ARL, commandes de lecture, journal, égaliseur.
-use super::logic::{add_activity, now_iso, sound_eq};
+use super::logic::{add_activity, sound_eq};
 use super::state::{DeezerConn, Shared};
 use serde_json::{json, Value};
 use std::process::Stdio;
@@ -177,5 +177,4 @@ pub async fn stop_session_music(app: &Shared, code: &str, reason: &str) {
     }
     app.persist();
     app.broadcast(code);
-    let _ = now_iso;
 }

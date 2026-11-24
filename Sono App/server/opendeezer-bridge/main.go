@@ -88,33 +88,19 @@ func (b *bridge) status(w http.ResponseWriter, _ *http.Request) {
 	writeJSON(w, http.StatusOK, response)
 }
 func (b *bridge) search(w http.ResponseWriter, r *http.Request) {
-	results, err := b.client.Search(r.URL.Query().Get("q"))
-	if err != nil {
-		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
-		return
-	}
-	tracks := make([]searchTrack, 0, len(results.Tracks))
-	for _, track := range results.Tracks {
+	// Seuls les titres servent : une requête à Deezer au lieu de quatre. En cas d’échec, liste vide
+	// (comme avant, où l’échec de la seule recherche de titres donnait aussi une liste vide).
+	results, _ := b.client.SearchTracks(r.URL.Query().Get("q"))
+	tracks := make([]searchTrack, 0, len(results))
+	for _, track := range results {
 		tracks = append(tracks, searchTrack{ID: track.ID, Title: track.Name, Artist: searchArtist{Name: track.ArtistLine()}, Album: searchAlbum{Title: track.AlbumName, CoverXL: track.ArtworkURL}, Duration: track.DurationMS / 1000})
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"data": tracks})
 }
 
-// prepare récupère en même temps les infos du titre et son flux audio (deux appels à Deezer en parallèle).
+// prepare récupère les infos du titre et son flux audio avec un seul appel song.getData à Deezer.
 func (b *bridge) prepare(id string) (dz.Track, *dz.StreamPlan, error) {
-	var (
-		track    dz.Track
-		trackErr error
-		wg       sync.WaitGroup
-	)
-	wg.Add(1)
-	go func() { defer wg.Done(); track, trackErr = b.client.Track(id) }()
-	plan, err := b.client.PrepareStream(id)
-	wg.Wait()
-	if trackErr != nil {
-		return track, nil, trackErr
-	}
-	return track, plan, err
+	return b.client.PrepareStreamWithTrack(id)
 }
 func (b *bridge) play(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {

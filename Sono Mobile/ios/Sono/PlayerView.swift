@@ -291,6 +291,7 @@ struct QRSheet: View {
                         Text(store.session.source == "Apple Music" ? L("Disponible avec Deezer : avec Apple Music, c’est iOS qui gère cet écran.") : L("Le QR code remplace la pochette sur CarPlay et sur l’écran verrouillé, pendant la lecture.")).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
                     }
                 }
+                .accentToggle()
                 .padding(.top, 6)
             }
             .padding(.horizontal, 22)

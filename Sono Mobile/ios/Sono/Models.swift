@@ -70,8 +70,6 @@ struct FallbackSummary: Codable, Hashable {
     var name: String?
     var subtitle: String?
     var cover: String?
-    var source: String?
-    var count: Int?
     var next: Track?
 }
 
@@ -180,18 +178,28 @@ func coverURL(_ address: String?, size: Int) -> URL? {
     return URL(string: cover)
 }
 
+// Formateurs créés une fois (coûteux) ; celui des dates suit la langue choisie.
+private let isoFractional: ISO8601DateFormatter = {
+    let formatter = ISO8601DateFormatter()
+    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+    return formatter
+}()
+private let isoPlain = ISO8601DateFormatter()
+private var dayFormatter: (lang: String, formatter: DateFormatter)?
+
 /// « il y a 5 min », comme sur la page web.
 func activityTime(_ value: String?) -> String {
     guard let value else { return "" }
-    let formatter = ISO8601DateFormatter()
-    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-    guard let date = formatter.date(from: value) ?? ISO8601DateFormatter().date(from: value) else { return "" }
+    guard let date = isoFractional.date(from: value) ?? isoPlain.date(from: value) else { return "" }
     let seconds = Int(Date().timeIntervalSince(date))
     if seconds < 60 { return L("À l’instant") }
     if seconds < 3600 { return L("Il y a {0} min", seconds / 60) }
     if seconds < 86400 { return L("Il y a {0} h", seconds / 3600) }
-    let day = DateFormatter()
-    day.locale = Lang.locale
-    day.dateFormat = "d MMM, HH:mm"
-    return day.string(from: date)
+    if dayFormatter?.lang != Lang.current {
+        let day = DateFormatter()
+        day.locale = Lang.locale
+        day.dateFormat = "d MMM, HH:mm"
+        dayFormatter = (Lang.current, day)
+    }
+    return dayFormatter!.formatter.string(from: date)
 }

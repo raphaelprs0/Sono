@@ -198,7 +198,8 @@ pub async fn host_bootstrap(r: Req) -> Response {
 pub async fn create_session(r: Req) -> Response {
     let previous_code = text(r.b("previousCode"), 20);
     let mut s = r.app.lock();
-    let trusted = s.sessions.get(&previous_code).filter(|p| !r.key().is_empty() && r.key() == str_of(p, "hostToken")).cloned();
+    // De l’ancienne session, seuls l’hôte et la validation des invités sont repris (sans copier toute la session).
+    let trusted = s.sessions.get(&previous_code).filter(|p| !r.key().is_empty() && r.key() == str_of(p, "hostToken")).map(|p| (str_of(p, "host").to_string(), truthy(p.get("requireApproval"))));
     if trusted.is_none() && r.is_tunnel() { return err(StatusCode::FORBIDDEN, "Une session se crée depuis le réseau Wi-Fi local, pas depuis le lien public."); }
     let name = text(r.b("name"), 80);
     if name.is_empty() { return err(StatusCode::BAD_REQUEST, "Donnez un nom à votre session."); }
@@ -206,8 +207,8 @@ pub async fn create_session(r: Req) -> Response {
         let candidate = format!("SONO-{}", rand::thread_rng().gen_range(1000..10000));
         if !s.sessions.contains_key(&candidate) { break candidate; }
     };
-    let host = { let h = text(r.b("host"), 30); if !h.is_empty() { h } else { trusted.as_ref().map(|t| str_of(t, "host").to_string()).filter(|h| !h.is_empty()).unwrap_or_else(|| "Hôte".into()) } };
-    let require = match r.b("requireApproval") { Some(Value::Bool(b)) => *b, _ => trusted.as_ref().map(|t| truthy(t.get("requireApproval"))).unwrap_or(false) };
+    let host = { let h = text(r.b("host"), 30); if !h.is_empty() { h } else { trusted.as_ref().map(|t| t.0.clone()).filter(|h| !h.is_empty()).unwrap_or_else(|| "Hôte".into()) } };
+    let require = match r.b("requireApproval") { Some(Value::Bool(b)) => *b, _ => trusted.as_ref().map(|t| t.1).unwrap_or(false) };
     let token = uuid::Uuid::new_v4().to_string();
     let mut session = json!({
         "code": code, "name": name, "host": host, "active": true, "requireApproval": require, "playbackSource": s.preferred_source,
@@ -470,13 +471,6 @@ fn owner_check(r: &Req, code: &str) -> Result<(), Response> {
     Ok(())
 }
 
-pub async fn stop_music(r: Req) -> Response {
-    let code = r.code_param();
-    if let Err(response) = owner_check(&r, &code) { return response; }
-    deezer::stop_session_music(&r.app, &code, "Musique coupée : l’hôte a quitté la session").await;
-    with_session(&r.app.clone(), &code, |s, session| { let v = r.viewer(session); pay(s, session, &v) })
-}
-
 pub async fn delete_session(r: Req) -> Response {
     let code = r.code_param();
     if let Err(response) = owner_check(&r, &code) { return response; }
@@ -494,14 +488,6 @@ pub async fn delete_session(r: Req) -> Response {
 }
 
 // ───── Apple Music ─────
-pub async fn apple_status(r: Req) -> Response {
-    match catalog::apple_search(&r.app, "As It Was", 1).await {
-        Ok(tracks) if !tracks.is_empty() => ok(json!({ "available": true, "title": tracks[0].pointer("/attributes/name").cloned().unwrap_or(json!("Apple Music")) })),
-        Ok(_) => (StatusCode::BAD_GATEWAY, Json(json!({ "available": false, "error": "Catalogue Apple Music indisponible : Le catalogue Apple Music n’a retourné aucun titre." }))).into_response(),
-        Err(e) => (StatusCode::BAD_GATEWAY, Json(json!({ "available": false, "error": format!("Catalogue Apple Music indisponible : {e}") }))).into_response(),
-    }
-}
-
 pub async fn apple_developer_token(r: Req) -> Response {
     let mut response = match catalog::apple_token(&r.app).await {
         Ok(token) => ok(json!({ "developerToken": token })),
@@ -840,7 +826,8 @@ pub async fn local_host_put(r: Req) -> Response {
     ok(json!({ "ok": true }))
 }
 
-fn dir_size(path: &std::path::Path) -> u64 {
+/// Taille d’un fichier ou d’un dossier (liens symboliques non suivis).
+pub fn dir_size(path: &std::path::Path) -> u64 {
     let Ok(meta) = std::fs::symlink_metadata(path) else { return 0 };
     if !meta.is_dir() { return meta.len(); }
     std::fs::read_dir(path).map(|entries| entries.flatten().map(|e| dir_size(&e.path())).sum()).unwrap_or(0)

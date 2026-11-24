@@ -6,7 +6,6 @@
 
 /* ───────────── Tokens ───────────── */ :root {
   --bg: #0f0f0d;
-  --bg-raised: #131311;
   --surface: #181815;
   --surface-2: #1f1f1b;
   --surface-3: #282823;
@@ -25,8 +24,6 @@
   --lime-line: rgba(var(--accent-rgb), .28);
   --peach: #eba97f;
   --peach-soft: rgba(235, 169, 127, .12);
-  --violet: #b99bff;
-  --violet-soft: rgba(185, 155, 255, .12);
   --danger: #ff8278;
   --danger-soft: rgba(255, 130, 120, .1);
   --radius-sm: 8px;
@@ -35,7 +32,6 @@
   --shadow: 0 24px 80px rgba(0, 0, 0, .45);
   /* Teinte des voiles et traits clairs (blanc en thème sombre, presque noir en thème clair) et des panneaux translucides. */
   --fg-rgb: 255, 255, 255;
-  --panel-rgb: 12, 12, 11;
   --font-display: 'Manrope', system-ui, sans-serif;
   --font-body: 'DM Sans', system-ui, sans-serif;
 
@@ -125,8 +121,6 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .search-empty.no-source .button { margin-top: 10px; }
 .form-note { font-size: 12.5px; color: var(--faint); margin: -8px 0 16px; text-align: left; }
 
-.view { animation: fade-in .2s; }
-
 .now-backdrop { position: absolute; inset: -60px; z-index: -1; background-size: cover; background-position: center; filter: blur(60px) saturate(1.5); opacity: .4; }
 /* Miniature déjà floutée : agrandie telle quelle, sans filtre à recalculer */ .now-backdrop.soft, .app-backdrop.blurred img.soft { filter: none; }
  .guest-now::after { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, rgba(15, 15, 13, .55), rgba(15, 15, 13, .35)); pointer-events: none; }
@@ -171,13 +165,6 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .empty-state h3 { font-size: 17px; color: var(--text); margin-bottom: 6px; }
 .empty-state p { font-size: 14px; line-height: 1.6; max-width: 340px; margin: 0 auto; }
 .empty-state .button { margin-top: 18px; }
-
-.participants { border-top: 1px solid var(--line); padding-top: 20px; }
-.participants ul { display: flex; flex-direction: column; gap: 10px; }
-.participants li { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.participants .avatar { width: 30px; height: 30px; font-size: 12px; }
-
-.participants small { font-size: 12px; color: var(--faint); white-space: nowrap; }
 
  .inline-error { display: flex; align-items: flex-start; gap: 9px; margin-top: 14px; padding: 12px; background: var(--danger-soft); border: 1px solid rgba(255, 130, 120, .25); border-radius: var(--radius-sm); color: #ffb0a8; font-size: 13.5px; line-height: 1.5; }
  .inline-error svg { flex-shrink: 0; margin-top: 1px; }
@@ -413,9 +400,6 @@ a.button { text-decoration: none; }
 .tv-info small { display: block; margin-top: 1.2vh; font-size: clamp(14px, 1.3vw, 22px); color: var(--muted); }
 .tv-qr { padding: 18px; border-radius: 22px; background: #f7f5ef; line-height: 0; }
 
-.tv-alerts { position: absolute; top: 24px; left: 50%; z-index: 2; width: min(560px, calc(100vw - 48px)); transform: translateX(-50%); }
-.tv-alerts .join-requests { margin-bottom: 10px; background: rgba(24, 24, 21, .94); box-shadow: 0 20px 60px rgba(0, 0, 0, .5); }
-
 /* ───────────── Apparence personnalisée ───────────── */
 /* Sa couleur unie (cachée sous le dégradé ou l’image) est celle du bord bas : Safari (iPhone) en teinte sa barre du bas. */ .app-backdrop { position: fixed; top: 0; left: 0; right: 0; height: 100vh; height: 100lvh; z-index: -1; background-color: var(--edge-bottom, var(--bg)); overflow: hidden; pointer-events: none; }
 .app-backdrop img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
@@ -426,8 +410,6 @@ a.button { text-decoration: none; }
 :root[data-custom-bg] body { background: transparent; }
 
 input[type="range"] { width: 100%; accent-color: var(--lime); }
-
-
 
 /* Barre de progression (tableau de bord et mode TV) */ .progress { --rail: 4px; display: grid; grid-template-columns: 3.2em minmax(0, 1fr) 3.2em; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; user-select: none; -webkit-user-select: none; }
 .progress-time:first-child { text-align: right; }
@@ -492,10 +474,6 @@ span.tv-cover { display: grid; place-items: center; background: var(--surface-2)
 .tv-invite-text { display: flex; flex-direction: column; gap: .5vh; flex: none; }
 .tv-invite-text strong { font-family: var(--font-display); font-size: clamp(15px, 1.6vw, 30px); }
 .tv-invite-text span { font-family: var(--font-display); font-size: clamp(12px, 1.2vw, 22px); font-weight: 700; color: var(--lime-text); letter-spacing: .5px; }
-/* Réglages des tailles en direct (mode TV ouvert depuis l’aperçu). */ .tv-tools { position: absolute; top: 24px; left: 24px; z-index: 4; display: flex; gap: 18px; padding: 10px 16px; border: 1px solid var(--line-strong); border-radius: 99px; background: rgba(15, 15, 13, .7); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); transition: opacity .3s; }
-.tv-tools label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); }
-.tv-tools input { width: 120px; accent-color: var(--lime); }
-.tv-view.idle .tv-tools { opacity: 0; pointer-events: none; }
 
 /* ───────────── Mode TV : fond animé tiré de la pochette en cours ───────────── */ .tv-ambient { position: absolute; inset: 0; z-index: -2; overflow: hidden; background: #050505; }
 .tv-ambient::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(0, 0, 0, 0), rgba(0, 0, 0, .3)); pointer-events: none; }
@@ -524,8 +502,6 @@ span.tv-cover { display: grid; place-items: center; background: var(--surface-2)
 .guest-controls .play-button { width: 56px; height: 56px; }
 .guest-controls .skip-button { width: 44px; height: 44px; }
 
-/* Fenêtre de l’app cachée ou réduite : plus aucune animation */ :root[data-window-hidden] *, :root[data-window-hidden] *::before, :root[data-window-hidden] *::after { animation-play-state: paused !important; }
-
 /* Une fenêtre ouverte : plus rien ne bouge dessous, pour que son fond flouté ne soit pas recalculé en continu. */ body.modal-open .equalizer i { animation-play-state: paused; }
 
 /* Mode TV : menu du clic droit (masquer le code QR) */ .tv-menu { position: fixed; z-index: 60; min-width: 220px; padding: 4px; border: 1px solid var(--line-strong); border-radius: 10px; background: rgba(20, 20, 18, .94); box-shadow: 0 10px 30px rgba(0, 0, 0, .5); }
@@ -537,11 +513,6 @@ button, a, input { touch-action: manipulation; }
 input, select, textarea { font-size: 16px !important; }
 body { padding-top: env(safe-area-inset-top); }
 .tv-view { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
-
-/* iPhone : la barre native remplace la barre web ; verre plus proche d’iOS 26 */ @media (max-width: 680px) {
-
-  :root[data-native-tabs] .toast { bottom: calc(96px + env(safe-area-inset-bottom)); }
-}
 
 /* Mode TV sur téléphone : deux pages à faire glisser */ .tv-pager { position: absolute; inset: 0; z-index: 1; display: flex; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch; scrollbar-width: none; overscroll-behavior: contain; }
 .tv-pager::-webkit-scrollbar { display: none; }
@@ -590,8 +561,6 @@ body { padding-top: env(safe-area-inset-top); }
   .tv-view { touch-action: pan-x; }
 }
 
-/* iPhone : la page qui défile s’efface sous l’heure et la batterie, pour qu’elles restent lisibles */ :root[data-native-tabs] body::before { content: ''; position: fixed; inset: 0 0 auto; z-index: 40; height: calc(env(safe-area-inset-top) + 10px); pointer-events: none; background: linear-gradient(rgba(10, 10, 9, .92) 60%, rgba(10, 10, 9, 0)); }
-
 /* Changement de titre : texte et pochette en fondu */ .swap-text { position: relative; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; min-width: 0; overflow: hidden; }
 .swap-layer { min-width: 0; }
 .swap-ghost { position: absolute; inset: 0; display: grid; grid-template-columns: minmax(0, 1fr); align-content: center; pointer-events: none; }
@@ -604,12 +573,8 @@ body { padding-top: env(safe-area-inset-top); }
 .queue-list.is-reordering .queue-item { transition: transform .18s cubic-bezier(.32, .72, 0, 1); }
 .queue-list .queue-item.touch-lifted { position: relative; z-index: 5; transition: none; border-radius: 16px; background: #2e2e2a; box-shadow: 0 8px 20px rgba(0, 0, 0, .45); }
 .queue-list .queue-item.touch-settling { position: relative; z-index: 5; border-radius: 16px; transition: transform .2s cubic-bezier(.32, .72, 0, 1), background .2s ease, box-shadow .2s ease; background: transparent; box-shadow: 0 0 0 rgba(0, 0, 0, 0); }
-/* Les lignes restent sur leur propre couche : le texte ne change pas de rendu au moment de les déposer. */ :root[data-native-tabs] .queue-list.is-host .queue-item { will-change: transform; }
 
-:root[data-native-tabs] .modal-backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .68); }
 /* Réponse immédiate au doigt, et pages qui apparaissent en douceur */ * { -webkit-tap-highlight-color: transparent; }
-:root[data-native-tabs] button { transition: transform .12s ease, background .15s, color .15s, opacity .15s; }
-:root[data-native-tabs] button:not(:disabled):active { transform: scale(.96); }
 
 @keyframes page-in { from { opacity: 0; transform: translate3d(0, 6px, 0); } }
 /* Le rebond de fin de page reste actif, sauf sous le mode TV et les fenêtres */ html:has(.tv-view), html:has(.tv-view) body, body.modal-open { overscroll-behavior: none; }
@@ -715,15 +680,12 @@ html { touch-action: manipulation; }
 .tv-display-idle { min-height: 100vh; display: grid; place-content: center; gap: 22px; text-align: center; background: radial-gradient(90% 70% at 50% 30%, #262d10, #0f0f0d 70%); color: var(--muted); font-size: 26px; }
 .tv-display-idle .brand { font-size: 96px; justify-content: center; }
 
-/* Mode TV glissé vers le bas : le fond animé s’arrête le temps du geste. */
-.tv-view.is-dragging .tv-drift, .tv-view.is-dragging .tv-ambient-layer { animation-play-state: paused; }
-
 /* Fenêtres : sur ordinateur, comme avant (centrées). Sur téléphone, la fenêtre est dans une zone qui défile
    (défilement d’iOS) : arrêt « ouverte » en bas, arrêt « fermée » en haut de la zone. */
 .sheet-scroller { display: contents; }
 .sheet-gap, .sheet-dim { display: none; }
 @media (max-width: 680px) {
-  .modal-backdrop, :root[data-native-tabs] .modal-backdrop{ display: block; background: transparent; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .modal-backdrop { display: block; background: transparent; padding: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .sheet-dim { display: block; position: absolute; inset: 0; background: rgba(0, 0, 0, .68); pointer-events: none; }
   .sheet-scroller { display: block; position: absolute; inset: 0; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: contain; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
   .sheet-scroller::-webkit-scrollbar { display: none; }
@@ -735,49 +697,26 @@ html { touch-action: manipulation; }
   .sheet-scroller.has-tall { scroll-padding-top: 8dvh; }
 }
 
-/* Mode TV sur téléphone : dans une zone qui défile (défilement d’iOS) ; arrêt « affiché » en bas, « fermé » en haut. */
-.tv-sheet { position: fixed; inset: 0; z-index: 50; overflow-x: hidden; overflow-y: auto; scroll-snap-type: y mandatory; overscroll-behavior: none; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-.tv-sheet::-webkit-scrollbar { display: none; }
-.tv-sheet-gap { height: 100%; scroll-snap-align: start; }
-.tv-sheet > .tv-view { position: relative; inset: auto; width: 100%; height: 100%; touch-action: auto; border-radius: 32px 32px 0 0; overflow: clip; }
-/* Position « ouverte » portée par un repère fixe (le zoom d’ouverture du lecteur ne la déplace pas). */
-.tv-sheet-open { display: block; height: 1px; margin-top: -1px; scroll-snap-align: end; }
-
-/* Le défilement horizontal (pages Lecture / QR code) laisse passer les gestes verticaux jusqu’au glisser du mode TV. */
-.tv-sheet .tv-pager { overscroll-behavior-x: contain; overscroll-behavior-y: auto; }
-
-/* Cran intermédiaire à 40 % de la descente : comme le lecteur d’Apple Music, un petit glissement ou un lancer suffit
-   pour fermer (sans lui, il fallait dépasser la moitié de l’écran). */
-.tv-sheet-gap { position: relative; }
-.tv-sheet-catch { position: absolute; left: 0; top: 60%; width: 1px; height: 1px; scroll-snap-align: start; }
-.tv-sheet-catch.is-hold { top: 88%; }
-
-/* Téléphone : le lecteur se déplace d’un bloc sous le doigt. Pas de flou en direct sur ses boutons (il serait recalculé
-   à chaque image du glissement) : des fonds presque opaques donnent le même rendu sur la pochette déjà floutée. */
-.tv-sheet .tv-view :is(.tv-play, .tv-page-nav, .tv-exit, .tv-airplay, .icon-button) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
-.tv-sheet .tv-view .tv-page-nav, .tv-sheet .tv-view .tv-airplay { background: rgba(28, 28, 26, .72); }
-.tv-sheet .tv-view .tv-player-buttons .icon-button.tv-play { background: rgba(var(--fg-rgb), .16); }
-
 /* ───────────── Thème clair (fond Blanc, ou Automatique quand le système est en clair) ───────────── */
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #f4f4f0; --bg-raised: #ffffff; --surface: #ffffff; --surface-2: #f0f0eb; --surface-3: #e6e6df;
+  --bg: #f4f4f0; --surface: #ffffff; --surface-2: #f0f0eb; --surface-3: #e6e6df;
   --line: #e2e2da; --line-strong: #cfcfc6;
   --text: #151513; --text-2: #3b3b36; --muted: #66665e; --faint: #74746c;
   --lime-soft: rgba(var(--accent-rgb), .2); --lime-line: rgba(var(--accent-rgb), .55);
-  --peach: #b45f28; --peach-soft: rgba(180, 95, 40, .12); --violet: #6b4bd0; --violet-soft: rgba(107, 75, 208, .1);
+  --peach: #b45f28; --peach-soft: rgba(180, 95, 40, .12);
   --danger: #cf3a2e; --danger-soft: rgba(207, 58, 46, .09);
   --shadow: 0 18px 50px rgba(0, 0, 0, .1);
-  --fg-rgb: 20, 20, 18; --panel-rgb: 255, 255, 255;
+  --fg-rgb: 20, 20, 18;
 }
 /* Ce qui reste toujours sombre (posé sur la pochette, ou mode TV) : on y remet les couleurs du thème sombre. */
-:root[data-theme="light"] :is(.guest-now, .tv-view, .tv-page, .tv-alerts, .tv-menu, .tv-tools, .tv-exit, .progress-tip) {
+:root[data-theme="light"] :is(.guest-now, .tv-view, .tv-page, .tv-menu, .tv-exit, .progress-tip) {
   color-scheme: dark;
-  --bg: #0f0f0d; --bg-raised: #131311; --surface: #181815; --surface-2: #1f1f1b; --surface-3: #282823;
+  --bg: #0f0f0d; --surface: #181815; --surface-2: #1f1f1b; --surface-3: #282823;
   --line: #2a2a25; --line-strong: #3a3a33;
   --text: #f4f2eb; --text-2: #dedcd2; --muted: #c4c3b9; --faint: #b0afa5;
   --danger: #ff8278; --danger-soft: rgba(255, 130, 120, .1);
-  --fg-rgb: 255, 255, 255; --panel-rgb: 12, 12, 11;
+  --fg-rgb: 255, 255, 255;
   --accent-rgb: var(--dark-accent-rgb); --lime: var(--dark-lime); --lime-hover: var(--dark-lime-hover); --lime-ink: var(--dark-lime-ink); --lime-text: var(--dark-lime-text);
   --lime-soft: rgba(var(--dark-accent-rgb), .1); --lime-line: rgba(var(--dark-accent-rgb), .28);
   color: var(--text);
@@ -820,3 +759,6 @@ html { touch-action: manipulation; }
   .guest-main .search-empty.no-source strong { font-size: 17px; }
   .guest-main .search-empty.no-source span { font-size: 14.5px; }
 }
+
+/* Fond Noir : le fond, la barre latérale, les panneaux et les champs passent en noir pur pour éteindre les pixels des
+   écrans OLED (moins de batterie) ; les cartes gardent leur gris très sombre pour rester distinctes. */ :root[data-background="black"] { --bg: #000000; --bg-raised: #000000; }

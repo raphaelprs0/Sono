@@ -1,9 +1,9 @@
 // État du serveur : sessions, invités connectés, moteur Deezer, lien public. Un seul verrou, jamais gardé pendant une attente.
 use super::logic::{payload, Sound, Viewer};
-use axum::extract::ws::Message;
+use axum::extract::ws::{Message, Utf8Bytes};
 use serde_json::{json, Map, Value};
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -17,7 +17,8 @@ pub struct Meta {
     pub since: String,
     pub greeted: bool,
     pub via_tunnel: bool,
-    pub last_sent: String,
+    /// Dernier état envoyé : partagé sans copie avec le message parti.
+    pub last_sent: Utf8Bytes,
 }
 
 pub struct Client {
@@ -83,7 +84,7 @@ pub struct App {
     pub apple_token: tokio::sync::Mutex<Option<(String, i64)>>,
     pub engine_log: Mutex<Vec<String>>,
     pub engine_log_scheduled: AtomicBool,
-    pub packed: Mutex<HashMap<String, Arc<Vec<u8>>>>,
+    pub packed: Mutex<HashMap<String, axum::body::Bytes>>,
     pub host_grace: Duration,
     /// Pochettes déjà cherchées (artiste et titre) : celle trouvée, ou rien.
     pub covers_tried: Mutex<HashMap<String, Option<String>>>,
@@ -98,8 +99,6 @@ impl App {
         self.state.lock().unwrap_or_else(|e| e.into_inner())
     }
 
-    pub fn store_path(&self) -> PathBuf { self.data_dir.join("sessions.json") }
-
     pub fn binary(&self, name: &str) -> PathBuf {
         self.bin_dir.join(if cfg!(windows) { format!("{name}.exe") } else { name.to_string() })
     }
@@ -111,11 +110,14 @@ impl App {
             Some(d) => json!({ "url": d.url, "token": d.token, "userId": d.user_id }),
             None => if s.saved_deezer_arl.is_empty() { Value::Null } else { json!({ "bridgeArl": s.saved_deezer_arl }) },
         };
-        let sessions: Vec<Value> = s.sessions.values().cloned().collect();
-        serde_json::to_string(&json!({
-            "sessions": sessions, "deezerConnection": deezer, "preferredSource": s.preferred_source,
-            "appleLinked": s.apple_linked, "sound": s.sound, "hostPrefs": s.host_prefs,
-        })).unwrap_or_default()
+        // Les sessions sont lues sur place (sans copie sous le verrou) ; mêmes clés, même ordre qu’avant.
+        #[derive(serde::Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct Store<'a> { sessions: Vec<&'a Value>, deezer_connection: Value, preferred_source: &'a Option<String>, apple_linked: bool, sound: &'a Sound, host_prefs: &'a Value }
+        serde_json::to_string(&Store {
+            sessions: s.sessions.values().collect(), deezer_connection: deezer, preferred_source: &s.preferred_source,
+            apple_linked: s.apple_linked, sound: &s.sound, host_prefs: &s.host_prefs,
+        }).unwrap_or_default()
     }
 
     /// Enregistrement sur disque regroupé et différé : une action n’attend jamais le disque pour répondre.
@@ -131,35 +133,12 @@ impl App {
 
     pub async fn write_store(&self) {
         let _guard = self.writing.lock().await;
-        let json = self.store_json();
-        let _ = tokio::fs::create_dir_all(&self.data_dir).await;
-        let tmp = self.data_dir.join("sessions.json.tmp");
-        if tokio::fs::write(&tmp, json).await.is_ok() {
-            restrict(&tmp);
-            // Windows refuse parfois de remplacer un fichier ouvert un instant par l’antivirus : on réessaie.
-            for attempt in 0..10 {
-                match tokio::fs::rename(&tmp, self.store_path()).await {
-                    Ok(()) => return,
-                    Err(error) if attempt == 9 => eprintln!("Enregistrement impossible : {error}"),
-                    Err(_) => tokio::time::sleep(std::time::Duration::from_millis(150)).await,
-                }
-            }
-        }
+        let (json, dir) = (self.store_json(), self.data_dir.clone());
+        let _ = tokio::task::spawn_blocking(move || save_sync(&dir, json)).await;
     }
 
     /// À la fermeture : ce qui reste à écrire l’est tout de suite.
-    pub fn flush_store(&self) {
-        let json = self.store_json();
-        let _ = std::fs::create_dir_all(&self.data_dir);
-        let tmp = self.data_dir.join("sessions.json.tmp");
-        if std::fs::write(&tmp, json).is_ok() {
-            restrict(&tmp);
-            for _ in 0..10 {
-                if std::fs::rename(&tmp, self.store_path()).is_ok() { break; }
-                std::thread::sleep(std::time::Duration::from_millis(150));
-            }
-        }
-    }
+    pub fn flush_store(&self) { save_sync(&self.data_dir, self.store_json()); }
 
     /// Plusieurs changements rapprochés ne font qu’une diffusion, et un invité ne reçoit rien si rien n’a changé pour lui.
     pub fn broadcast(self: &Arc<Self>, code: &str) {
@@ -182,6 +161,21 @@ impl App {
     }
 }
 
+/// Écriture sûre : fichier temporaire puis renommage. Windows refuse parfois de remplacer un fichier ouvert un instant par l’antivirus : on réessaie.
+fn save_sync(dir: &Path, json: String) {
+    let _ = std::fs::create_dir_all(dir);
+    let tmp = dir.join("sessions.json.tmp");
+    if std::fs::write(&tmp, json).is_err() { return; }
+    restrict(&tmp);
+    for attempt in 0..10 {
+        match std::fs::rename(&tmp, dir.join("sessions.json")) {
+            Ok(()) => return,
+            Err(error) if attempt == 9 => eprintln!("Enregistrement impossible : {error}"),
+            Err(_) => std::thread::sleep(Duration::from_millis(150)),
+        }
+    }
+}
+
 fn restrict(path: &std::path::Path) {
     #[cfg(unix)]
     {
@@ -196,18 +190,18 @@ pub fn send_all(s: &mut State, code: &str) {
     let Some(slot) = s.sessions.get_mut(code) else { return };
     // La session est sortie de l’état le temps du calcul (sans copie), puis remise à sa place.
     let mut session = std::mem::take(slot);
-    let metas: Vec<(u64, Viewer, String)> = s.clients.get(code).map(|list| list.iter().map(|c| (c.id, Viewer { host: c.meta.host, client_id: c.meta.client_id.clone() }, c.meta.last_sent.clone())).collect()).unwrap_or_default();
+    let metas: Vec<(u64, Viewer, Utf8Bytes)> = s.clients.get(code).map(|list| list.iter().map(|c| (c.id, Viewer { host: c.meta.host, client_id: c.meta.client_id.clone() }, c.meta.last_sent.clone())).collect()).unwrap_or_default();
     let mut outgoing = Vec::new();
     for (id, viewer, last) in metas {
         let message = payload(s, &mut session, &viewer).to_string();
-        if message != last { outgoing.push((id, message)); }
+        if message != last.as_str() { outgoing.push((id, Utf8Bytes::from(message))); }
     }
     *s.sessions.get_mut(code).unwrap() = session;
     if let Some(list) = s.clients.get_mut(code) {
         for (id, message) in outgoing {
             if let Some(client) = list.iter_mut().find(|c| c.id == id) {
                 client.meta.last_sent = message.clone();
-                let _ = client.tx.send(Message::Text(message.into()));
+                let _ = client.tx.send(Message::Text(message));
             }
         }
     }
@@ -220,9 +214,10 @@ pub fn send_one(s: &mut State, code: &str, client_id: u64) {
     let message = payload(s, &mut session, &viewer).to_string();
     *s.sessions.get_mut(code).unwrap() = session;
     if let Some(client) = s.clients.get_mut(code).and_then(|l| l.iter_mut().find(|c| c.id == client_id)) {
-        if client.meta.last_sent != message {
+        if client.meta.last_sent.as_str() != message {
+            let message = Utf8Bytes::from(message);
             client.meta.last_sent = message.clone();
-            let _ = client.tx.send(Message::Text(message.into()));
+            let _ = client.tx.send(Message::Text(message));
         }
     }
 }

@@ -131,12 +131,19 @@ final class ExternalDisplaySceneDelegate: UIResponder, UIWindowSceneDelegate {
         window.isHidden = false
         self.window = window
     }
+
+    // TV débranchée : la page et ses relevés s’arrêtent, la fenêtre est libérée.
+    func sceneDidDisconnect(_ scene: UIScene) {
+        (window?.rootViewController as? TVDisplayViewController)?.tearDown()
+        window?.isHidden = true
+        window = nil
+    }
 }
 
 /// La page du mode TV, en lecture seule : elle ne peut que lire la position de lecture, rien commander.
 final class TVDisplayViewController: UIViewController, WKScriptMessageHandlerWithReply, WKNavigationDelegate {
     private var webView: WKWebView!
-    private let serverURL = URL(string: Bundle.main.object(forInfoDictionaryKey: "SonoServerURL") as? String ?? "")!
+    private let serverURL = SonoApp.server
     private var page: URL { URL(string: "/?tv=1", relativeTo: serverURL)!.absoluteURL }
 
     override func viewDidLoad() {
@@ -174,15 +181,25 @@ final class TVDisplayViewController: UIViewController, WKScriptMessageHandlerWit
         return (await SonoApp.driver.statusForPage(), nil)
     }
 
-    // Réseau coupé ou page fermée par le système : on recharge tout seul.
+    /// Le gestionnaire de messages retient ce contrôleur : on le retire, sinon la page reste en mémoire.
+    func tearDown() {
+        guard let webView else { return }
+        webView.configuration.userContentController.removeAllScriptMessageHandlers()
+        webView.stopLoading()
+        webView.navigationDelegate = nil
+        webView.removeFromSuperview()
+    }
+
+    // Réseau coupé ou page fermée par le système : on recharge tout seul (tant que l’écran est branché).
     func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
-            guard let self else { return }
+            guard let self, self.view.window != nil else { return }
             self.webView.load(URLRequest(url: self.page, cachePolicy: .reloadIgnoringLocalCacheData))
         }
     }
 
     func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        guard view.window != nil else { return }
         webView.load(URLRequest(url: page, cachePolicy: .reloadIgnoringLocalCacheData))
     }
 }

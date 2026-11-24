@@ -4,11 +4,7 @@ class Res {
   headers = new Headers();
   body = null;
   status(code) { this.statusCode = code; return this; }
-  set(name, value) { this.headers.set(name, value); return this; }
-  type(kind) { this.headers.set('Content-Type', kind === 'html' ? 'text/html; charset=utf-8' : kind); return this; }
   json(value) { this.headers.set('Content-Type', 'application/json; charset=utf-8'); this.body = JSON.stringify(value); return this; }
-  send(value) { this.body = value; return this; }
-  end() { return this; }
 }
 export class MiniApp {
   routes = [];
@@ -34,7 +30,7 @@ export class MiniApp {
       let body = {};
       try { body = raw ? JSON.parse(raw) : {}; } catch { return Response.json({ error: 'Demande illisible.' }, { status: 400 }); }
       const params = Object.fromEntries(route.names.map((name, index) => [name, decodeURIComponent(match[index + 1])]));
-      const req = { method: request.method, path: url.pathname, params, body, query: Object.fromEntries(url.searchParams), get: (name) => request.headers.get(name) || undefined };
+      const req = { params, body, query: Object.fromEntries(url.searchParams), get: (name) => request.headers.get(name) || undefined };
       try { await route.handler(req, res); }
       catch { return Response.json({ error: 'Le service Sono a rencontré un problème.' }, { status: 500 }); }
       return new Response(res.body, { status: res.statusCode, headers: res.headers });

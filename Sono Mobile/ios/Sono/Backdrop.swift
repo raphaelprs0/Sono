@@ -106,8 +106,6 @@ struct Backdrop: Identifiable {
     let edges: [String]
     /// Calques du dessous vers le dessus (l’inverse de l’ordre CSS).
     let layers: [Layer]
-    var image: String? = nil
-    var minShade: Double = 0
 
     /// Noir, Blanc (thème clair) et Automatique (noir ou blanc selon le système) ; « Pochette en cours » est à part.
     static let all: [Backdrop] = [
@@ -168,7 +166,8 @@ struct AppBackground: View {
     /// « Automatique » : Noir ou Blanc selon le thème du système.
     private var backgroundID: String { appearance.background == "auto" ? (scheme == .light ? "white" : "black") : appearance.background }
     private var preset: Backdrop { Backdrop.all.first { $0.id == backgroundID } ?? Backdrop.all[0] }
-    private var sourceKey: String? { appearance.background == "cover" ? cover.flatMap { $0.isEmpty ? nil : $0 } : preset.image }
+    /// Seul le fond « Pochette en cours » s’appuie sur une image.
+    private var sourceKey: String? { appearance.background == "cover" ? cover.flatMap { $0.isEmpty ? nil : $0 } : nil }
 
     /// Couleur des bords : la plus sombre des deux, après le même assombrissement que le fond.
     private var edgeColor: Color {
@@ -176,7 +175,7 @@ struct AppBackground: View {
         var pair: [RGB] = preset.edges.map(rgb)
         if appearance.background == "cover" { pair = [rgb("#0f0f0d"), rgb("#0f0f0d")] }
         if let measure, measuredKey == sourceKey, sourceKey != nil {
-            let shade = appearance.background == "cover" ? max(0.5, measure.shade) : max(measure.shade, preset.minShade)
+            let shade = max(0.5, measure.shade)
             pair = [measure.top, measure.bottom].map { ($0.r * (1 - shade) + scrim.r * shade, $0.g * (1 - shade) + scrim.g * shade, $0.b * (1 - shade) + scrim.b * shade) }
         }
         return color(pair.min { relativeLuminance($0) < relativeLuminance($1) } ?? pair[0])
@@ -199,12 +198,6 @@ struct AppBackground: View {
                     }
                 } else {
                     GradientLayers(layers: preset.layers)
-                    if let image = preset.image {
-                        Image(image).resizable().interpolation(.high).scaledToFill()
-                            .frame(width: geometry.size.width + geometry.safeAreaInsets.leading + geometry.safeAreaInsets.trailing, height: geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom)
-                            .clipped()
-                        Color(red: 8 / 255, green: 8 / 255, blue: 7 / 255).opacity(max(measuredKey == sourceKey ? measure?.shade ?? 0.65 : 0.65, preset.minShade))
-                    }
                 }
                 if edges {
                     VStack(spacing: 0) {
@@ -225,11 +218,8 @@ struct AppBackground: View {
     private func load() async {
         guard let key = sourceKey else { return }
         if let found = BackdropLab.cached(key) { measure = found; measuredKey = key; return }
-        var image: UIImage?
-        if appearance.background == "cover" {
-            if let url = coverURL(key, size: 250) { image = await CoverCache.shared.image(url, pixels: 120) }
-        } else { image = UIImage(named: key) }
-        guard let image, let found = await BackdropLab.measure(key: key, image: image, blur: appearance.background == "cover") else { return }
+        guard let url = coverURL(key, size: 250), let image = await CoverCache.shared.image(url, pixels: 120),
+              let found = await BackdropLab.measure(key: key, image: image, blur: true) else { return }
         guard key == sourceKey else { return }
         measure = found
         measuredKey = key

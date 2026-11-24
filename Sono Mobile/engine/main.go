@@ -40,20 +40,6 @@ type apiTrack struct {
 	DurationMS int64  `json:"durationMs"`
 	ArtworkURL string `json:"artworkUrl,omitempty"`
 }
-type searchTrack struct {
-	ID       string       `json:"id"`
-	Title    string       `json:"title"`
-	Artist   searchArtist `json:"artist"`
-	Album    searchAlbum  `json:"album"`
-	Duration int64        `json:"duration"`
-}
-type searchArtist struct {
-	Name string `json:"name"`
-}
-type searchAlbum struct {
-	Title   string `json:"title"`
-	CoverXL string `json:"cover_xl"`
-}
 
 func writeJSON(w http.ResponseWriter, status int, value any) {
 	w.Header().Set("Content-Type", "application/json")
@@ -88,34 +74,10 @@ func (b *bridge) status(w http.ResponseWriter, _ *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, response)
 }
-func (b *bridge) search(w http.ResponseWriter, r *http.Request) {
-	results, err := b.client.Search(r.URL.Query().Get("q"))
-	if err != nil {
-		writeJSON(w, http.StatusBadGateway, map[string]string{"error": err.Error()})
-		return
-	}
-	tracks := make([]searchTrack, 0, len(results.Tracks))
-	for _, track := range results.Tracks {
-		tracks = append(tracks, searchTrack{ID: track.ID, Title: track.Name, Artist: searchArtist{Name: track.ArtistLine()}, Album: searchAlbum{Title: track.AlbumName, CoverXL: track.ArtworkURL}, Duration: track.DurationMS / 1000})
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"data": tracks})
-}
 
-// prepare récupère en même temps les infos du titre et son flux audio (deux appels à Deezer en parallèle).
+// prepare récupère les infos du titre et son flux audio avec un seul appel song.getData à Deezer.
 func (b *bridge) prepare(id string) (dz.Track, *dz.StreamPlan, error) {
-	var (
-		track    dz.Track
-		trackErr error
-		wg       sync.WaitGroup
-	)
-	wg.Add(1)
-	go func() { defer wg.Done(); track, trackErr = b.client.Track(id) }()
-	plan, err := b.client.PrepareStream(id)
-	wg.Wait()
-	if trackErr != nil {
-		return track, nil, trackErr
-	}
-	return track, plan, err
+	return b.client.PrepareStreamWithTrack(id)
 }
 func (b *bridge) play(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -243,6 +205,9 @@ var engine struct {
 	started bool
 	reply   string
 	stop    func()
+	// La sortie audio (oto) ne peut être créée qu’une fois par processus : le lecteur est gardé
+	// d’une connexion à l’autre et seulement remis à zéro à l’arrêt du moteur.
+	player *player.Player
 }
 
 func start(arl, token string) (map[string]any, error) {
@@ -263,10 +228,14 @@ func start(arl, token string) (map[string]any, error) {
 	} else if client.Account().CanHQ {
 		client.SetQuality(dz.QualityHigh)
 	}
-	audio, err := player.NewPlayer()
-	if err != nil {
-		return nil, fmt.Errorf("Aucune sortie audio disponible : %v", err)
+	if engine.player == nil {
+		created, err := player.NewPlayer()
+		if err != nil {
+			return nil, fmt.Errorf("Aucune sortie audio disponible : %v", err)
+		}
+		engine.player = created
 	}
+	audio := engine.player
 	audio.SetCrossfadeMS(3000)
 	// Moins de mémoire au repos, et une limite pour que le système ne ferme pas l’app écran verrouillé.
 	debug.SetGCPercent(60)
@@ -283,11 +252,7 @@ func start(arl, token string) (map[string]any, error) {
 		bridge.mu.Unlock()
 	})
 	mux := http.NewServeMux()
-	mux.HandleFunc("/whoami", func(w http.ResponseWriter, _ *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{"name": bridge.account.Name, "offer": bridge.account.Offer})
-	})
 	mux.HandleFunc("/status", bridge.auth(bridge.status))
-	mux.HandleFunc("/search", bridge.auth(bridge.search))
 	mux.HandleFunc("/play/track", bridge.auth(bridge.play))
 	mux.HandleFunc("/preload/track", bridge.auth(bridge.preload))
 	mux.HandleFunc("/playpause", bridge.auth(bridge.pause))
@@ -297,12 +262,13 @@ func start(arl, token string) (map[string]any, error) {
 	mux.HandleFunc("/eq", bridge.auth(bridge.eq))
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
+		audio.SetOnFinish(nil)
 		return nil, err
 	}
 	go http.Serve(listener, mux)
 	engine.stop = func() {
 		listener.Close()
-		audio.Close()
+		audio.Reset()
 	}
 	return map[string]any{"ready": true, "port": listener.Addr().(*net.TCPAddr).Port, "account": bridge.account}, nil
 }

@@ -72,7 +72,10 @@ struct RootView: View {
         }
         .onChange(of: store.phase) { _, phase in if phase != .host { sheet = nil; tab = .queue } }
         // Retour dans l’app : l’état de la session est relu (la connexion a pu être coupée en arrière-plan).
-        .onChange(of: scenePhase) { _, phase in if phase == .active, store.phase == .host { Task { await store.refresh() } } }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .background { store.setForeground(false) }
+            if phase == .active, store.phase == .host { store.setForeground(true); Task { await store.refresh() } }
+        }
     }
 
     private var confirmationTitle: String {

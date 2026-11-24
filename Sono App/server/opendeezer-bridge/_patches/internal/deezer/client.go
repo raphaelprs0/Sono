@@ -769,6 +769,26 @@ func (c *Client) Search(query string) (*SearchResults, error) {
 	return sr, nil
 }
 
+// SearchTracksOnly ne cherche que les titres (même requête que la partie titres de Search) :
+// une requête au lieu de quatre quand seuls les titres servent — correctif Sono.
+func (c *Client) SearchTracksOnly(query string) ([]Track, error) {
+	b, err := c.restGet("/search?q=" + url.QueryEscape(query) + "&limit=40")
+	if err != nil {
+		return nil, err
+	}
+	var r struct {
+		Data []restTrackDTO `json:"data"`
+	}
+	if err := json.Unmarshal(b, &r); err != nil {
+		return nil, fmt.Errorf("json unmarshal: %w", err)
+	}
+	tracks := make([]Track, 0, len(r.Data))
+	for _, t := range r.Data {
+		tracks = append(tracks, t.toTrack())
+	}
+	return tracks, nil
+}
+
 // albumPageSize is the per-request page for the REST album tracklist.
 const albumPageSize = 100
 
@@ -1192,6 +1212,51 @@ func (c *Client) PrepareStream(trackID string) (*StreamPlan, error) {
 		return nil, fmt.Errorf("not logged in")
 	}
 	tok, gain, alt, err := c.trackTokens(trackID)
+	return c.planFromTokens(trackID, tok, gain, alt, err)
+}
+
+// PrepareStreamWithTrack renvoie les infos du titre et son flux audio avec un seul appel
+// song.getData, au lieu de deux (Track puis PrepareStream) — correctif Sono. Les erreurs
+// sont celles qu’aurait données Track d’abord, puis PrepareStream.
+func (c *Client) PrepareStreamWithTrack(trackID string) (Track, *StreamPlan, error) {
+	b, err := c.gw("song.getData", fmt.Sprintf(`{"sng_id":%s}`, jsonEsc(trackID)))
+	if err != nil {
+		return Track{}, nil, err
+	}
+	var r struct {
+		Results struct {
+			gwTrackDTO
+			TrackToken string      `json:"TRACK_TOKEN"`
+			Gain       json.Number `json:"GAIN"`
+			Fallback   *struct {
+				SngID      json.Number `json:"SNG_ID"`
+				TrackToken string      `json:"TRACK_TOKEN"`
+			} `json:"FALLBACK"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(b, &r); err != nil {
+		return Track{}, nil, err
+	}
+	t := r.Results.toTrack()
+	if t.ID == "" {
+		return Track{}, nil, fmt.Errorf("track %s: not found", trackID)
+	}
+	if !c.LoggedIn() {
+		return t, nil, fmt.Errorf("not logged in")
+	}
+	g, _ := strconv.ParseFloat(r.Results.Gain.String(), 64)
+	var alt *altVersion
+	if fb := r.Results.Fallback; fb != nil && fb.TrackToken != "" && fb.SngID.String() != "" && fb.SngID.String() != trackID {
+		alt = &altVersion{ID: fb.SngID.String(), Token: fb.TrackToken}
+	}
+	plan, err := c.planFromTokens(trackID, r.Results.TrackToken, g, alt, nil)
+	return t, plan, err
+}
+
+// planFromTokens résout le flux à partir des jetons de song.getData (version demandée,
+// version alternative, puis extrait de 30 s) : la suite de PrepareStream, partagée avec
+// PrepareStreamWithTrack (correctif Sono).
+func (c *Client) planFromTokens(trackID, tok string, gain float64, alt *altVersion, err error) (*StreamPlan, error) {
 	if err == nil && tok != "" {
 		u, format, mErr := c.resolveMediaURL(tok)
 		// Correctif Sono : version refusée pour ce compte → la version alternative

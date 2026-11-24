@@ -62,7 +62,6 @@ struct Progress: Equatable {
 struct JoinNotice: Identifiable, Equatable {
     let id: String
     let name: String
-    let at: Date
 }
 
 /// Tout l’état de l’app côté hôte, et ses actions. Une seule instance (SonoApp.store).
@@ -148,7 +147,7 @@ final class Store: ObservableObject {
         // Le moteur Deezer redémarre pendant que la session se recharge ; ses comptes ne sont annoncés qu’une fois vérifiés.
         Task {
             await driver.startSavedEngineAndWait()
-            status = PlayerStatus(await driver.statusForPage())
+            status = PlayerStatus(await driver.statusForPage()).shown
             connectionsChecked = true
             if phase == .host { await syncApps() }
         }
@@ -214,7 +213,7 @@ final class Store: ObservableObject {
     private func leaveHost() {
         driver.follow(code: nil, token: nil)
         driver.setInviteAddress(nil, shown: false)
-        pollTask?.cancel(); syncTask?.cancel()
+        pollTask?.cancel(); pollTask = nil; syncTask?.cancel()
         token = nil
         reset()
         phase = .home
@@ -273,7 +272,7 @@ final class Store: ObservableObject {
         if let known = knownGuests, known.code == session.code, session.requireApproval != true {
             let fresh = guests.filter { !known.ids.contains($0.id) }
             if !fresh.isEmpty {
-                joinNotices = joinNotices.filter { notice in !fresh.contains { $0.id == notice.id } } + fresh.map { JoinNotice(id: $0.id, name: $0.name, at: Date()) }
+                joinNotices = joinNotices.filter { notice in !fresh.contains { $0.id == notice.id } } + fresh.map { JoinNotice(id: $0.id, name: $0.name) }
                 let ids = fresh.map(\.id)
                 Task { [weak self] in
                     try? await Task.sleep(for: .seconds(15))
@@ -432,8 +431,10 @@ final class Store: ObservableObject {
             while !Task.isCancelled {
                 guard let self else { return }
                 let raw = await self.driver.statusForPage()
+                // L’état complet sert à la barre de progression ; les écrans ne reçoivent que ce qu’ils lisent.
                 let status = PlayerStatus(raw)
-                if status != self.status { self.status = status }
+                let shown = status.shown
+                if shown != self.status { self.status = shown }
                 if let current = self.current, !self.skipActive {
                     let stale = status.trackId != nil && current.source == self.session.source && status.trackId != current.provider
                     if !stale, status.durationMs > 0 || status.positionMs > 0 {
@@ -444,6 +445,12 @@ final class Store: ObservableObject {
                 try? await Task.sleep(for: .milliseconds(Date() < self.watchUntil ? 200 : 1000))
             }
         }
+    }
+
+    /// App en arrière-plan : plus de relevé (la position se déduit de l’heure), il reprend au retour.
+    func setForeground(_ active: Bool) {
+        if !active { pollTask?.cancel(); pollTask = nil }
+        else if phase == .host, pollTask == nil { startPolling() }
     }
 
     /// Les apps connectées sur ce téléphone : une seule devient l’app de lecture.
@@ -460,7 +467,7 @@ final class Store: ObservableObject {
 
     func syncApps() async {
         let status = PlayerStatus(await driver.statusForPage())
-        self.status = status
+        if status.shown != self.status { self.status = status.shown }
         let apps = [status.appleConnected ? "Apple Music" : nil, status.deezerConnected ? "Deezer" : nil].compactMap { $0 }
         var update: [String: Any] = [:]
         if apps != (session.apps ?? []) { update["apps"] = apps }
@@ -751,6 +758,13 @@ struct PlayerStatus: Equatable {
         deezerAccount = account?["name"] as? String
         deezerUserId = (account?["userId"]).map { "\($0)" }
         appleConnected = (raw["apple"] as? [String: Any])?["connected"] as? Bool ?? false
+    }
+
+    /// Ce que les écrans lisent : sans la position ni le titre, qui changent à chaque seconde de lecture.
+    var shown: PlayerStatus {
+        var copy = self
+        copy.trackId = nil; copy.positionMs = 0; copy.durationMs = 0
+        return copy
     }
 }
 

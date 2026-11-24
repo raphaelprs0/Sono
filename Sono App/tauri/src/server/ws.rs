@@ -2,7 +2,7 @@
 use super::deezer;
 use super::logic::*;
 use super::state::{send_one, Client, Meta, Shared};
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::extract::ws::{Message, Utf8Bytes, WebSocket, WebSocketUpgrade};
 use axum::extract::{Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
@@ -29,7 +29,7 @@ async fn connection(app: Shared, socket: WebSocket, code: String, tunnel: bool) 
     let id = app.next_client.fetch_add(1, Ordering::SeqCst);
     {
         let mut s = app.lock();
-        let meta = Meta { client_id: uuid::Uuid::new_v4().to_string(), name: String::new(), host: false, since: now_iso(), greeted: false, via_tunnel: tunnel, last_sent: String::new() };
+        let meta = Meta { client_id: uuid::Uuid::new_v4().to_string(), name: String::new(), host: false, since: now_iso(), greeted: false, via_tunnel: tunnel, last_sent: Utf8Bytes::from_static("") };
         s.clients.entry(code.clone()).or_default().push(Client { id, tx, meta });
         send_one(&mut s, &code, id);
     }
@@ -124,12 +124,13 @@ fn hello(app: &Shared, code: &str, id: u64, message: &Value) {
 /// « Quitter la session » : l’invité sort de la liste et pourra revenir librement.
 fn mark_guest_left(app: &Shared, code: &str, id: u64) {
     let mut s = app.lock();
-    let Some(meta) = s.clients.get(code).and_then(|l| l.iter().find(|c| c.id == id)).map(|c| c.meta.clone()) else { return };
+    let Some((host, client_id)) = s.clients.get(code).and_then(|l| l.iter().find(|c| c.id == id)).map(|c| (c.meta.host, c.meta.client_id.clone())) else { return };
     let Some(session) = s.sessions.get_mut(code) else { return };
-    let viewer = Viewer { host: false, client_id: meta.client_id.clone() };
-    let name = session.get("members").and_then(|m| m.get(&meta.client_id)).map(|m| str_of(m, "name").to_string()).unwrap_or_default();
-    if meta.host || name.is_empty() || admission_of(session, &viewer) != "accepted" { return; }
-    session["members"][&meta.client_id]["status"] = json!("left");
+    let name = session.get("members").and_then(|m| m.get(&client_id)).map(|m| str_of(m, "name").to_string()).unwrap_or_default();
+    if host || name.is_empty() { return; }
+    let viewer = Viewer { host: false, client_id };
+    if admission_of(session, &viewer) != "accepted" { return; }
+    session["members"][&viewer.client_id]["status"] = json!("left");
     add_activity(session, "user", &format!("{name} a quitté la session"));
     drop(s);
     app.persist();
@@ -159,10 +160,14 @@ fn closed(app: &Shared, code: &str, id: u64) {
 async fn review_host_absence(app: &Shared, code: &str) {
     let admin_ready = {
         let mut s = app.lock();
-        let online: Vec<Meta> = s.clients.get(code).map(|l| l.iter().map(|c| c.meta.clone()).collect()).unwrap_or_default();
-        if online.iter().any(|m| m.host) { return; }
+        // Seuls les invités salués comptent : on ne copie que leur identifiant.
+        let mut online: Vec<String> = Vec::new();
+        for c in s.clients.get(code).into_iter().flatten() {
+            if c.meta.host { return; }
+            if c.meta.greeted { online.push(c.meta.client_id.clone()); }
+        }
         let Some(session) = s.sessions.get_mut(code) else { return };
-        let ready = online.iter().any(|m| m.greeted && !m.host && session.get("members").and_then(|ms| ms.get(&m.client_id)).map(|mm| truthy(mm.get("admin"))).unwrap_or(false));
+        let ready = online.iter().any(|id| session.get("members").and_then(|ms| ms.get(id)).map(|mm| truthy(mm.get("admin"))).unwrap_or(false));
         if ready {
             let already = session.pointer("/activity/0/text").and_then(Value::as_str).map(|t| t.contains("s’est absenté")).unwrap_or(false);
             if !already { add_activity(session, "user", "L’hôte s’est absenté : les admins gardent les commandes"); }

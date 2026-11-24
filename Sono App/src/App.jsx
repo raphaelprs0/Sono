@@ -99,14 +99,13 @@ function applyAccent(hex, theme) {
   root.setProperty('--lime', accent.hex);
   root.setProperty('--lime-hover', accent.hover);
   root.setProperty('--lime-ink', accent.ink);
-  root.setProperty('--lime-text', theme === 'light' ? accent.lightText || accent.hex : accent.text || accent.hex);
+  root.setProperty('--lime-text', theme === 'light' ? accent.lightText || accent.hex : accent.hex);
   // Zones toujours sombres (carte du titre en cours, mode TV) : la version de l’accent faite pour un fond sombre.
-  const onDark = chosen;
-  root.setProperty('--dark-accent-rgb', hexToRgb(onDark.hex).join(', '));
-  root.setProperty('--dark-lime', onDark.hex);
-  root.setProperty('--dark-lime-hover', onDark.hover);
-  root.setProperty('--dark-lime-ink', onDark.ink);
-  root.setProperty('--dark-lime-text', onDark.text || onDark.hex);
+  root.setProperty('--dark-accent-rgb', hexToRgb(chosen.hex).join(', '));
+  root.setProperty('--dark-lime', chosen.hex);
+  root.setProperty('--dark-lime-hover', chosen.hover);
+  root.setProperty('--dark-lime-ink', chosen.ink);
+  root.setProperty('--dark-lime-text', chosen.hex);
 }
 
 // Fond « Automatique » : noir ou blanc selon le thème du système, suivi en direct.
@@ -273,7 +272,7 @@ const SCRIM = [8, 8, 7];
 const toHex = (rgb) => `#${rgb.map((v) => Math.round(v).toString(16).padStart(2, '0')).join('')}`;
 function useBackdropEdges(look, cover) {
   const preset = BACKGROUNDS.find((item) => item.id === look.background) || BACKGROUNDS[0];
-  const src = look.background === 'cover' ? cover : preset.image;
+  const src = look.background === 'cover' ? cover : null;
   const measure = useImageMeasure(src);
   const last = useRef(null);
   if (!src || !measure?.top) {
@@ -281,8 +280,8 @@ function useBackdropEdges(look, cover) {
     if (src && look.background === 'cover' && last.current) return last.current;
     return preset.id === 'cover' || !preset.edges ? ['#0f0f0d', '#0f0f0d'] : preset.edges;
   }
-  // Même assombrissement que l’arrière-plan : au moins 50 % pour une pochette, juste le complément pour l’image déjà assombrie.
-  const shade = look.background === 'cover' ? Math.max(0.5, measure.shade) : Math.max(measure.shade, preset.minShade ?? 0);
+  // Même assombrissement que l’arrière-plan : au moins 50 % pour une pochette.
+  const shade = Math.max(0.5, measure.shade);
   last.current = [measure.top, measure.bottom].map((rgb) => toHex(rgb.map((v, i) => v * (1 - shade) + SCRIM[i] * shade)));
   return last.current;
 }
@@ -313,15 +312,14 @@ function applyEdges(edges) {
 function AppBackdrop({ appearance, cover }) {
   const { background } = appearance;
   const preset = BACKGROUNDS.find((item) => item.id === background);
-  const measure = useImageMeasure(background === 'cover' ? cover : preset?.image);
+  const measure = useImageMeasure(background === 'cover' ? cover : null);
   const shade = measure?.shade ?? 0.65;
   // Le temps d’analyser la nouvelle pochette, l’ancienne reste en place.
   const shownCover = useRef(null);
   if (background === 'cover' && cover && measure) shownCover.current = { cover, measure };
-  if (background === 'default') return null;
   // Pochette en cours : au moins 50 %, davantage pour les pochettes claires (comme sur l’iPhone).
   if (background === 'cover') return <div className={shownCover.current?.cover ? 'app-backdrop blurred has-image' : 'app-backdrop'} style={{ '--shade': Math.max(0.5, shownCover.current?.measure?.shade ?? shade) }} aria-hidden="true">{shownCover.current && <FadeCover className={shownCover.current.measure.blur ? 'soft' : ''} src={shownCover.current.measure.blur || shownCover.current.cover} />}</div>;
-  return <div className={preset?.image ? 'app-backdrop has-image' : 'app-backdrop'} style={{ background: preset?.css || 'var(--bg)', backgroundColor: 'var(--edge-bottom)', '--shade': preset?.image ? Math.max(shade, preset.minShade ?? 0) : 0 }} aria-hidden="true" />;
+  return <div className="app-backdrop" style={{ background: preset?.css || 'var(--bg)', backgroundColor: 'var(--edge-bottom)', '--shade': 0 }} aria-hidden="true" />;
 }
 
 function formatDuration(ms) {
@@ -493,13 +491,16 @@ function ProviderLogo({ provider, size = 20 }) {
   return src ? <img className={`provider-logo ${provider === 'Deezer' ? 'deezer' : 'apple-music'}`} src={src} width={size} height={size} alt="" aria-hidden="true" /> : null;
 }
 
+// Identifiant de l’appareil, lu une seule fois puis gardé en mémoire.
+let cachedClientId = '';
 function clientId() {
+  if (cachedClientId) return cachedClientId;
   let id = readStorage('sono-client-id');
   if (!id) {
     id = window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
     writeStorage('sono-client-id', id);
   }
-  return id;
+  return (cachedClientId = id);
 }
 
 function IconButton({ label, children, className = '', ...props }) {
@@ -640,6 +641,8 @@ function App() {
   const autoAdvanceRef = useRef(() => {});
   const toastTimer = useRef();
   const socketRef = useRef(null);
+  // Moment où l’état complet de l’hôte vient d’être reçu (reprise ou création) : la première connexion ne le redemande pas.
+  const freshPayloadAt = useRef(0);
   const helloRef = useRef({});
   helloRef.current = { type: 'hello', clientId: clientId(), name: isGuest ? myName.trim() : '', hostToken: isGuest ? undefined : hostToken };
 
@@ -699,7 +702,6 @@ function App() {
     if (isGuest) { setEnded(true); return; }
     writeStorage(`sono-host-${session.code}`, null);
     writeStorage('sono-host-code', null);
-    if (readStorage('sono-last-host-code') === session.code) writeStorage('sono-last-host-code', null);
     setModal(null);
     setHostState('home');
     notify(tx("Cette session a été supprimée."));
@@ -717,6 +719,7 @@ function App() {
       if (cancelled) return;
       if (token) setHostToken(token);
       applyPayload(data);
+      freshPayloadAt.current = Date.now();
       setHostState('host');
     }).catch((error) => {
       if (cancelled) return;
@@ -731,8 +734,12 @@ function App() {
     let closed = false;
     let socket;
     let reconnect;
+    let first = true;
     const connect = async () => {
-      try {
+      // Les reconnexions redemandent toujours l’état ; la première s’en passe s’il vient d’arriver.
+      const fresh = first && !isGuest && Date.now() - freshPayloadAt.current < 2000;
+      first = false;
+      if (!fresh) try {
         const data = isGuest
           ? await apiRequest(`/api/sessions/${session.code}`)
           : await apiRequest('/api/host/resume', { method: 'POST', headers: { 'x-host-token': readStorage(`sono-host-${session.code}`) }, body: JSON.stringify({ code: session.code }) });
@@ -819,24 +826,19 @@ function App() {
   // Une position donnée à l’instant pour ce titre (changement affiché d’avance) reste valable.
   const currentKey = trackKey(current);
   useEffect(() => { setProgress((value) => (Date.now() - value.at < 300 ? value : { positionMs: 0, durationMs: 0, at: Date.now() })); }, [currentKey]);
-  useEffect(() => {
-    if (hostState !== 'host' || session.source !== 'Apple Music' || !currentId) return undefined;
-    const timer = window.setInterval(() => {
-      const music = window.sonoAppleMusic;
-      if (music && Number.isFinite(music.currentPlaybackTime)) {
-        setProgress({ positionMs: music.currentPlaybackTime * 1000, durationMs: (music.currentPlaybackDuration || 0) * 1000, at: Date.now() });
-        if (music.currentPlaybackTime > 0) savePosition(currentId, music.currentPlaybackTime * 1000);
-      }
-    }, 500);
-    return () => window.clearInterval(timer);
-  }, [hostState, session.source, currentId]);
-  // Apple Music ne joue qu’un titre à la fois : fondu de sortie sur les 3 dernières secondes, fondu d’entrée au suivant.
+  // Apple Music, une seule minuterie : position relevée pour la barre (toutes les 400 ms), et comme l’app ne joue
+  // qu’un titre à la fois, fondu de sortie sur les 3 dernières secondes, fondu d’entrée au suivant.
   useEffect(() => {
     if (hostState !== 'host' || session.source !== 'Apple Music' || !currentId) return undefined;
     const started = Date.now();
+    let tick = 0;
     const timer = window.setInterval(() => {
       const music = window.sonoAppleMusic;
       if (!music || !Number.isFinite(music.currentPlaybackTime)) return;
+      if (++tick % 2 === 0) {
+        setProgress({ positionMs: music.currentPlaybackTime * 1000, durationMs: (music.currentPlaybackDuration || 0) * 1000, at: Date.now() });
+        if (music.currentPlaybackTime > 0) savePosition(currentId, music.currentPlaybackTime * 1000);
+      }
       const duration = music.currentPlaybackDuration || 0;
       const fadeOut = duration > 6 ? Math.min(1, Math.max(0, (duration - music.currentPlaybackTime) / 3)) : 1;
       music.volume = Math.min(fadeOut, Math.min(1, (Date.now() - started) / 1500));
@@ -917,8 +919,10 @@ function App() {
   useEffect(() => {
     const theme = look.background === 'white' ? 'light' : 'dark';
     document.documentElement.dataset.theme = theme;
+    // Fond Noir : noir pur pour les écrans OLED (pixels éteints), voir styles.css.
+    document.documentElement.dataset.background = look.background;
     applyAccent(look.accent, theme);
-    document.documentElement.toggleAttribute('data-custom-bg', look.background !== 'default');
+    document.documentElement.setAttribute('data-custom-bg', '');
   }, [look.accent, look.background]);
   useEffect(() => {
     if (isGuest) return;
@@ -1327,6 +1331,7 @@ function App() {
   const startHosting = async ({ name, host, requireApproval }) => {
     const data = await apiRequest('/api/sessions', { method: 'POST', body: JSON.stringify({ name, host, requireApproval }) });
     applyPayload(data);
+    freshPayloadAt.current = Date.now();
     setView('queue');
     setHostState('host');
     notify(tx("Votre session est prête. Invitez vos proches !"));
@@ -1381,7 +1386,6 @@ function App() {
       await apiRequest(`/api/sessions/${code}`, { method: 'DELETE', headers: hostHeaders });
       writeStorage(`sono-host-${code}`, null);
       writeStorage('sono-host-code', null);
-      if (readStorage('sono-last-host-code') === code) writeStorage('sono-last-host-code', null);
       rememberHostSession(null);
       setModal(null);
       setHostState('home');
@@ -1412,8 +1416,7 @@ function App() {
 
   if (hostState === 'checking') return <><AppBackdrop appearance={look} cover={backdropCover} /><div className="guest-shell boot-screen"><Brand /><LoaderCircle className="spin" size={22} /></div></>;
   if (hostState === 'home') {
-    const lastCode = readStorage('sono-last-host-code');
-    return <><AppBackdrop appearance={look} cover={backdropCover} /><HomeView initialTab={isJoinPage || !localHosts.includes(window.location.hostname) ? 'join' : 'create'} onCreate={startHosting} resumeCode={lastCode && readStorage(`sono-host-${lastCode}`) ? lastCode : ''} onResume={resumeHosting} guestName={guestName} onConfirmName={confirmGuestName} toast={toast} closeToast={closeToast} /></>;
+    return <><AppBackdrop appearance={look} cover={backdropCover} /><HomeView initialTab={isJoinPage || !localHosts.includes(window.location.hostname) ? 'join' : 'create'} onCreate={startHosting} guestName={guestName} onConfirmName={confirmGuestName} toast={toast} closeToast={closeToast} /></>;
   }
 
   if (isGuest && ended) return <><AppBackdrop appearance={look} cover={backdropCover} /><SessionEndedView /></>;
@@ -1584,14 +1587,11 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
   const progress = useSyncExternalStore(store.subscribe, store.get);
   const trackRef = useRef(null);
   const fillRef = useRef(null);
-  const thumbRef = useRef(null);
-  const tipRef = useRef(null);
   const timeRef = useRef(null);
   const anchor = useRef({ positionMs: 0, at: performance.now(), playing: false });
   const dragRef = useRef(null);
   const settleRef = useRef(0);
   const [dragging, setDragging] = useState(false);
-  const [hovering, setHovering] = useState(false);
   const duration = progress.durationMs || trackDurationMs(track) || 0;
   const durationRef = useRef(duration);
   durationRef.current = duration;
@@ -1605,7 +1605,6 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
     const ratio = total ? Math.min(1, Math.max(0, position / total)) : 0;
     // Transformations seulement : la carte graphique déplace la barre sans recalcul de mise en page.
     if (fillRef.current) { fillRef.current.style.transition = 'none'; fillRef.current.style.transform = `translate3d(${(ratio - 1) * 100}%, 0, 0)`; }
-    if (thumbRef.current) { thumbRef.current.style.transition = 'none'; thumbRef.current.style.transform = `translateX(${ratio * 100}%)`; }
     const label = clockLabel(Math.min(position, total || position));
     if (timeRef.current && timeRef.current.textContent !== label) timeRef.current.textContent = label;
   };
@@ -1614,19 +1613,11 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
     const position = livePosition();
     draw(position);
     const total = durationRef.current;
-    if (!anchor.current.playing || !total || position >= total || !fillRef.current || !thumbRef.current) return;
+    if (!anchor.current.playing || !total || position >= total || !fillRef.current) return;
     void fillRef.current.offsetWidth;
     const motion = `transform ${Math.round(total - position)}ms linear`;
     fillRef.current.style.transition = motion;
-    thumbRef.current.style.transition = motion;
     fillRef.current.style.transform = 'translate3d(0, 0, 0)';
-    thumbRef.current.style.transform = 'translateX(100%)';
-  };
-  const showTip = (ms) => {
-    const total = durationRef.current;
-    if (!tipRef.current || !total) return;
-    tipRef.current.style.left = `${(ms / total) * 100}%`;
-    tipRef.current.textContent = clockLabel(ms);
   };
   // Un relevé de l’app de lecture ne recale la barre que s’il s’écarte vraiment de sa course.
   // Juste après un déplacement, on laisse au moteur le temps d’y aller avant d’écouter ses relevés.
@@ -1671,13 +1662,11 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
     dragRef.current = msAt(event.clientX);
     setDragging(true);
     draw(dragRef.current);
-    showTip(dragRef.current);
   };
   const onPointerMove = (event) => {
-    if (!duration) return;
-    const ms = msAt(event.clientX);
-    showTip(ms);
-    if (dragRef.current !== null) { dragRef.current = ms; draw(ms); }
+    if (!duration || dragRef.current === null) return;
+    dragRef.current = msAt(event.clientX);
+    draw(dragRef.current);
   };
   const onPointerUp = () => {
     if (dragRef.current === null) return;
@@ -1691,14 +1680,11 @@ function ProgressBar({ track, progress: store, playing, onSeek, className = '' }
     if (step) { event.preventDefault(); seek(livePosition() + step); }
     if (event.key === 'Home') { event.preventDefault(); seek(0); }
   };
-  return <div className={`progress${dragging ? ' dragging' : ''}${(hovering || dragging) && duration ? ' show-tip' : ''}${duration ? '' : ' disabled'} ${className}`}>
+  return <div className={`progress${dragging ? ' dragging' : ''}${duration ? '' : ' disabled'} ${className}`}>
     <span ref={timeRef} className="progress-time" />
     <div ref={trackRef} className="progress-track" role="slider" tabIndex={duration ? 0 : -1} aria-label={tx("Position dans le titre")} aria-valuemin={0} aria-valuemax={Math.round(duration / 1000)}
-      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp}
-      onPointerEnter={() => setHovering(true)} onPointerLeave={() => setHovering(false)} onKeyDown={onKeyDown}>
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp} onPointerCancel={onPointerUp} onKeyDown={onKeyDown}>
       <span className="progress-rail"><span ref={fillRef} className="progress-fill" /></span>
-      <span ref={thumbRef} className="progress-thumb-track"><span className="progress-thumb" /></span>
-      <span ref={tipRef} className="progress-tip" aria-hidden="true" />
     </div>
     <span className="progress-time">{duration ? clockLabel(duration) : '—:—'}</span>
   </div>;
@@ -2110,7 +2096,7 @@ function GuestView({ admin, control, session, queue, fallbackQueue, current, pla
       {tab === 'search' ? <SearchPanel compact source={session.source} showSource={(session.apps || []).length > 1} addTrack={addTrack} /> : <div className="guest-queue">
         {session.fallback && <QueueGroupLabel title={tx("Proposés par les invités")} count={queue.length} />}
         <QueueList queue={queue} host={Boolean(control)} fallback={session.fallback} onRemove={control ? setRemoving : undefined} onReorder={control?.onReorder} onBrowse={control ? () => setTab('search') : undefined} />
-        {session.fallback && <><QueueGroupLabel title={tx("Musique de fond · {0}", session.fallback.name)} count={fallbackQueue?.total || 0} fallback /><FallbackList tracks={fallbackQueue?.tracks || []} total={fallbackQueue?.total || 0} host={Boolean(control)} startIndex={queue.length} onSkip={control?.onSkipFallback} onMove={control?.onMoveFallback} sessionCode={session.code} headers={control?.headers} /></>}
+        {session.fallback && <><QueueGroupLabel title={tx("Musique de fond · {0}", session.fallback.name)} count={fallbackQueue?.total || 0} fallback /><FallbackList tracks={fallbackQueue?.tracks || NO_TRACKS} total={fallbackQueue?.total || 0} host={Boolean(control)} startIndex={queue.length} onSkip={control?.onSkipFallback} onMove={control?.onMoveFallback} sessionCode={session.code} headers={control?.headers} /></>}
       </div>}
     </main>
     {removing && <Modal onClose={() => setRemoving(null)} className="confirm-modal">
@@ -2123,7 +2109,7 @@ function GuestView({ admin, control, session, queue, fallbackQueue, current, pla
   </div>;
 }
 
-function HomeView({ initialTab, onCreate, resumeCode, onResume, guestName, onConfirmName, toast, closeToast }) {
+function HomeView({ initialTab, onCreate, guestName, onConfirmName, toast, closeToast }) {
   const [tab, setTab] = useState(initialTab);
   return <div className="guest-shell home-shell">
     <main className="home-main">
@@ -2140,7 +2126,6 @@ function HomeView({ initialTab, onCreate, resumeCode, onResume, guestName, onCon
         </button>
       </div>
       <div className="home-panel">{tab === 'create' ? <CreateForm onCreate={onCreate} defaultHost={guestName} /> : <JoinForm guestName={guestName} onConfirmName={onConfirmName} />}</div>
-      {resumeCode && <button type="button" className="text-button resume-link" onClick={() => onResume(resumeCode)}>{tx("Reprendre ma session")} {resumeCode}<ArrowRight size={14} /></button>}
     </main>
     {toast && <Toast toast={toast} onClose={closeToast} />}
   </div>;

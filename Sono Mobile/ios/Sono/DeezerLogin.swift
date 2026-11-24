@@ -8,7 +8,7 @@ enum SonoError: LocalizedError {
 }
 
 /// Page officielle de connexion Deezer. Dès que Deezer pose son cookie « arl », la fenêtre se ferme.
-final class DeezerLogin: UIViewController {
+final class DeezerLogin: UIViewController, UIAdaptivePresentationControllerDelegate {
     private var continuation: CheckedContinuation<String, Error>?
     private var timer: Timer?
     private let webView: WKWebView = {
@@ -22,6 +22,8 @@ final class DeezerLogin: UIViewController {
             let login = DeezerLogin()
             login.continuation = continuation
             let navigation = UINavigationController(rootViewController: login)
+            // Fenêtre glissée vers le bas : même chose qu’« Annuler ».
+            navigation.presentationController?.delegate = login
             parent.present(navigation, animated: true)
         }
     }
@@ -30,7 +32,7 @@ final class DeezerLogin: UIViewController {
         super.viewDidLoad()
         title = L("Connexion à Deezer")
         navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .cancel, primaryAction: UIAction { [weak self] _ in
-            self?.finish(.failure(SonoError.message(L("La connexion à Deezer a été annulée."))))
+            self?.cancel()
         })
         webView.frame = view.bounds
         webView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
@@ -43,11 +45,17 @@ final class DeezerLogin: UIViewController {
         }
     }
 
-    private func finish(_ result: Result<String, Error>) {
+    func presentationControllerDidDismiss(_ presentationController: UIPresentationController) { cancel(dismissed: true) }
+
+    private func cancel(dismissed: Bool = false) {
+        finish(.failure(SonoError.message(L("La connexion à Deezer a été annulée."))), dismissed: dismissed)
+    }
+
+    private func finish(_ result: Result<String, Error>, dismissed: Bool = false) {
         timer?.invalidate()
         guard let continuation else { return }
         self.continuation = nil
-        dismiss(animated: true)
+        if !dismissed { dismiss(animated: true) }
         continuation.resume(with: result)
     }
 }

@@ -12,7 +12,17 @@ const clients = new Map();
 const WebSocket = { OPEN: 1 };
 
 const HOST_VIEW = { role: 'host' };
-const memberKey = (session, clientId) => crypto.createHash('sha256').update(`${session.code}:${clientId}`).digest('hex').slice(0, 12);
+// Identifiant public d’un invité : calculé une fois, puis gardé en mémoire (chaque diffusion en demande beaucoup).
+const memberKeys = new Map();
+const memberKey = (session, clientId) => {
+  const source = `${session.code}:${clientId}`;
+  let key = memberKeys.get(source);
+  if (key) return key;
+  key = crypto.createHash('sha256').update(source).digest('hex').slice(0, 12);
+  if (memberKeys.size >= 5000) memberKeys.delete(memberKeys.keys().next().value);
+  memberKeys.set(source, key);
+  return key;
+};
 // Liens d’invitation courts : un token unique de 5 caractères par session (« /k7f2q »), sans lettres ni chiffres
 // qui se confondent. Les ordinateurs y publient aussi le lien de leur tunnel, sous leur propre token.
 const TOKEN_ALPHABET = 'abcdefghijkmnpqrstuvwxyz23456789';
@@ -118,51 +128,62 @@ const fallbackSummary = (session, viewer) => {
   const summary = { type: fallback.type, name: fallback.name, subtitle: fallback.subtitle, cover: fallback.cover, source: fallback.source, count: fallback.tracks.length };
   return isController(session, viewer) ? { ...summary, next: peekFallback(session) } : summary;
 };
-// Couleurs choisies par l’hôte (fond, accent, Liquid Glass), reprises sur les écrans des invités.
+// Couleurs choisies par l’hôte (fond, accent, langue), reprises sur les écrans des invités.
 const THEME_BACKGROUNDS = ['black', 'white', 'auto', 'cover'];
 const cleanTheme = (theme) => (theme && typeof theme === 'object' ? {
   background: THEME_BACKGROUNDS.includes(theme.background) ? theme.background : 'black',
   accent: /^#[0-9a-f]{6}$/i.test(theme.accent) ? theme.accent.toLowerCase() : '#d7f75b',
   lang: theme.lang === 'en' ? 'en' : 'fr',
 } : null);
-const publicSession = (session, viewer = HOST_VIEW) => {
+// Ce qui ne dépend pas de qui regarde : calculé une seule fois par diffusion, pour tous les appareils de la session.
+const sharedOf = (session) => ({ hostOnline: hostOnline(session), participants: participantsOf(session), fallbackQueue: session.fallback ? fallbackQueueOf(session) : null });
+const publicSession = (session, viewer = HOST_VIEW, shared = null) => {
   const source = session.playbackSource || 'Deezer';
   const apps = Array.isArray(session.apps) ? session.apps : [source];
-  const base = { code: session.code, token: session.token, name: session.name, host: session.host, active: session.active, requireApproval: Boolean(session.requireApproval), source, apps, theme: cleanTheme(session.theme), hostOnline: hostOnline(session) };
+  const base = { code: session.code, token: session.token, name: session.name, host: session.host, requireApproval: Boolean(session.requireApproval), source, apps, theme: cleanTheme(session.theme), hostOnline: shared ? shared.hostOnline : hostOnline(session) };
   if (admissionOf(session, viewer) !== 'accepted') return { ...base, guests: 0, participants: [] };
-  const participants = participantsOf(session);
+  const participants = shared ? shared.participants : participantsOf(session);
   return { ...base, fallback: fallbackSummary(session, viewer), guests: participants.filter((item) => item.role !== 'host' && item.online).length, participants, ...(isController(session, viewer) ? { requests: requestsOf(session) } : {}) };
 };
-const payload = (session, viewer = HOST_VIEW) => {
+const payload = (session, viewer = HOST_VIEW, shared = null) => {
   const admission = admissionOf(session, viewer);
   const member = viewer.role !== 'host' && viewer.clientId ? session.members?.[viewer.clientId] : null;
   // Un admin reçoit sa clé personnelle (pour les commandes), et seulement lui.
   const you = viewer.role !== 'host' && viewer.clientId ? { you: member?.name || null, ...(member?.admin && member.adminKey ? { admin: { key: member.adminKey, id: memberKey(session, viewer.clientId) } } : {}) } : {};
-  if (admission !== 'accepted') return { session: publicSession(session, viewer), admission, ...you };
+  if (admission !== 'accepted') return { session: publicSession(session, viewer, shared), admission, ...you };
   const host = isController(session, viewer) ? { previous: session.history?.[0] || null, history: (session.history || []).slice(0, 5) } : {};
-  return { session: publicSession(session, viewer), admission, ...you, queue: session.queue, fallbackQueue: session.fallback ? fallbackQueueOf(session) : null, ...host, current: session.current, playing: session.playing, activity: session.activity };
+  const fallbackQueue = shared ? shared.fallbackQueue : session.fallback ? fallbackQueueOf(session) : null;
+  // Le journal d’activité n’est lu que par l’app de l’hôte.
+  return { session: publicSession(session, viewer, shared), admission, ...you, queue: session.queue, fallbackQueue, ...host, current: session.current, playing: session.playing, ...(viewer.role === 'host' ? { activity: session.activity } : {}) };
 };
 // Enregistrement sur disque : JSON compact, et plusieurs demandes rapprochées (un titre ajouté, un invité qui arrive…)
 // ne font qu’une seule écriture de plus au lieu d’une par demande.
-const saved = new Map();
 let writing = null;
 let writeAgain = false;
-// Une entrée par session (limite de taille du stockage) ; seules les sessions modifiées sont réécrites.
+// Une entrée par session (limite de taille du stockage) ; seules les sessions modifiées (dirty) sont réécrites,
+// et seules les sessions supprimées (removed) sont effacées.
+const dirty = new Set();
+const removed = new Set();
+const dropSession = (code) => { sessions.delete(code); dirty.delete(code); removed.add(code); };
 const writeStore = async () => {
-  const puts = {};
-  for (const [code, session] of sessions) {
-    const json = JSON.stringify(session);
-    if (saved.get(code) !== json) { saved.set(code, json); puts[`session:${code}`] = json; }
+  const codes = [...dirty].filter((code) => sessions.has(code));
+  const gone = [...removed];
+  dirty.clear();
+  removed.clear();
+  try {
+    for (let index = 0; index < codes.length; index += 100) await storage.put(Object.fromEntries(codes.slice(index, index + 100).map((code) => [`session:${code}`, JSON.stringify(sessions.get(code))])));
+    for (let index = 0; index < gone.length; index += 128) await storage.delete(gone.slice(index, index + 128).map((code) => `session:${code}`));
+  } catch (error) {
+    // Écriture ratée : elle sera retentée avec le prochain changement.
+    for (const code of codes) if (!removed.has(code)) dirty.add(code);
+    for (const code of gone) if (!sessions.has(code)) removed.add(code);
+    throw error;
   }
-  const entries = Object.entries(puts);
-  for (let index = 0; index < entries.length; index += 100) await storage.put(Object.fromEntries(entries.slice(index, index + 100)));
-  const gone = [...saved.keys()].filter((code) => !sessions.has(code));
-  for (const code of gone) { saved.delete(code); await storage.delete(`session:${code}`); }
 };
 // Regroupé et différé : une action n’attend pas l’écriture pour répondre, et plusieurs changements n’en font qu’une.
 let saveTimer = null;
-const persist = () => {
-  for (const code of clients.keys()) if (clients.get(code).size && sessions.has(code)) sessions.get(code).updatedAt = Date.now();
+const persist = (session) => {
+  if (session && sessions.get(session.code) === session) { session.updatedAt = Date.now(); dirty.add(session.code); removed.delete(session.code); }
   saveTimer ??= setTimeout(() => {
     saveTimer = null;
     if (writing) { writeAgain = true; return; }
@@ -175,8 +196,8 @@ const persist = () => {
 // Plusieurs changements rapprochés ne font qu’une diffusion, et personne ne reçoit un message identique au précédent.
 const pendingBroadcasts = new Set();
 let broadcastTimer = null;
-const sendPayload = (client, session) => {
-  const message = JSON.stringify(payload(session, client.sono));
+const sendPayload = (client, session, shared = null) => {
+  const message = JSON.stringify(payload(session, client.sono, shared));
   if (client.sono.lastSent === message) return;
   client.sono.lastSent = message;
   client.send(message);
@@ -185,7 +206,12 @@ const broadcast = (session) => {
   pendingBroadcasts.add(session);
   broadcastTimer ??= setTimeout(() => {
     broadcastTimer = null;
-    for (const pending of pendingBroadcasts) for (const client of clients.get(pending.code) || []) if (client.readyState === WebSocket.OPEN) sendPayload(client, pending);
+    for (const pending of pendingBroadcasts) {
+      const open = [...(clients.get(pending.code) || [])].filter((client) => client.readyState === WebSocket.OPEN);
+      if (!open.length) continue;
+      const shared = sharedOf(pending);
+      for (const client of open) sendPayload(client, pending, shared);
+    }
     // Après l’envoi : les pochettes manquantes sont cherchées sans retarder personne.
     for (const pending of pendingBroadcasts) fillCovers(pending);
     pendingBroadcasts.clear();
@@ -229,22 +255,34 @@ const applyCovers = (session) => {
   }
   return changed;
 };
+// Quelques recherches à la fois (les autres attendent leur tour) : une longue file sans pochettes ne lance pas
+// des dizaines de requêtes d’un coup.
+const coverQueue = [];
+let coverLookups = 0;
+const runCoverLookups = () => {
+  while (coverLookups < 3 && coverQueue.length) {
+    const { key, artist, title, code } = coverQueue.shift();
+    coverLookups += 1;
+    lookupCover(artist, title).then((cover) => {
+      if (!cover) return;
+      coversTried.set(key, cover);
+      const live = sessions.get(code);
+      if (live && applyCovers(live)) { persist(live); broadcast(live); }
+    }).catch(() => {}).finally(() => { coverLookups -= 1; runCoverLookups(); });
+  }
+};
 const fillCovers = (session) => {
   // Une pochette trouvée plus tôt (pour une autre session ou un titre revenu) s’applique tout de suite.
-  if (applyCovers(session)) { persist(); broadcast(session); }
+  if (applyCovers(session)) { persist(session); broadcast(session); }
   for (const item of sessionTracks(session)) {
     const key = coverKey(item);
     if (!key || coversTried.has(key)) continue;
     // Une soirée enchaîne des centaines de titres : seules les recherches récentes restent en mémoire.
-    if (coversTried.size >= 600) coversTried.clear();
+    if (coversTried.size >= 600) coversTried.delete(coversTried.keys().next().value);
     coversTried.set(key, null);
-    lookupCover(item.artist, item.title).then((cover) => {
-      if (!cover) return;
-      coversTried.set(key, cover);
-      const live = sessions.get(session.code);
-      if (live && applyCovers(live)) { persist(); broadcast(live); }
-    });
+    coverQueue.push({ key, artist: item.artist, title: item.title, code: session.code });
   }
+  runCoverLookups();
 };
 const findSession = (req, res) => {
   const session = sessions.get(req.params.code.toUpperCase());
@@ -266,7 +304,6 @@ const authorizeControl = (req, res, session) => {
     res.status(403).json({ error: 'Seul l’hôte ou un admin peut effectuer cette action.' });
     return false;
   }
-  req.access = access;
   return true;
 };
 const text = (value, max = 160) => String(value || '').trim().slice(0, max);
@@ -276,7 +313,6 @@ const addActivity = (session, icon, message) => {
 };
 
 app.get('/api/health', (req, res) => res.json({ ok: true, service: 'Sono' }));
-app.get('/api/config', (req, res) => res.json({ networkUrl: null, publicUrl: null }));
 // Adresse courte « /k7f2q » : une session de ce service, ou le lien publié par un ordinateur (son tunnel).
 app.get('/api/join/:token', (req, res) => {
   const token = String(req.params.token || '').toLowerCase();
@@ -315,18 +351,16 @@ app.post('/api/host/resume', (req, res) => {
 });
 // Sur Internet, aucune session n’est ouverte sans sa clé d’hôte.
 app.post('/api/sessions', async (req, res) => {
-  const previous = sessions.get(text(req.body.previousCode, 20));
-  const trustedPrevious = previous && req.get('x-host-token') === previous.hostToken ? previous : null;
   const name = text(req.body.name, 80);
   if (!name) return res.status(400).json({ error: 'Donnez un nom à votre session.' });
   let code;
   do { code = `SONO-${crypto.randomInt(1000, 10000)}`; } while (sessions.has(code));
-  const host = text(req.body.host, 30) || trustedPrevious?.host || 'Hôte';
-  const requireApproval = typeof req.body.requireApproval === 'boolean' ? req.body.requireApproval : Boolean(trustedPrevious?.requireApproval);
-  const session = { code, token: newToken(), name, host, active: true, requireApproval, playbackSource: 'Deezer', updatedAt: Date.now(), members: {}, hostToken: crypto.randomUUID(), queue: [], history: [], playing: false, current: null, activity: [{ icon: 'music', text: 'La session est prête', at: new Date().toISOString() }] };
+  const host = text(req.body.host, 30) || 'Hôte';
+  const requireApproval = typeof req.body.requireApproval === 'boolean' ? req.body.requireApproval : false;
+  const session = { code, token: newToken(), name, host, requireApproval, playbackSource: 'Deezer', updatedAt: Date.now(), members: {}, hostToken: crypto.randomUUID(), queue: [], history: [], playing: false, current: null, activity: [{ icon: 'music', text: 'La session est prête', at: new Date().toISOString() }] };
   sessions.set(code, session);
   pruneSessions();
-  await persist();
+  await persist(session);
   res.status(201).json({ hostToken: session.hostToken, ...payload(session) });
 });
 app.post('/api/sessions/:code/tracks', async (req, res) => {
@@ -346,7 +380,7 @@ app.post('/api/sessions/:code/tracks', async (req, res) => {
   const item = { id: crypto.randomUUID(), providerId: text(track.providerId || track.id, 120), title, artist, album: text(track.album, 180), duration: text(track.duration, 12), durationMs: Number.isFinite(track.durationMs) ? track.durationMs : 0, cover: text(track.cover, 700), addedBy, source: text(track.source, 40) || 'Recherche' };
   session.queue.push(item);
   addActivity(session, 'plus', `${addedBy} a ajouté « ${title} »`);
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.status(201).json({ track: item, ...payload(session, viewer) });
 });
 app.delete('/api/sessions/:code/tracks/:id', async (req, res) => {
@@ -355,7 +389,7 @@ app.delete('/api/sessions/:code/tracks/:id', async (req, res) => {
   const track = session.queue.find((item) => item.id === req.params.id);
   session.queue = session.queue.filter((item) => item.id !== req.params.id);
   if (track) addActivity(session, 'music', `L’hôte a retiré « ${track.title} »`);
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.patch('/api/sessions/:code/queue', async (req, res) => {
@@ -365,7 +399,7 @@ app.patch('/api/sessions/:code/queue', async (req, res) => {
   const byId = new Map(session.queue.map((item) => [item.id, item]));
   if (ids.length !== session.queue.length || new Set(ids).size !== ids.length || ids.some((id) => !byId.has(id))) return res.status(400).json({ error: 'Le nouvel ordre de la file est invalide.' });
   session.queue = ids.map((id) => byId.get(id));
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.post('/api/sessions/:code/playback', async (req, res) => {
@@ -406,7 +440,7 @@ app.post('/api/sessions/:code/playback', async (req, res) => {
     session.playing = true;
   } else if (req.body.action === 'ended') session.playing = false;
   else session.playing = !session.playing;
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.patch('/api/sessions/:code', async (req, res) => {
@@ -433,7 +467,7 @@ app.patch('/api/sessions/:code', async (req, res) => {
     }
     session.requireApproval = req.body.requireApproval;
   }
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.post('/api/sessions/:code/admissions', async (req, res) => {
@@ -455,7 +489,7 @@ app.post('/api/sessions/:code/admissions', async (req, res) => {
     session.knownGuests = [...(Array.isArray(session.knownGuests) ? session.knownGuests : []), clientId].slice(-200);
     addActivity(session, 'user', `${name} a rejoint la session`);
   } else addActivity(session, 'user', `La demande de ${name} a été refusée`);
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.delete('/api/sessions/:code/members/:id', async (req, res) => {
@@ -469,7 +503,7 @@ app.delete('/api/sessions/:code/members/:id', async (req, res) => {
   member.status = 'removed';
   member.mustAsk = true;
   addActivity(session, 'user', `${member.name} a été retiré de la session`);
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 // L’hôte nomme (ou retire) un admin parmi les invités admis.
@@ -489,7 +523,7 @@ app.patch('/api/sessions/:code/admins', async (req, res) => {
     delete member.admin; delete member.adminKey;
     addActivity(session, 'user', `${member.name} n’est plus admin`);
   }
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 // Quand l’hôte quitte sa session, la musique s’arrête.
@@ -497,15 +531,9 @@ const stopSessionMusic = async (session, reason) => {
   if (!session.playing) return;
   session.playing = false;
   addActivity(session, 'music', reason);
-  await persist();
+  await persist(session);
   broadcast(session);
 };
-app.post('/api/sessions/:code/stop', async (req, res) => {
-  const session = findSession(req, res);
-  if (!session || !authorizeHost(req, res, session)) return;
-  await stopSessionMusic(session, 'Musique coupée : l’hôte a quitté la session');
-  res.json(payload(session, viewerFromRequest(req, session)));
-});
 // L’hôte a déconnecté son app de musique : la session repart de zéro (lecture, file, historique, musique de fond),
 // avec les mêmes invités et le même code.
 app.post('/api/sessions/:code/reset', async (req, res) => {
@@ -517,7 +545,7 @@ app.post('/api/sessions/:code/reset', async (req, res) => {
   session.history = [];
   session.fallback = null;
   addActivity(session, 'music', 'App de musique déconnectée : la file repart de zéro');
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.delete('/api/sessions/:code', async (req, res) => {
@@ -526,7 +554,7 @@ app.delete('/api/sessions/:code', async (req, res) => {
   await stopSessionMusic(session, 'Musique coupée : session supprimée');
   for (const client of clients.get(session.code) || []) client.close(4004, 'Session supprimée');
   clients.delete(session.code);
-  sessions.delete(session.code);
+  dropSession(session.code);
   await persist();
   res.json({ ok: true });
 });
@@ -585,8 +613,6 @@ const normalizeAppleTrack = (track) => {
     album: details.albumName || '',
     duration: details.durationInMillis,
     cover: details.artwork?.url?.replace('{w}', '400').replace('{h}', '400') || '',
-    previewUrl: details.previews?.[0]?.url || '',
-    url: details.url || '',
   };
 };
 app.get('/api/integrations/apple/search', async (req, res) => {
@@ -734,7 +760,7 @@ app.put('/api/sessions/:code/fallback', async (req, res) => {
     session.fallback = { type, id, source, name: text(req.body.name, 120) || 'Musique de fond', subtitle: text(req.body.subtitle, 160), cover: /^https:\/\//.test(String(req.body.cover || '')) ? text(req.body.cover, 500) : '', tracks };
     session.fallback.upcoming = fallbackOrder(session.fallback);
     addActivity(session, 'music', `Musique de fond : ${session.fallback.name}`);
-    await persist(); broadcast(session);
+    await persist(session); broadcast(session);
     res.json(payload(session, viewerFromRequest(req, session)));
   } catch (error) { res.status(502).json({ error: `Impossible de charger cette sélection : ${error.message}` }); }
 });
@@ -743,7 +769,9 @@ app.get('/api/sessions/:code/fallback/upcoming', (req, res) => {
   if (!session) return;
   if (admissionOf(session, viewerFromRequest(req, session)) !== 'accepted') return res.status(403).json({ error: 'Vous n’avez pas encore accès à cette session.' });
   const upcoming = session.fallback ? fallbackUpcoming(session) : [];
-  res.json({ tracks: upcoming.map((index) => fallbackItem(session, index)), total: upcoming.length });
+  // ?limit= : seulement les premiers titres (ceux affichés) ; total reste la longueur complète.
+  const limit = Number.parseInt(req.query.limit, 10);
+  res.json({ tracks: (limit > 0 ? upcoming.slice(0, limit) : upcoming).map((index) => fallbackItem(session, index)), total: upcoming.length });
 });
 // Réordonne les titres de fond à venir : le titre d’index donné passe à la position voulue.
 app.patch('/api/sessions/:code/fallback/order', async (req, res) => {
@@ -754,7 +782,7 @@ app.patch('/api/sessions/:code/fallback/order', async (req, res) => {
   if (from < 0) return res.status(404).json({ error: 'Ce titre n’est plus dans la musique de fond à venir.' });
   const to = Math.max(0, Math.min(upcoming.length - 1, Math.round(Number(req.body.to) || 0)));
   upcoming.splice(to, 0, upcoming.splice(from, 1)[0]);
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.delete('/api/sessions/:code/fallback/tracks/:index', async (req, res) => {
@@ -767,14 +795,14 @@ app.delete('/api/sessions/:code/fallback/tracks/:index', async (req, res) => {
   upcoming.splice(position, 1);
   // Titre que le compte ne peut pas lire : il ne reviendra plus aux tours suivants.
   if (req.query.unavailable) session.fallback.blocked = [...new Set([...(session.fallback.blocked || []), index])];
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 app.delete('/api/sessions/:code/fallback', async (req, res) => {
   const session = findSession(req, res);
   if (!session || !authorizeHost(req, res, session)) return;
   session.fallback = null;
-  await persist(); broadcast(session);
+  await persist(session); broadcast(session);
   res.json(payload(session, viewerFromRequest(req, session)));
 });
 
@@ -782,7 +810,9 @@ app.delete('/api/sessions/:code/fallback', async (req, res) => {
 app.get('/api/integrations/opendeezer/search', async (req, res) => {
   const query = text(req.query.q, 120);
   if (!query) return res.json({ data: [] });
-  try { res.json({ data: (await deezerApi(`/search?q=${encodeURIComponent(query)}&limit=25`)).data || [] }); }
+  // Seuls les champs lus par la page des invités et l’app iPhone sont renvoyés.
+  const slim = ({ id, title, duration, artist, album }) => ({ id, title, duration, artist: artist ? { name: artist.name } : undefined, album: album ? { title: album.title, cover_xl: album.cover_xl, cover: album.cover } : undefined });
+  try { res.json({ data: ((await deezerApi(`/search?q=${encodeURIComponent(query)}&limit=25`)).data || []).map(slim) }); }
   catch (error) { res.status(502).json({ error: `Recherche Deezer impossible : ${error.message}` }); }
 });
 // Réglages du son : gardés avec la session, appliqués au moteur par l’iPhone de l’hôte.
@@ -799,7 +829,7 @@ app.put('/api/sound', async (req, res) => {
   const session = sessions.get(text(req.body.code, 20));
   if (!session || !authorizeHost(req, res, session)) return;
   session.sound = cleanSound(req.body.sound);
-  await persist();
+  await persist(session);
   res.json({ sound: session.sound, engine: true });
 });
 
@@ -810,14 +840,14 @@ const markGuestLeft = async (session, meta) => {
   if (meta.role !== 'guest' || !member?.name || admissionOf(session, meta) !== 'accepted') return;
   member.status = 'left';
   addActivity(session, 'user', `${member.name} a quitté la session`);
-  await persist();
+  await persist(session);
   broadcast(session);
 };
 // L’hôte hors ligne (réseau perdu, app fermée) : la session reste ouverte et un admin peut prendre la main.
 const reviewHostAbsence = async (session) => {
   const online = [...(clients.get(session.code) || [])].filter((socket) => socket.readyState === WebSocket.OPEN);
   if (online.some((socket) => socket.sono?.role === 'host')) return;
-  if (!session.activity?.[0]?.text?.includes('s’est absenté')) { addActivity(session, 'user', 'L’hôte s’est absenté'); await persist(); broadcast(session); }
+  if (!session.activity?.[0]?.text?.includes('s’est absenté')) { addActivity(session, 'user', 'L’hôte s’est absenté'); await persist(session); broadcast(session); }
 };
 const onConnection = (socket, code) => {
   if (!clients.has(code)) clients.set(code, new Set());
@@ -865,7 +895,7 @@ const onConnection = (socket, code) => {
       session.knownGuests = [...session.knownGuests, meta.clientId].slice(-200);
       addActivity(session, 'user', `${lockedName} a rejoint la session`);
     }
-    await persist();
+    await persist(session);
     broadcast(session);
   });
   socket.on('close', () => {
@@ -877,11 +907,13 @@ const onConnection = (socket, code) => {
 };
 
 // Sessions inutilisées depuis 7 jours supprimées ; 200 au plus (les plus anciennes partent d’abord).
+// Les sessions ouvertes sur un appareil en ce moment sont « touchées » d’abord : elles restent les plus récentes.
 const pruneSessions = () => {
+  for (const [code, session] of sessions) if (clients.get(code)?.size) persist(session);
   const limit = Date.now() - 7 * 24 * 3600 * 1000;
-  for (const [code, session] of sessions) if ((session.updatedAt || 0) < limit && !clients.get(code)?.size) sessions.delete(code);
+  for (const [code, session] of sessions) if ((session.updatedAt || 0) < limit && !clients.get(code)?.size) dropSession(code);
   const oldest = [...sessions.values()].sort((a, b) => (a.updatedAt || 0) - (b.updatedAt || 0));
-  while (oldest.length > 200) sessions.delete(oldest.shift().code);
+  while (oldest.length > 200) dropSession(oldest.shift().code);
 };
 const DAY_MS = 24 * 3600 * 1000;
 export class SonoHub {
@@ -891,11 +923,11 @@ export class SonoHub {
     ctx.blockConcurrencyWhile(async () => {
       const stored = await ctx.storage.list({ prefix: 'session:' });
       sessions = new Map();
-      for (const [key, json] of stored) { sessions.set(key.slice(8), JSON.parse(json)); saved.set(key.slice(8), json); }
+      for (const [key, json] of stored) sessions.set(key.slice(8), JSON.parse(json));
       links = new Map();
       for (const [key, json] of await ctx.storage.list({ prefix: 'link:' })) links.set(key.slice(5), JSON.parse(json));
       // Sessions d’avant les liens courts : elles reçoivent leur token.
-      for (const session of sessions.values()) if (!session.token) session.token = newToken();
+      for (const session of sessions.values()) if (!session.token) { session.token = newToken(); dirty.add(session.code); }
       // Le ménage passe une fois par jour, même si personne ne crée de session.
       if (!(await ctx.storage.getAlarm())) await ctx.storage.setAlarm(Date.now() + DAY_MS);
     });

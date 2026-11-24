@@ -106,7 +106,8 @@ const DISABLED_PAGE: &str = "<!doctype html><html lang=\"fr\"><meta charset=\"ut
 /// Tant que l’hôte n’a pas activé l’accès à distance, le tunnel préparé ne laisse rien passer.
 async fn tunnel_gate(AxumState(app): AxumState<Shared>, request: Request, next: Next) -> Response {
     let path = request.uri().path().to_string();
-    if path == "/api/health" || app.lock().public_link_enabled || !ws::via_tunnel(request.headers()) { return next.run(request).await; }
+    // Le verrou n’est pris que pour les requêtes passées par le tunnel.
+    if path == "/api/health" || !ws::via_tunnel(request.headers()) || app.lock().public_link_enabled { return next.run(request).await; }
     let message = "L’accès à distance à cette session est désactivé par l’hôte.";
     if path.starts_with("/api/") { return routes::err(StatusCode::SERVICE_UNAVAILABLE, message); }
     (StatusCode::SERVICE_UNAVAILABLE, Html(DISABLED_PAGE)).into_response()
@@ -125,8 +126,7 @@ async fn assets(AxumState(app): AxumState<Shared>, request: Request) -> Response
             Some(b) => Some(b),
             None => match tokio::fs::read(app.dist_dir.join("assets").join(&name)).await {
                 Ok(source) => {
-                    let packed = tokio::task::spawn_blocking(move || compress(&source, encoding)).await.unwrap_or_default();
-                    let packed = Arc::new(packed);
+                    let packed = axum::body::Bytes::from(tokio::task::spawn_blocking(move || compress(&source, encoding)).await.unwrap_or_default());
                     app.packed.lock().unwrap().insert(key, packed.clone());
                     Some(packed)
                 }
@@ -137,7 +137,7 @@ async fn assets(AxumState(app): AxumState<Shared>, request: Request) -> Response
             return Response::builder()
                 .header(header::CONTENT_TYPE, kind).header(header::CONTENT_ENCODING, encoding).header(header::VARY, "Accept-Encoding")
                 .header(header::CACHE_CONTROL, "public, max-age=31536000, immutable")
-                .body(Body::from(bytes.as_ref().clone())).unwrap();
+                .body(Body::from(bytes)).unwrap();
         }
     }
     let service = ServeDir::new(app.dist_dir.join("assets"));
@@ -201,8 +201,6 @@ pub fn router(app: Shared) -> Router {
         .route("/api/sessions/{code}/admissions", post(admissions))
         .route("/api/sessions/{code}/members/{id}", delete(remove_member))
         .route("/api/sessions/{code}/admins", patch(set_admin))
-        .route("/api/sessions/{code}/stop", post(stop_music))
-        .route("/api/integrations/apple/status", get(apple_status))
         .route("/api/integrations/apple/developer-token", get(apple_developer_token))
         .route("/api/integrations/apple/search", get(apple_search))
         .route("/api/sessions/{code}/catalog/search", get(catalog_search))
@@ -270,7 +268,7 @@ pub async fn serve(app: Shared) -> std::io::Result<()> {
             for encoding in ["br", "gzip"] {
                 let source = source.clone();
                 if let Ok(packed) = tokio::task::spawn_blocking(move || compress(&source, encoding)).await {
-                    warm.packed.lock().unwrap().insert(format!("{encoding}:{name}"), Arc::new(packed));
+                    warm.packed.lock().unwrap().insert(format!("{encoding}:{name}"), packed.into());
                 }
             }
         }

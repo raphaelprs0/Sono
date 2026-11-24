@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.7.3 | 2.7.3 (build 28) |
+| Version | 2.7.4 | 2.7.4 (build 29) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -472,7 +472,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.3**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.4**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -487,7 +487,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.3-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.7.4-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

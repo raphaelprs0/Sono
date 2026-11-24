@@ -147,10 +147,8 @@ function TvAmbient({ cover }) {
 // et s’agrandit jusqu’au plein écran ; à la fermeture, il revient s’y loger.
 const tvOriginElement = (origin) => origin?.map((selector) => document.querySelector(selector)).find(Boolean) || null;
 
-// Plein écran du mode TV dans un navigateur. Dans l’app de bureau, le mode TV reste dans la fenêtre telle
-// qu’elle est : passer la fenêtre en plein écran à sa place faisait planter macOS au retour du bouton vert.
+// Plein écran du mode TV dans un navigateur.
 const setScreenFull = (on) => {
-  if (window.sonoDesktop) return Promise.resolve();
   if (on) return document.documentElement.requestFullscreen?.().catch(() => {});
   return document.fullscreenElement ? document.exitFullscreen?.().catch(() => {}) : Promise.resolve();
 };
@@ -175,7 +173,7 @@ function tvZoomKeyframes(origin, closing) {
   return closing ? [full, { opacity: 1, offset: .55 }, small] : [small, { opacity: 1, offset: .3 }, full];
 }
 
-function TvView({ display = false, origin, current, previousKey, next, playing, inviteUrl, controls, appearance, onAppearance, showTools, progressBar, onExit, toast, closeToast, children }) {
+function TvView({ display = false, origin, current, previousKey, next, playing, inviteUrl, controls, appearance, onAppearance, progressBar, onExit, toast, closeToast }) {
   const [idle, setIdle] = useState(false);
   // Passe à vrai une fois le zoom terminé : le fond animé et la pochette en haute définition n’arrivent qu’alors,
   // pour que le zoom ne partage pas la carte graphique avec leur chargement.
@@ -193,8 +191,6 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
   const showTvPage = (page) => pagerRef.current?.scrollTo({ left: page * pagerRef.current.clientWidth, behavior: 'smooth' });
   const viewRef = useRef(null);
   const scrimRef = useRef(null);
-  const sheetRef = useRef(null);
-  const readyRef = useRef(false);
   const closingRef = useRef(false);
   // Clic droit sur le mode TV : un petit menu discret pour masquer (ou remettre) le code QR et l’adresse.
   const [menu, setMenu] = useState(null);
@@ -211,17 +207,6 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
     const view = viewRef.current;
     const target = tvOriginElement(origin);
     if (!view || reducedMotion()) return Promise.resolve();
-    // Téléphone : le lecteur monte du bas de l’écran (et y redescend), comme celui d’Apple Music. C’est la zone qui
-    // défile qui bouge, pas le lecteur : déplacer un élément aimanté ferait recaler le défilement d’iOS.
-    const sheet = sheetRef.current;
-    if (sheet) {
-      const closing = direction === 'reverse';
-      const slide = { duration: 540, easing: 'cubic-bezier(.32, .72, 0, 1)', fill: closing ? 'forwards' : 'none' };
-      const down = { transform: `translate3d(0, ${sheet.clientHeight}px, 0)` };
-      const up = { transform: 'none' };
-      scrimRef.current?.animate(closing ? [{ opacity: 0.6 }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0.6 }], { ...slide, fill: 'forwards' });
-      return sheet.animate(closing ? [up, down] : [down, up], slide).finished.catch(() => {});
-    }
     const closing = direction === 'reverse';
     // À l’ouverture, le lecteur disparaît sous l’écran qui grandit ; à la fermeture, il reste affiché dessous
     // pour que l’écran qui rétrécit s’y fonde sans laisser de vide.
@@ -239,9 +224,9 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
     if (motion) settled.then(() => requestAnimationFrame(() => requestAnimationFrame(() => {
       if (closingRef.current) return;
       view.style.opacity = '';
-      zoom('normal').then(() => { if (!closingRef.current) { readyRef.current = true; const sheet = sheetRef.current; if (sheet) sheet.scrollTop = sheet.scrollHeight; document.documentElement.setAttribute('data-tv-open', ''); setSettled(true); } });
+      zoom('normal').then(() => { if (!closingRef.current) { document.documentElement.setAttribute('data-tv-open', ''); setSettled(true); } });
     })));
-    else { readyRef.current = true; setSettled(true); }
+    else setSettled(true);
   }, []);
   const close = useCallback(() => {
     if (closingRef.current) return;
@@ -320,71 +305,6 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
   onExitRef.current = onExit;
   const closeRef = useRef(close);
   closeRef.current = close;
-  // Téléphone : le mode TV est dans une zone qui défile, avec deux arrêts (affiché, et sorti par le bas) : iOS le fait
-  // suivre le doigt, garder l’élan et revenir en place, comme le lecteur d’Apple Music. Arrêté en bas, il se ferme.
-  useLayoutEffect(() => {
-    const sheet = sheetRef.current;
-    const view = viewRef.current;
-    if (!phone || !sheet || !view) return undefined;
-    sheet.scrollTop = sheet.scrollHeight;
-    let frame = 0;
-    let settle = 0;
-    let moving = false;
-    let touching = false;
-    const max = () => Math.max(1, sheet.scrollHeight - sheet.clientHeight);
-    // Pendant le geste : tableau de bord redessiné dessous (sans flou) et fond animé en pause.
-    const lighten = (on) => {
-      if (moving === on) return;
-      moving = on;
-      view.classList.toggle('is-dragging', on);
-      if (on) scrimRef.current?.getAnimations().forEach((animation) => animation.cancel());
-    };
-    const finish = () => {
-      if (closingRef.current) return;
-      // Pendant l’ouverture (zoom), la position bouge toute seule : rien ne se décide avant la fin.
-      if (!readyRef.current) { sheet.scrollTop = sheet.scrollHeight; return; }
-      // Doigt encore posé : iOS n’a pas encore choisi le cran, rien ne se décide.
-      if (touching) return;
-      if (sheet.scrollTop <= 2) { closingRef.current = true; lighten(false); onExitRef.current(); return; }
-      // Petit glissement (cran du haut) : il remonte en place.
-      if (sheet.scrollTop >= max() * 0.8 && sheet.scrollTop < max() - 2) { sheet.scrollTo({ top: max(), behavior: 'smooth' }); return; }
-      // Arrêté sur le cran intermédiaire (geste assez long ou lancé) : il finit de descendre tout seul, puis se ferme.
-      if (sheet.scrollTop < max() - 4) { sheet.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-      if (sheet.scrollTop >= max() - 2) { lighten(false); document.documentElement.setAttribute('data-tv-open', ''); if (scrimRef.current) scrimRef.current.style.opacity = ''; }
-    };
-    const onScroll = () => {
-      if (closingRef.current || !readyRef.current) return;
-      if (!frame) frame = requestAnimationFrame(() => { frame = 0; if (scrimRef.current) scrimRef.current.style.opacity = String(0.6 * Math.min(1, sheet.scrollTop / max())); });
-      window.clearTimeout(settle);
-      settle = window.setTimeout(finish, 140);
-    };
-    // Le tableau de bord est préparé dessous dès que le doigt se pose : changer les styles pendant le défilement ferait revenir iOS au cran (geste interrompu).
-    const down = () => { touching = true; window.clearTimeout(settle); if (readyRef.current && !closingRef.current) lighten(true); };
-    // Doigt levé après un vrai glissement : il continue de descendre d’un trait (sans s’arrêter sur un cran à mi-hauteur).
-    const up = () => {
-      touching = false;
-      window.clearTimeout(settle);
-      if (readyRef.current && !closingRef.current && sheet.scrollTop < max() * 0.85) {
-        sheet.style.scrollSnapType = 'none';
-        sheet.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-      settle = window.setTimeout(finish, 160);
-    };
-    sheet.addEventListener('scroll', onScroll, { passive: true });
-    sheet.addEventListener('scrollend', finish);
-    sheet.addEventListener('touchstart', down, { passive: true });
-    sheet.addEventListener('touchend', up, { passive: true });
-    sheet.addEventListener('touchcancel', up, { passive: true });
-    return () => {
-      sheet.removeEventListener('touchstart', down);
-      sheet.removeEventListener('touchend', up);
-      sheet.removeEventListener('touchcancel', up);
-      cancelAnimationFrame(frame);
-      window.clearTimeout(settle);
-      sheet.removeEventListener('scroll', onScroll);
-      sheet.removeEventListener('scrollend', finish);
-    };
-  }, [phone]);
   const widget = (id) => {
     if (id === 'cover') return <div className="tv-fill">{coverSrc
       ? <FadeCover className="tv-cover" src={coverSrc} onError={() => setCoverSrc((src) => (src !== coverAt(current?.cover, 600) ? coverAt(current?.cover, 600) : ''))} />
@@ -434,11 +354,6 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
   const view = <div ref={viewRef} onContextMenu={(event) => { event.preventDefault(); setMenu({ x: event.clientX, y: event.clientY }); }} className={`tv-view${display ? ' tv-display' : ''}${current && !playing ? ' is-paused' : ''}${idle ? ' idle' : ''}${blackBackground ? ' tv-black' : ''}`} style={{ '--tv-cover-scale': Math.min(1, coverScale), '--tv-qr-scale': Math.min(1, qrScale) }}>
     {!blackBackground && <TvAmbient cover={settled ? current?.cover : ''} />}
     {!phone && <button type="button" className="tv-exit" aria-label={tx("Quitter le mode TV")} onClick={close}><X size={16} />{tx("Quitter le mode TV")}</button>}
-    {showTools && <div className="tv-tools">
-      <label>{tx("Pochette")}<input type="range" min="30" max="200" step="5" value={appearance.tvCoverScale} aria-label={tx("Taille de la pochette")} onChange={(event) => onAppearance({ tvCoverScale: Number(event.target.value) })} /></label>
-      <label>QR code<input type="range" min="20" max="200" step="5" value={appearance.tvQrScale} aria-label={tx("Taille du QR code")} onChange={(event) => onAppearance({ tvQrScale: Number(event.target.value) })} /></label>
-    </div>}
-    {children && <div className="tv-alerts">{children}</div>}
     {phone ? <>
       <span className="tv-grabber" aria-hidden="true" />
       {native && phone && <AirplayButton className="tv-airplay" />}
@@ -466,7 +381,7 @@ function TvView({ display = false, origin, current, previousKey, next, playing, 
   </div>;
   return <>
     <div ref={scrimRef} className="tv-scrim" aria-hidden="true" />
-    {phone && !display ? <div ref={sheetRef} className="tv-sheet"><div className="tv-sheet-gap" aria-hidden="true"><span className="tv-sheet-catch" /><span className="tv-sheet-catch is-hold" /></div>{view}<span className="tv-sheet-open" aria-hidden="true" /></div> : view}
+    {view}
   </>;
 }
 

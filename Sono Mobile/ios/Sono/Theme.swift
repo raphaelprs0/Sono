@@ -91,7 +91,8 @@ extension Color {
     }
     /// Couleur qui change avec le thème affiché (sombre ou clair).
     static func themed(dark: UIColor, light: UIColor) -> Color { Color(UIColor { $0.userInterfaceStyle == .light ? light : dark }) }
-    static let sonoBackground = themed(dark: UIColor(hex: "#0f0f0d"), light: UIColor(hex: "#f4f4f0"))
+    /// Fond sombre en noir pur : pixels éteints sur les écrans OLED.
+    static let sonoBackground = themed(dark: UIColor(hex: "#000000"), light: UIColor(hex: "#f4f4f0"))
     static let sonoText = themed(dark: UIColor(hex: "#f4f3ec"), light: UIColor(hex: "#151513"))
     static let sonoMuted = themed(dark: UIColor(red: 0.62, green: 0.62, blue: 0.58, alpha: 1), light: UIColor(hex: "#66665e"))
     static let sonoDanger = themed(dark: UIColor(red: 1, green: 0.47, blue: 0.42, alpha: 1), light: UIColor(hex: "#cf3a2e"))
@@ -267,7 +268,7 @@ struct SoftShadow: View {
         }
         guard let input = CIImage(image: shape) else { return nil }
         let blurred = input.clampedToExtent().applyingFilter("CIGaussianBlur", parameters: [kCIInputRadiusKey: blur * scale]).cropped(to: input.extent)
-        guard let cg = CIContext().createCGImage(blurred, from: input.extent) else { return nil }
+        guard let cg = QRCode.context.createCGImage(blurred, from: input.extent) else { return nil }
         let image = UIImage(cgImage: cg, scale: scale, orientation: .up)
         cache.setObject(image, forKey: key)
         return image
@@ -277,14 +278,22 @@ struct SoftShadow: View {
 // MARK: QR code
 
 enum QRCode {
-    /// Code net (pixels entiers), noir sur blanc.
-    static func image(_ text: String, level: String = "M") -> UIImage? {
+    /// Un seul contexte Core Image pour toute l’app (coûteux à créer).
+    static let context = CIContext()
+    private static let cache = NSCache<NSString, UIImage>()
+
+    /// Code net (pixels entiers), noir sur blanc ; gardé en cache, la vue se redessine souvent.
+    static func image(_ text: String, level: String) -> UIImage? {
+        let key = "\(level)|\(text)" as NSString
+        if let image = cache.object(forKey: key) { return image }
         let filter = CIFilter.qrCodeGenerator()
         filter.message = Data(text.utf8)
         filter.correctionLevel = level
         guard let output = filter.outputImage?.transformed(by: CGAffineTransform(scaleX: 12, y: 12)),
-              let image = CIContext().createCGImage(output, from: output.extent) else { return nil }
-        return UIImage(cgImage: image)
+              let cg = context.createCGImage(output, from: output.extent) else { return nil }
+        let image = UIImage(cgImage: cg)
+        cache.setObject(image, forKey: key)
+        return image
     }
 }
 
@@ -380,6 +389,16 @@ extension Color {
         let hsbSaturation = brightness == 0 ? 0 : 2 * (1 - lightness / brightness)
         self.init(hue: hue / 360, saturation: hsbSaturation, brightness: brightness)
     }
+}
+
+/// Interrupteurs iOS exactement de la couleur d’accent choisie, quel que soit le fond (clair, sombre ou pochette).
+private struct AccentToggle: ViewModifier {
+    @EnvironmentObject private var store: Store
+    func body(content: Content) -> some View { content.tint(store.appearance.accentColor) }
+}
+
+extension View {
+    func accentToggle() -> some View { modifier(AccentToggle()) }
 }
 
 /// Curseur d’écriture de la couleur d’accent choisie. Posé sur chaque champ : les fenêtres ouvertes par-dessus

@@ -5,6 +5,7 @@
 
 mod server;
 
+use server::routes::dir_size;
 use server::state::Shared;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
@@ -112,18 +113,12 @@ fn webview_dirs(app: &AppHandle) -> Vec<PathBuf> {
     dirs
 }
 
-fn size_of(path: &std::path::Path) -> u64 {
-    let Ok(meta) = std::fs::symlink_metadata(path) else { return 0 };
-    if !meta.is_dir() { return meta.len(); }
-    std::fs::read_dir(path).map(|e| e.flatten().map(|e| size_of(&e.path())).sum()).unwrap_or(0)
-}
-
 /// Vide le cache du navigateur de la fenêtre ; la page se recharge ensuite d’elle-même (la session revient du serveur).
 fn clear_webview_cache(app: &AppHandle) -> u64 {
-    let before: u64 = webview_dirs(app).iter().map(|d| size_of(d)).sum();
+    let before: u64 = webview_dirs(app).iter().map(|d| dir_size(d)).sum();
     if let Some(window) = app.get_webview_window("main") { let _ = window.clear_all_browsing_data(); }
     std::thread::sleep(Duration::from_millis(600));
-    let after: u64 = webview_dirs(app).iter().map(|d| size_of(d)).sum();
+    let after: u64 = webview_dirs(app).iter().map(|d| dir_size(d)).sum();
     before.saturating_sub(after)
 }
 
@@ -215,7 +210,7 @@ fn main() {
             let cache_handle = app.handle().clone();
             *shared.clear_cache.lock().unwrap() = Some(Arc::new(move || clear_webview_cache(&cache_handle)));
             let size_handle = app.handle().clone();
-            *shared.cache_size.lock().unwrap() = Some(Arc::new(move || webview_dirs(&size_handle).iter().map(|d| size_of(d)).sum()));
+            *shared.cache_size.lock().unwrap() = Some(Arc::new(move || webview_dirs(&size_handle).iter().map(|d| dir_size(d)).sum()));
             let quit_handle = app.handle().clone();
             *shared.quit_app.lock().unwrap() = Some(Arc::new(move || quit_handle.exit(0)));
             let _ = SERVER.set(shared.clone());

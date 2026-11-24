@@ -24,14 +24,13 @@ pub fn close_public_sockets(app: &Shared) {
 }
 
 /// Sonde le tunnel en passant directement par le réseau Cloudflare, sans résolution DNS du nouveau nom :
-/// une recherche trop précoce met « introuvable » en cache pendant une minute.
-async fn probe(url: &str) -> Result<u16, String> {
+/// une recherche trop précoce met « introuvable » en cache pendant une minute. Préparée une fois (client et adresse).
+async fn prober(url: &str) -> Option<(reqwest::Client, String)> {
     let host = url.trim_start_matches("https://").split('/').next().unwrap_or("").to_string();
     let edge = tokio::net::lookup_host(("api.trycloudflare.com", 443)).await.ok().and_then(|mut a| a.find(|x| x.is_ipv4()));
     let mut builder = reqwest::Client::builder().timeout(Duration::from_secs(3));
     if let Some(edge) = edge { builder = builder.resolve(&host, edge); }
-    let client = builder.build().map_err(|e| e.to_string())?;
-    client.get(format!("https://{host}/api/health")).send().await.map(|r| r.status().as_u16()).map_err(|e| e.to_string())
+    builder.build().ok().map(|client| (client, format!("https://{host}/api/health")))
 }
 
 // cloudflared n’est plus livré dans l’app (près de 40 Mo sur Mac, 55 Mo sur Windows) : il est téléchargé depuis
@@ -152,10 +151,13 @@ pub async fn start(app: &Shared) -> Result<String, String> {
     }
     let url = url.unwrap();
     // Cloudflare met environ une seconde à router un tunnel tout juste enregistré : sondé toutes les demi-secondes.
+    let probe = prober(&url).await;
     loop {
         if Instant::now() > deadline { return failure(app, "Le service d’accès public n’a pas répondu à temps. Vérifiez votre connexion Internet."); }
         if app.tunnel_child.lock().unwrap().is_none() { return Err("Le connecteur d’accès public s’est arrêté avant de créer le lien.".into()); }
-        if probe(&url).await == Ok(200) { break; }
+        if let Some((client, health)) = &probe {
+            if client.get(health).send().await.map(|r| r.status().as_u16()).ok() == Some(200) { break; }
+        }
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
     app.lock().public_tunnel_url = url.clone();
