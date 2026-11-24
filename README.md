@@ -2,16 +2,16 @@
 
 [🇫🇷 **French**](README-FR.md) · 🇬🇧 **English**
 
-![Version](https://img.shields.io/badge/Version-2.7.3-7927F5?style=flat)
-![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?style=flat)
-![macOS](https://img.shields.io/badge/macOS-12%2B-6E6E73?logo=apple&logoColor=white&style=flat)
-![iOS](https://img.shields.io/badge/iOS-17%2B-6E6E73?logo=apple&logoColor=white&style=flat)
+![Version](.github/badges/version.svg)
+![Windows](.github/badges/windows.svg)
+![macOS](.github/badges/macos.svg)
+![iOS](.github/badges/ios.svg)
 
-![Rust](https://img.shields.io/badge/Server-Rust-FF2E2E?logo=rust&logoColor=white&style=flat)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-Native-FF4A17?logo=swift&logoColor=white&style=flat)
-![Go](https://img.shields.io/badge/Engine-Go-00ADD8?logo=go&logoColor=white&style=flat)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-FF7C00?logo=cloudflare&logoColor=white&style=flat)
-![License](https://img.shields.io/badge/License-AGPL--3.0-29A825?style=flat)
+![Rust](.github/badges/rust.svg)
+![SwiftUI](.github/badges/swiftui.svg)
+![Go](.github/badges/go.svg)
+![Cloudflare](.github/badges/cloudflare.svg)
+![License](.github/badges/license.svg)
 
 **Your guests pick the music, your speaker plays it.** The host starts a session, guests scan a QR code with their phone and
 suggest tracks: everyone sees the queue, the music plays on **Deezer** or **Apple Music**, and nobody has to install

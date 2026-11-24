@@ -2,16 +2,16 @@
 
 🇫🇷 **Français** · [🇬🇧 **Anglais**](README.md)
 
-![Version](https://img.shields.io/badge/Version-2.7.3-7927F5?style=flat)
-![Windows](https://img.shields.io/badge/Windows-10%2F11-2798F5?style=flat)
-![macOS](https://img.shields.io/badge/macOS-12%2B-6E6E73?logo=apple&logoColor=white&style=flat)
-![iOS](https://img.shields.io/badge/iOS-17%2B-6E6E73?logo=apple&logoColor=white&style=flat)
+![Version](.github/badges/version.svg)
+![Windows](.github/badges/windows.svg)
+![macOS](.github/badges/macos.svg)
+![iOS](.github/badges/ios.svg)
 
-![Rust](https://img.shields.io/badge/Serveur-Rust-FF2E2E?logo=rust&logoColor=white&style=flat)
-![SwiftUI](https://img.shields.io/badge/SwiftUI-Natif-FF4A17?logo=swift&logoColor=white&style=flat)
-![Go](https://img.shields.io/badge/Moteur-Go-00ADD8?logo=go&logoColor=white&style=flat)
-![Cloudflare](https://img.shields.io/badge/Cloudflare-Workers-FF7C00?logo=cloudflare&logoColor=white&style=flat)
-![Licence](https://img.shields.io/badge/Licence-AGPL--3.0-29A825?style=flat)
+![Rust](.github/badges/rust-fr.svg)
+![SwiftUI](.github/badges/swiftui-fr.svg)
+![Go](.github/badges/go-fr.svg)
+![Cloudflare](.github/badges/cloudflare.svg)
+![Licence](.github/badges/license-fr.svg)
 
 **Vos invités choisissent la musique, votre enceinte la joue.** L’hôte lance une session, les invités scannent un QR code
 avec leur téléphone et proposent leurs titres : tout le monde voit la file, la musique est jouée sur **Deezer** ou
