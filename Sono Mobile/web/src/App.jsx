@@ -1549,6 +1549,8 @@ function GuestView({ admin, control, session, queue, fallbackQueue, current, pla
       <section className="guest-welcome">
         <h1>{session.name}</h1>
         <p><Avatar name={name} /><span>{tx("Vous êtes")} <strong>{name}</strong>{people > 1 ? tx(" · {0} personnes", people) : ''}</span></p>
+        {/* Aussi une fois dans la session (prénom déjà connu de Safari) : sinon plus aucun moyen de passer dans l’app. */}
+        {openInAppLink(session) && <a className="open-in-app" href={openInAppLink(session)}><Smartphone size={15} />{tx("Ouvrir dans l’app Sono")}</a>}
       </section>
       {admin && <section className={session.hostOnline ? 'admin-card' : 'admin-card alert'} aria-label="Admin">
         <span className="admin-card-icon"><ShieldCheck size={20} /></span>

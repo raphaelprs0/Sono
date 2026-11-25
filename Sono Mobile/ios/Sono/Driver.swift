@@ -308,9 +308,13 @@ final class Driver {
             commandedId = engineId
             preloadId = nil
             seenPlaying = true
-            onAdvance?(0)
-            await sendPlayback(nextProviderId == nil ? "ended" : "next", expected: current.id)
-            return
+            // Si la session est déjà sur ce titre (un admin vient de passer au suivant), il n’y a rien à avancer :
+            // sinon le serveur avancerait une deuxième fois et un titre serait sauté.
+            if engineId != (await playableId(current)) {
+                onAdvance?(0)
+                await sendPlayback(nextProviderId == nil ? "ended" : "next", expected: current.id)
+                return
+            }
         }
         guard playing else {
             if state == "playing" { await pausePlayer() }

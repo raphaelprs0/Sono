@@ -804,10 +804,12 @@ function App() {
           controlProvider({ track: current, action: 'next', playing: true, source: session.source, hostToken, sessionCode: session.code }).catch(() => {});
         }
         else if (!skip.active && preloadedRef.current && engineTrack === preloadedRef.current) {
-          // Enchaînement sans blanc : le moteur joue déjà le titre préchargé.
+          // Enchaînement sans blanc : le moteur joue déjà le titre préchargé. Si la session est déjà sur ce titre
+          // (un admin vient de passer au suivant), rien n’avance : sinon un titre serait sauté.
           const switchedTo = preloadedRef.current;
           preloadedRef.current = null;
-          autoAdvanceRef.current(currentId, switchedTo);
+          if (String(current?.providerId) !== switchedTo) autoAdvanceRef.current(currentId, switchedTo);
+          else seenPlaying = true;
         } else if (state === 'playing') seenPlaying = true;
         else if (seenPlaying && !skip.active && (state === 'stopped' || state === 'error')) { seenPlaying = false; autoAdvanceRef.current(currentId); }
         // Le fondu dure 3 s. À 2 s de la fin, le nouveau titre domine : l’affichage change sans attendre la fin du moteur.
