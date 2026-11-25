@@ -190,7 +190,7 @@ pub fn send_all(s: &mut State, code: &str) {
     let Some(slot) = s.sessions.get_mut(code) else { return };
     // La session est sortie de l’état le temps du calcul (sans copie), puis remise à sa place.
     let mut session = std::mem::take(slot);
-    let metas: Vec<(u64, Viewer, Utf8Bytes)> = s.clients.get(code).map(|list| list.iter().map(|c| (c.id, Viewer { host: c.meta.host, client_id: c.meta.client_id.clone() }, c.meta.last_sent.clone())).collect()).unwrap_or_default();
+    let metas: Vec<(u64, Viewer, Utf8Bytes)> = s.clients.get(code).map(|list| list.iter().filter(|c| c.meta.greeted).map(|c| (c.id, Viewer { host: c.meta.host, client_id: c.meta.client_id.clone() }, c.meta.last_sent.clone())).collect()).unwrap_or_default();
     let mut outgoing = Vec::new();
     for (id, viewer, last) in metas {
         let message = payload(s, &mut session, &viewer).to_string();
@@ -203,21 +203,6 @@ pub fn send_all(s: &mut State, code: &str) {
                 client.meta.last_sent = message.clone();
                 let _ = client.tx.send(Message::Text(message));
             }
-        }
-    }
-}
-
-pub fn send_one(s: &mut State, code: &str, client_id: u64) {
-    let Some(viewer) = s.clients.get(code).and_then(|l| l.iter().find(|c| c.id == client_id)).map(|c| Viewer { host: c.meta.host, client_id: c.meta.client_id.clone() }) else { return };
-    let Some(slot) = s.sessions.get_mut(code) else { return };
-    let mut session = std::mem::take(slot);
-    let message = payload(s, &mut session, &viewer).to_string();
-    *s.sessions.get_mut(code).unwrap() = session;
-    if let Some(client) = s.clients.get_mut(code).and_then(|l| l.iter_mut().find(|c| c.id == client_id)) {
-        if client.meta.last_sent.as_str() != message {
-            let message = Utf8Bytes::from(message);
-            client.meta.last_sent = message.clone();
-            let _ = client.tx.send(Message::Text(message));
         }
     }
 }

@@ -199,7 +199,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .now-info { min-width: 0; }
 .now-info h2 { font-size: 28px; line-height: 1.22; letter-spacing: -.8px; margin-bottom: 4px; padding-bottom: 2px; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .now-info > p { font-size: 15px; color: var(--text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.now-info > p span { padding: 0 8px; color: var(--muted); }
+.now-album > span { padding: 0 6px; color: var(--muted); }
 .now-playing.idle .now-info > p { color: var(--muted); }
 .now-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; font-size: 13px; color: var(--muted); }
 .now-meta .avatar { width: 22px; height: 22px; font-size: 10px; }
@@ -281,12 +281,24 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .activity-icon.plus { background: var(--lime-soft); color: var(--lime-text); }
 .activity-icon.user { background: var(--violet-soft); color: var(--violet); }
 
-/* ───────────── Activity page ───────────── */ .activity-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
-.activity-stats > div { padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; gap: 4px; }
-.activity-stats .stat-icon { margin-bottom: 10px; }
-.activity-stats strong { font-family: var(--font-display); font-size: 28px; line-height: 1.1; }
-.activity-stats span:not(.stat-icon) { font-size: 13.5px; color: var(--muted); }
-.activity-columns { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 14px; align-items: start; }
+/* ───────────── Activity page (bento) ───────────── */ .activity-bento { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 14px; align-items: start; }
+.activity-side { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+.activity-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.activity-stats > div { padding: 14px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.activity-stats .stat-icon { width: 30px; height: 30px; border-radius: 9px; margin-bottom: 8px; }
+.activity-stats strong { font-family: var(--font-display); font-size: 24px; line-height: 1.1; }
+.activity-stats span:not(.stat-icon) { font-size: 12.5px; color: var(--muted); }
+.feed-card { display: flex; flex-direction: column; min-height: 0; }
+.feed-scroll { min-height: 0; max-height: 60vh; overflow-y: auto; margin-right: -12px; padding-right: 12px; overscroll-behavior: contain; }
+/* Grand écran : la page tient dans la fenêtre ; le fil et la liste des invités défilent dans leur carte. */
+@media (min-width: 901px) {
+  .activity-page { max-width: 1240px; height: calc(100vh - 104px); min-height: 480px; display: flex; flex-direction: column; }
+  .activity-bento { flex: 1; min-height: 0; align-items: stretch; }
+  .feed-card { height: 100%; }
+  .feed-scroll { flex: 1; max-height: none; }
+  .people-card { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+}
+@media (min-width: 901px) and (max-width: 1280px) { .activity-page { height: calc(100vh - 92px); } }
 .people-card .participants { border-top: 0; padding-top: 0; }
 .people-card .mini-heading h3 { font-size: 17px; }
 .activity-feed { padding: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
@@ -318,7 +330,8 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .connection-progress { padding: 11px 12px; background: var(--lime-soft); border-radius: var(--radius-sm); color: var(--text-2); font-size: 13.5px; margin-top: 14px; }
 /* Taille du cache (Réglages → Stockage) */ .cache-size { margin-top: 10px; font-size: 13px; font-weight: 600; color: var(--text-2); }
 .cache-size-freed { margin-top: 8px; font-weight: 600; color: var(--text); }
-/* Version de l’app, en bas des réglages */ .app-version { margin: 4px 0 0; text-align: center; font-size: 12px; color: var(--faint); }
+/* Version de l’app, en bas des réglages et de l’accueil */ .app-version { margin: 4px 0 0; text-align: center; font-size: 12px; color: var(--faint); }
+.home-version { margin-top: 18px; }
 .field-help { font-size: 13px; color: var(--muted); line-height: 1.55; margin-top: 12px; }
 .advanced-connection { margin-top: 22px; padding-top: 16px; border-top: 1px solid var(--line); }
 .advanced-connection summary { cursor: pointer; color: var(--muted); font-size: 13.5px; }
@@ -575,7 +588,7 @@ input::placeholder { color: var(--faint); }
   .track-actions .icon-button { width: 34px; height: 34px; }
 
   .activity-stats { gap: 8px; }
-  .activity-columns { grid-template-columns: 1fr; }
+  .activity-bento { grid-template-columns: 1fr; }
   .home-hero { margin-top: 28px; }
   .home-hero .brand { font-size: 48px; }
   .home-choice { grid-template-columns: 1fr; }
@@ -694,6 +707,23 @@ a.button { text-decoration: none; }
 .app-shell.no-panel { grid-template-columns: 248px minmax(0, 1fr); }
 @media (max-width: 1280px) { .app-shell.no-panel { grid-template-columns: 228px minmax(0, 1fr); } }
 @media (max-width: 900px) { .app-shell.no-panel { grid-template-columns: 76px minmax(0, 1fr); } }
+/* Colonnes masquables (grand écran) : une poignée posée sur la bordure, visible au survol de la colonne ; une fois la colonne masquée, elle reste au bord de la fenêtre. */ .column-handle { display: none; }
+@media (min-width: 901px) {
+  .app-shell { --left-w: 248px; --right-w: 312px; }
+  .column-handle { display: inline-grid; position: fixed; top: 50%; transform: translateY(-50%); z-index: 25; width: 16px; height: 44px; border-radius: 99px; background: var(--bg-raised); border: 1px solid var(--line-strong); color: var(--muted); opacity: 0; transition: opacity .2s, color .15s; }
+  .icon-button.column-handle:hover { background: var(--bg-raised); }
+  .column-handle.left { left: calc(var(--left-w) - 8px); }
+  .column-handle.right { right: calc(var(--right-w) - 8px); }
+  .hide-left .column-handle.left { left: 6px; opacity: .55; }
+  .no-panel .column-handle.right { right: 6px; opacity: .55; }
+  .app-shell:has(.sidebar:hover) .column-handle.left, .app-shell:has(.right-panel:hover) .column-handle.right, .app-shell .column-handle:hover, .app-shell .column-handle:focus-visible { opacity: 1; color: var(--text); }
+  .app-shell.hide-left .sidebar { display: none; }
+  .app-shell.hide-left { grid-template-columns: minmax(0, 1fr) 312px; }
+  .app-shell.hide-left.no-panel { grid-template-columns: minmax(0, 1fr); }
+  .sidebar, .right-panel { animation: fade-in .25s ease; }
+}
+@media (min-width: 901px) and (max-width: 1280px) { .app-shell { --left-w: 228px; --right-w: 284px; } .app-shell.hide-left { grid-template-columns: minmax(0, 1fr) 284px; } }
+@media (min-width: 901px) and (max-width: 1100px) { .app-shell.hide-left { grid-template-columns: minmax(0, 1fr); } .column-handle.right { display: none; } }
 
 /* Widgets réactivables du panneau droit */ .party-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .party-stats > div { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
@@ -917,8 +947,7 @@ html { touch-action: manipulation; }
 /* Un titre sur une ou deux lignes ne change pas la hauteur du lecteur */ @media (min-width: 681px) { .now-info .swap-text { min-height: 98px; } }
 @media (prefers-reduced-motion: reduce) { .now-backdrop .fade-cover img, .app-backdrop .fade-cover img { animation: none; } }
 
-/* Fenêtre cachée : les grands fonds et les flous libèrent la carte graphique */ :root[data-window-hidden] .app-backdrop, :root[data-window-hidden] .now-backdrop { display: none; }
-:root[data-window-hidden] * { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* Fenêtre cachée : plus rien n’est dessiné, toutes les surfaces graphiques sont libérées (la page continue de tourner). */ :root[data-window-hidden] body > * { display: none !important; }
 
 /* Le texte du lecteur reste toujours au-dessus des fonds, pendant et après un changement de titre */ .now-info { position: relative; z-index: 1; }
 

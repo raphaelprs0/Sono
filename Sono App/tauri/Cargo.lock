@@ -3588,7 +3588,7 @@ dependencies = [
 
 [[package]]
 name = "sono"
-version = "2.7.9"
+version = "2.8.1"
 dependencies = [
  "axum",
  "base64 0.22.1",

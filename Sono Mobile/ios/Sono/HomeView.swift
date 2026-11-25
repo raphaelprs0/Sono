@@ -61,6 +61,7 @@ struct HomeView: View {
                 }
                 .buttonStyle(StillButtonStyle())
                 .frame(maxWidth: .infinity)
+                AppVersionLabel()
             }
             .padding(.horizontal, 20)
             .padding(.bottom, 40)

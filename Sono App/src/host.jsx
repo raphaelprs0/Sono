@@ -50,19 +50,22 @@ function ProviderIcon({ provider }) {
 }
 
 function ActivityView({ activity, participants, guests, queue, onRemove, onToggleAdmin }) {
-  return <section className="subpage">
+  // Bento : le fil (grande carte, défilement interne) à gauche ; les chiffres et les invités à droite. Tout tient dans la fenêtre.
+  return <section className="subpage activity-page">
     <div className="page-heading"><div><div className="eyebrow">SESSION</div><h1>{tx("Activité")}</h1></div></div>
-    <div className="activity-stats">
-      <div><span className="stat-icon"><UsersRound size={18} /></span><strong>{guests}</strong><span>{guests > 1 ? tx("invités connectés") : tx("invité connecté")}</span></div>
-      <div><span className="stat-icon peach"><Music2 size={18} /></span><strong>{queue.length}</strong><span>{tx("titres à venir")}</span></div>
-      <div><span className="stat-icon violet"><Activity size={18} /></span><strong>{activity.length}</strong><span>{tx("actions enregistrées")}</span></div>
-    </div>
-    <div className="activity-columns">
-    <div className="activity-feed">
-      <h2>{tx("Fil d’activité")}</h2>
-      {activity.length ? <ol>{activity.map((item, index) => <li className="activity-item" key={item.at || index}><ActivityIcon icon={item.icon} /><div><strong>{txServer(item.text)}</strong><small>{activityTime(item)}</small></div></li>)}</ol> : <p className="feed-empty">{tx("Aucune activité enregistrée.")}</p>}
-    </div>
-    <div className="activity-feed people-card"><ParticipantList participants={participants} onRemove={onRemove} onToggleAdmin={onToggleAdmin} /></div>
+    <div className="activity-bento">
+      <div className="activity-feed feed-card">
+        <h2>{tx("Fil d’activité")}</h2>
+        <div className="feed-scroll">{activity.length ? <ol>{activity.map((item, index) => <li className="activity-item" key={item.at || index}><ActivityIcon icon={item.icon} /><div><strong>{txServer(item.text)}</strong><small>{activityTime(item)}</small></div></li>)}</ol> : <p className="feed-empty">{tx("Aucune activité enregistrée.")}</p>}</div>
+      </div>
+      <div className="activity-side">
+        <div className="activity-stats">
+          <div><span className="stat-icon"><UsersRound size={16} /></span><strong>{guests}</strong><span>{guests > 1 ? tx("invités connectés") : tx("invité connecté")}</span></div>
+          <div><span className="stat-icon peach"><Music2 size={16} /></span><strong>{queue.length}</strong><span>{tx("titres à venir")}</span></div>
+          <div><span className="stat-icon violet"><Activity size={16} /></span><strong>{activity.length}</strong><span>{tx("actions enregistrées")}</span></div>
+        </div>
+        <div className="activity-feed people-card"><ParticipantList participants={participants} onRemove={onRemove} onToggleAdmin={onToggleAdmin} /></div>
+      </div>
     </div>
   </section>;
 }

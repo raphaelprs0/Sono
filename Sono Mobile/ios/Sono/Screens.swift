@@ -247,6 +247,15 @@ struct ConnectionsScreen: View {
 
 // MARK: Réglages : la session, puis l’apparence de ce téléphone
 
+/// Version de l’app (celle de l’IPA) et numéro de fabrication, en bas des réglages et de l’accueil.
+struct AppVersionLabel: View {
+    var body: some View {
+        Text("Sono \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
+            .font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
+            .frame(maxWidth: .infinity)
+    }
+}
+
 struct SettingsScreen: View {
     @EnvironmentObject private var store: Store
     @Binding var sheet: Sheet?
@@ -260,10 +269,7 @@ struct SettingsScreen: View {
                     Picker("Section", selection: $store.settingsSection) { Text("Session").tag(0); Text(L("Apparence")).tag(1) }.pickerStyle(.segmented)
                 }
                 if store.settingsSection == 0 { SessionSettings(sheet: $sheet) } else { AppearanceSettings() }
-                // Version de l’app (celle de l’App Store / de l’IPA) et numéro de fabrication.
-                Text("Sono \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "") (\(Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? ""))")
-                    .font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
-                    .frame(maxWidth: .infinity).padding(.top, 6)
+                AppVersionLabel().padding(.top, 6)
             }
             .padding(.horizontal, 20).padding(.bottom, 30)
         }
@@ -316,6 +322,7 @@ struct SessionSettings: View {
     @State private var sound: Sound?
     @State private var soundTask: Task<Void, Never>?
     @State private var confirmClear = false
+    @State private var askNotificationSettings = false
     /// Taille de ce que « Vider le cache » efface (dossier Caches et fichiers temporaires), calculée à l’affichage.
     @State private var cacheBytes: Int64?
 
@@ -351,13 +358,20 @@ struct SessionSettings: View {
                 .accentToggle()
             }
             SettingsCard(title: L("Notifications")) {
-                Toggle(isOn: Binding(get: { store.notificationsOn }, set: { store.setNotifications($0) })) {
+                // Refusées dans iOS : l’option reste coupée, et l’activer explique où les autoriser.
+                Toggle(isOn: Binding(get: { store.notificationsOn && store.notificationsAllowed }, set: { on in
+                    if on, !store.notificationsAllowed { askNotificationSettings = true } else { store.setNotifications(on) }
+                })) {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(L("Prévenir sur ce téléphone")).font(.system(size: 15, weight: .medium)).foregroundStyle(Color.sonoText)
                         Text(L("Quand quelqu’un rejoint, demande à rejoindre ou ajoute un titre, pendant que Sono est en arrière-plan.")).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
                     }
                 }
                 .accentToggle()
+                .alert(L("Notifications désactivées"), isPresented: $askNotificationSettings) {
+                    Button(L("Ouvrir les Réglages")) { store.openNotificationSettings() }
+                    Button(L("Annuler"), role: .cancel) {}
+                } message: { Text(L("Autorisez les notifications de Sono dans les Réglages de l’iPhone.")) }
             }
             if let sound { soundCard(sound) }
             SettingsCard(title: L("Lien d’invitation"), subtitle: L("Partagez ce lien avec les invités qui ne peuvent pas scanner le code QR.")) {

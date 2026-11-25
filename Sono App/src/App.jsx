@@ -1,7 +1,7 @@
 import React, { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore, lazy, Suspense } from 'react';
 import { tx, txServer, locale, lang, setLang } from './i18n.js';
 import {
-  Activity, ArrowRight, Check, ChevronRight, CircleAlert, Clock3, Copy, Disc3, Globe2, GripVertical, Link2, Maximize2, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, Settings, ShieldCheck, ShieldPlus, SkipBack, Smartphone, SkipForward, Trash2, Tv, UserMinus, UserPlus, UserRound, UsersRound, Wifi, X
+  Activity, ArrowRight, Check, ChevronLeft, ChevronRight, CircleAlert, Clock3, Copy, Disc3, Globe2, GripVertical, Link2, Maximize2, ListMusic, LoaderCircle, LogOut, Music2, Pause, Play, Plus, QrCode, Radio, Repeat, Search, Settings, ShieldCheck, ShieldPlus, SkipBack, Smartphone, SkipForward, Trash2, Tv, UserMinus, UserPlus, UserRound, UsersRound, Wifi, X
 } from 'lucide-react';
 import { createPortal, flushSync } from 'react-dom';
 import appleMusicLogo from './assets/apple-music.webp';
@@ -613,6 +613,10 @@ function App() {
   const [publicBusy, setPublicBusy] = useState(false);
   const [live, setLive] = useState(false);
   const [view, setView] = useState('queue');
+  // Menu de gauche masquable seulement sur la file ; pour changer de page il faut le rouvrir, donc rien n’est retenu.
+  const [sidebarHidden, setSidebarHidden] = useState(false);
+  const hideSidebar = sidebarHidden && view === 'queue';
+  useEffect(() => { if (view !== 'queue') setSidebarHidden(false); }, [view]);
   const [modal, setModal] = useState(null);
   const [toast, setToast] = useState(null);
   const [activity, setActivity] = useState([]);
@@ -732,44 +736,81 @@ function App() {
   useEffect(() => {
     if (hostState !== 'host' && hostState !== 'guest') return undefined;
     let closed = false;
-    let socket;
+    let socket = null;
     let reconnect;
-    let first = true;
+    let connecting = false;
+    let working = false;
+    let failures = 0;
+    let hiddenAt = 0;
+    // Au départ, l’état est demandé (sauf s’il vient d’arriver) ; ensuite, seulement après un échec.
+    let fetchState = isGuest || Date.now() - freshPayloadAt.current >= 2000;
     const connect = async () => {
-      // Les reconnexions redemandent toujours l’état ; la première s’en passe s’il vient d’arriver.
-      const fresh = first && !isGuest && Date.now() - freshPayloadAt.current < 2000;
-      first = false;
-      if (!fresh) try {
+      window.clearTimeout(reconnect);
+      if (closed || connecting || socket) return;
+      connecting = true;
+      if (fetchState) try {
         const data = isGuest
           ? await apiRequest(`/api/sessions/${session.code}`)
           : await apiRequest('/api/host/resume', { method: 'POST', headers: { 'x-host-token': readStorage(`sono-host-${session.code}`) }, body: JSON.stringify({ code: session.code }) });
         if (!closed) applyPayload(data);
       } catch (error) {
-        if (closed) return;
-        if (error.status === 404) { closed = true; sessionGone(); return; }
-        notify(error.message, 'error');
+        if (error.status === 404 && !closed) { closed = true; sessionGone(); }
+        else if (!closed) notify(error.message, 'error');
       }
+      connecting = false;
       // Un invité ne rejoint vraiment la session qu’après avoir donné son prénom.
       if (closed || !guestReady) return;
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      socket = new WebSocket(`${protocol}//${window.location.host}/ws?session=${session.code}`);
-      socketRef.current = socket;
-      socket.onopen = () => {
+      const own = new WebSocket(`${protocol}//${window.location.host}/ws?session=${session.code}`);
+      socket = own;
+      socketRef.current = own;
+      own.onopen = () => {
         setLive(true);
-        socket.send(JSON.stringify(helloRef.current));
+        own.send(JSON.stringify(helloRef.current));
       };
-      socket.onmessage = (event) => applyBroadcast(JSON.parse(event.data));
-      socket.onclose = (event) => {
+      own.onmessage = (event) => { working = true; failures = 0; applyBroadcast(JSON.parse(event.data)); };
+      own.onclose = (event) => {
+        if (socket !== own) return;
+        socket = null;
         setLive(false);
         if (event.code === 4001) { closed = true; notify(tx("L’hôte a désactivé l’accès à distance."), 'error'); return; }
         if (event.code === 4004) { closed = true; sessionGone(); return; }
-        if (!closed) reconnect = window.setTimeout(connect, 2500);
+        if (closed) return;
+        // Une connexion qui marchait est refaite tout de suite ; après un échec, on attend un peu plus à chaque fois.
+        fetchState = !working;
+        reconnect = window.setTimeout(connect, working ? 250 : Math.min(1000 * 2 ** failures++, 10000));
+        working = false;
       };
     };
+    // Retour sur la page ou sur le réseau : on n’attend pas la prochaine tentative. Après une longue veille
+    // ou un changement de réseau, la connexion a souvent été coupée sans prévenir : elle est refaite d’office.
+    const wake = (event) => {
+      if (document.hidden) { hiddenAt = Date.now(); return; }
+      const stale = event.type === 'online' || event.persisted || (hiddenAt && Date.now() - hiddenAt > 15000);
+      hiddenAt = 0;
+      if (socket && !stale) return;
+      if (socket) { const old = socket; socket = null; old.close(); setLive(false); }
+      fetchState = false;
+      connect();
+    };
+    document.addEventListener('visibilitychange', wake);
+    window.addEventListener('online', wake);
+    window.addEventListener('pageshow', wake);
     connect();
-    fetch('/api/config').then((response) => response.json()).then((config) => { setNetworkUrl(config.networkUrl || ''); setPublicUrl(config.publicUrl || ''); setLinkBase(config.linkBase || ''); }).catch(() => {});
-    return () => { closed = true; window.clearTimeout(reconnect); socket?.close(); };
+    return () => {
+      closed = true;
+      window.clearTimeout(reconnect);
+      document.removeEventListener('visibilitychange', wake);
+      window.removeEventListener('online', wake);
+      window.removeEventListener('pageshow', wake);
+      socket?.close();
+    };
   }, [session.code, isGuest, hostState, guestReady, applyPayload, notify, sessionGone]);
+  // Adresses d’invitation (Wi-Fi, lien public, lien court) : lues une fois par session ouverte.
+  const inSession = hostState === 'host' || hostState === 'guest';
+  useEffect(() => {
+    if (inSession) fetch('/api/config').then((response) => response.json()).then((config) => { setNetworkUrl(config.networkUrl || ''); setPublicUrl(config.publicUrl || ''); setLinkBase(config.linkBase || ''); }).catch(() => {});
+  }, [inSession]);
 
   // Détecte la fin du titre en cours sur l’app de lecture pour enchaîner automatiquement.
   const currentId = current?.id;
@@ -1435,8 +1476,9 @@ function App() {
     return <><AppBackdrop appearance={look} cover={current?.cover} /><GuestView admin={adminInfo} control={adminControl ? { canPrevious: Boolean(previous), canNext: Boolean(nextUp), onToggle: () => playback(current ? 'toggle' : 'next'), onNext: () => playback('next'), onPrevious: () => playback('previous'), requests: session.requests || [], onDecide: decideRequest, onRemoveTrack: removeTrack, onReorder: reorderTrack, onSkipFallback: skipFallbackTrack, onMoveFallback: moveFallbackTrack, headers: hostHeaders } : null} session={session} queue={queue} fallbackQueue={fallbackQueue} current={current} playing={playing} live={live} addTrack={addTrack} name={myName} onLeave={leaveAsGuest} toast={toast} closeToast={closeToast} /></>;
   }
 
-  const showPanel = view === 'queue' && PANEL_WIDGETS.some((id) => widgets[id]);
-  return <div className={showPanel ? 'app-shell' : 'app-shell no-panel'}>
+  const panelAvailable = view === 'queue' && PANEL_WIDGETS.some((id) => widgets[id]);
+  const showPanel = panelAvailable && !appearance.hidePanel;
+  return <div className={`app-shell${showPanel ? '' : ' no-panel'}${hideSidebar ? ' hide-left' : ''}`}>
     <AppBackdrop appearance={look} cover={current?.cover} />
     <aside className="sidebar">
       <Brand />
@@ -1451,6 +1493,9 @@ function App() {
     </aside>
 
     <main className="main-content">
+      {/* Poignées sur les bordures des colonnes (grands écrans, page File), visibles au survol : elles masquent ou rouvrent la colonne. Le panneau de droite garde son réglage avec l’apparence. */}
+      {view === 'queue' && <IconButton label={hideSidebar ? tx("Afficher le menu") : tx("Masquer le menu")} className="column-handle left" onClick={() => setSidebarHidden(!hideSidebar)}>{hideSidebar ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}</IconButton>}
+      {panelAvailable && <IconButton label={showPanel ? tx("Masquer le panneau") : tx("Afficher le panneau")} className="column-handle right" onClick={() => updateAppearance({ hidePanel: showPanel })}>{showPanel ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}</IconButton>}
       <header className="mobile-header"><Brand /><IconButton label={tx("Afficher le code QR")} className="mobile-qr" onClick={() => setModal('qr')}><QrCode size={20} /></IconButton></header>
       {(session.requests || []).length > 0 && <JoinRequests requests={session.requests} onDecide={decideRequest} />}
       {joinNotices.length > 0 && <JoinNotices notices={joinNotices} onDismiss={dismissJoinNotice} onRemove={(person) => { dismissJoinNotice(person.id); setModal({ type: 'kick', person }); }} />}
@@ -2135,6 +2180,7 @@ function HomeView({ initialTab, onCreate, guestName, onConfirmName, toast, close
         </button>
       </div>
       <div className="home-panel">{tab === 'create' ? <CreateForm onCreate={onCreate} defaultHost={guestName} /> : <JoinForm guestName={guestName} onConfirmName={onConfirmName} />}</div>
+      <p className="app-version home-version">Sono {__SONO_VERSION__}</p>
     </main>
     {toast && <Toast toast={toast} onClose={closeToast} />}
   </div>;

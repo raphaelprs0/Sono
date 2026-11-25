@@ -18,8 +18,8 @@ final class Driver {
     private var code: String?
     private var token: String?
     private var socket: URLSessionWebSocketTask?
-    /// Délai avant de rouvrir la connexion : il double à chaque échec (2,5 s à 30 s), remis à zéro dès qu’un message arrive.
-    private var reconnectDelay = 2.5
+    /// Délai avant de rouvrir la connexion : il double à chaque échec (1 s à 30 s), remis à zéro dès qu’un message arrive.
+    private var reconnectDelay = 1.0
     private var current: Track?
     private var nextProviderId: String?
     private var playing = false
@@ -140,12 +140,19 @@ final class Driver {
         self.token = token
         socket?.cancel(with: .goingAway, reason: nil)
         socket = nil
-        reconnectDelay = 2.5
+        reconnectDelay = 1
         current = nil
         playing = false
         if code == nil { ping?.invalidate(); ping = nil }
         if code != nil { openSocket(); startTicking(); Task { await applySound() } }
         else { Task { await reconcile() } }
+    }
+
+    /// Retour dans l’app : une connexion coupée est rouverte tout de suite, sans attendre la prochaine tentative.
+    func wake() {
+        guard code != nil, socket == nil else { return }
+        reconnectDelay = 1
+        openSocket()
     }
 
     private func openSocket() {
@@ -171,7 +178,7 @@ final class Driver {
                 switch result {
                 case .success(.string(let text)):
                     self.onLive?(true)
-                    self.reconnectDelay = 2.5
+                    self.reconnectDelay = 1
                     if let json = (try? JSONSerialization.jsonObject(with: Data(text.utf8))) as? [String: Any] { self.apply(json); self.onPayload?(json) }
                     self.receive(on: task)
                 case .success: self.receive(on: task)

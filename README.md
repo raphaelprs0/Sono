@@ -39,7 +39,7 @@ anything to join in.
 | | Desktop app | iPhone app |
 |---|---|---|
 | Devices | Mac (Apple Silicon, macOS 12+), Windows 10/11 64-bit | iPhone, iOS 17 or later |
-| Version | 2.7.9 | 2.7.9 (build 34) |
+| Version | 2.8.1 | 2.8.1 (build 36) |
 | Interface | Preact (web) in a **Tauri 2** window | Native **SwiftUI** |
 | Guest server | **Rust** (axum, tokio), built into the app | **Cloudflare Workers** + Durable Objects |
 | Deezer playback | **Go** engine (OpenDeezer) running next to the app | The same **Go** engine, compiled into the app |
@@ -134,12 +134,13 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
   iTunes Store from its artist and title, background music included. Imported tracks (your own files uploaded to Deezer,
   songs from your Apple Music library) keep their cover as it is.
 - **Clear the cache**: shows the cache size, then closes the current session and the app to start from scratch (after confirmation). Accounts and the « Internet » link connector are kept.
-- **App version**: shown at the bottom of the settings (computer and iPhone).
+- **App version**: shown at the bottom of the settings and of the home screen (computer and iPhone).
 - **No surprise restarts**: relaunching the app doesn’t restart the music on its own; disconnecting the music app resets
   the session (current track, queue, history, background music).
 
 ### 💻 Extra on the desktop app
 
+- **Hideable columns**: on the Queue page, a discreet handle on the edge of each column, shown on hover, hides or reopens the left menu and the right panel.
 - **Wi-Fi**: guests on the same network open the local address shown (with a short link without a port number when possible).
 
 - **« Internet »**: a public link (Cloudflare tunnel, `trycloudflare.com`) for guests on 4G/5G. The `cloudflared` tool
@@ -161,7 +162,7 @@ adjust the sound. The aim: an app that is **simple for guests** (nothing to inst
 - **TV mirroring** (AirPlay or cable): the TV shows TV mode full size while the iPhone stays usable.
 - **Join with a QR code**: Sono’s camera reads a session’s QR code; the session opens inside the app.
 - **Background music**: playback continues with the screen off.
-- **Notifications**: while Sono is in the background (during playback), an iOS notification tells you when someone joins, asks to join or adds a track; a long press on a request accepts or declines it, and a red badge on the icon counts what is new. They can be turned off in Settings → Session.
+- **Notifications**: while Sono is in the background (during playback), an iOS notification tells you when someone joins, asks to join or adds a track; a long press on a request accepts or declines it, and a red badge on the icon counts what is new. They can be turned off in Settings → Session; when they are denied in iOS, the option stays off and offers to open the iPhone Settings.
 
 ---
 
@@ -473,7 +474,7 @@ The script:
 The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
 `error:` lines.
 
-The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.7.9**). It has **no signature** and contains no
+The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.8.1**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
 
 <details>
@@ -488,7 +489,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. The IPA: the zipped Payload/ folder
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.9-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.8.1-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

@@ -197,21 +197,19 @@ const persist = (session) => {
 // Plusieurs changements rapprochés ne font qu’une diffusion, et personne ne reçoit un message identique au précédent.
 const pendingBroadcasts = new Set();
 let broadcastTimer = null;
-const sendPayload = (client, session, shared = null) => {
-  const message = JSON.stringify(payload(session, client.sono, shared));
-  if (client.sono.lastSent === message) return;
-  client.sono.lastSent = message;
-  client.send(message);
-};
 const broadcast = (session) => {
   pendingBroadcasts.add(session);
   broadcastTimer ??= setTimeout(() => {
     broadcastTimer = null;
     for (const pending of pendingBroadcasts) {
-      const open = [...(clients.get(pending.code) || [])].filter((client) => client.readyState === WebSocket.OPEN);
+      // L’état part après le « hello » : avant, le serveur ne sait pas encore qui est au bout de la connexion.
+      const open = [...(clients.get(pending.code) || [])].filter((client) => client.sono.greeted && client.readyState === WebSocket.OPEN);
       if (!open.length) continue;
       const shared = sharedOf(pending);
-      for (const client of open) sendPayload(client, pending, shared);
+      for (const client of open) {
+        const message = JSON.stringify(payload(pending, client.sono, shared));
+        if (client.sono.lastSent !== message) { client.sono.lastSent = message; client.send(message); }
+      }
     }
     // Après l’envoi : les pochettes manquantes sont cherchées sans retarder personne.
     for (const pending of pendingBroadcasts) fillCovers(pending);
@@ -855,8 +853,6 @@ const onConnection = (socket, code) => {
   clients.get(code).add(socket);
   const session = sessions.get(code);
   socket.sono = { clientId: crypto.randomUUID(), name: '', role: 'guest', since: new Date().toISOString(), greeted: false };
-  sendPayload(socket, session);
-  broadcast(session);
   socket.on('message', async (raw) => {
     let message;
     try { message = JSON.parse(String(raw)); } catch { return; }
@@ -905,8 +901,8 @@ const onConnection = (socket, code) => {
   });
   socket.on('close', () => {
     clients.get(code)?.delete(socket);
-    broadcast(session);
-    const { role } = socket.sono;
+    const { role, greeted } = socket.sono;
+    if (greeted) broadcast(session);
     if (role === 'host') setTimeout(() => { if (sessions.get(code) === session) reviewHostAbsence(session); }, HOST_LEAVE_GRACE_MS);
   });
 };

@@ -125,6 +125,8 @@ fn clear_webview_cache(app: &AppHandle) -> u64 {
 fn show_main(app: &AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.unminimize();
+        // La page vidée avant de cacher la fenêtre se redessine tout de suite.
+        let _ = window.eval("document.documentElement.removeAttribute('data-window-hidden')");
         let _ = window.show();
         let _ = window.set_focus();
     }
@@ -222,7 +224,14 @@ fn main() {
             if window.label() != "main" { return; }
             if let WindowEvent::CloseRequested { api, .. } = event {
                 // Mac : la croix rouge cache la fenêtre, Sono continue (musique, invités) ; Cmd+Q le quitte vraiment.
-                if cfg!(target_os = "macos") && !QUITTING.load(Ordering::SeqCst) { api.prevent_close(); let _ = window.hide(); }
+                // La page est d’abord vidée : sa dernière image (plus de 100 Mo de surfaces) n’est pas gardée par la fenêtre cachée.
+                if cfg!(target_os = "macos") && !QUITTING.load(Ordering::SeqCst) {
+                    api.prevent_close();
+                    if let Some(page) = window.app_handle().get_webview_window("main") {
+                        let _ = page.eval("document.documentElement.setAttribute('data-window-hidden', '')");
+                        std::thread::spawn(move || { std::thread::sleep(std::time::Duration::from_millis(120)); let _ = page.hide(); });
+                    }
+                }
                 // Windows : fermer la fenêtre quitte Sono (le serveur des invités vit avec l’app).
                 else { window.app_handle().exit(0); }
             }

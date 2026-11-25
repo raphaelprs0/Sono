@@ -36,7 +36,7 @@ avec leur téléphone et proposent leurs titres : tout le monde voit la file, la
 | | App ordinateur | App iPhone |
 |---|---|---|
 | Appareils | Mac (Apple Silicon, macOS 12+), Windows 10/11 64 bits | iPhone, iOS 17 ou plus récent |
-| Version | 2.7.9 | 2.7.9 (build 34) |
+| Version | 2.8.1 | 2.8.1 (build 36) |
 | Interface | Preact (web) dans une fenêtre **Tauri 2** | **SwiftUI** natif |
 | Serveur des invités | **Rust** (axum, tokio), intégré à l’app | **Cloudflare Workers** + Durable Objects |
 | Lecture Deezer | Moteur **Go** (OpenDeezer) lancé à côté de l’app | Le même moteur **Go**, compilé dans l’app |
@@ -116,11 +116,12 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **Mode TV** : un écran plein format pour la TV, avec la pochette, le titre, la barre de lecture, le titre suivant et le QR code (leur disposition se règle sur l’app ordinateur). Il s’ouvre en s’agrandissant depuis le lecteur et se referme en revenant s’y poser, avec la même animation à l’envers. Échap quitte le mode TV sans faire sortir la fenêtre du plein écran. Les boutons de lecture sont centrés sous la barre, assez grands pour être vus de loin, et le fond « pochette en cours » garde des couleurs bien visibles, que la pochette soit sombre, pâle ou très claire.
 - **Pochettes retrouvées** : un titre sans pochette (ou avec l’image vide de Deezer) en reçoit une, cherchée sur Deezer puis sur l’iTunes Store à partir de l’artiste et du titre, y compris dans la musique de fond. Les titres importés (vos propres fichiers envoyés sur Deezer, les morceaux de votre bibliothèque Apple Music) gardent leur pochette telle quelle.
 - **Vider le cache** : affiche la taille du cache, puis ferme la session en cours et l’app pour repartir de zéro (après confirmation). Les comptes et le connecteur du lien « Internet » sont gardés.
-- **Version de l’app** : affichée en bas des Réglages (ordinateur et iPhone).
+- **Version de l’app** : affichée en bas des Réglages et de l’accueil (ordinateur et iPhone).
 - **Reprise sans surprise** : relancer l’app ne relance pas la musique toute seule ; déconnecter l’app de musique remet la session à zéro (titre en cours, file, historique, musique de fond).
 
 ### 💻 En plus sur l’app ordinateur
 
+- **Colonnes masquables** : sur la page File, une poignée discrète sur la bordure de chaque colonne, visible au survol, masque ou rouvre le menu de gauche et le panneau de droite.
 - **Wi-Fi** : les invités du même réseau ouvrent l’adresse locale affichée (avec un lien court sans numéro de port quand c’est possible).
 
 - **« Internet »** : un lien public (tunnel Cloudflare `trycloudflare.com`) pour les invités en 4G/5G. L’outil `cloudflared` n’est pas livré avec l’app : il est téléchargé une seule fois depuis Cloudflare à la première activation (≈ 20 Mo sur Mac, 55 Mo sur Windows) et vérifié avant usage. Le lien est préparé dès que le tableau de bord de l’hôte est ouvert (porte fermée aux invités) : le passage Wi-Fi → Internet est instantané.
@@ -139,7 +140,7 @@ et règle le son. L’objectif : une app **simple pour les invités** (rien à i
 - **TV en recopie** (AirPlay ou câble) : la TV affiche le mode TV en grand pendant que l’iPhone reste utilisable.
 - **Rejoindre avec un QR code** : l’appareil photo de Sono lit le QR code d’une session ; elle s’ouvre dans l’app.
 - **Musique en arrière-plan** : la lecture continue écran éteint.
-- **Notifications** : quand Sono est en arrière-plan (pendant la musique), une notification iOS prévient quand quelqu’un rejoint, demande à rejoindre ou ajoute un titre ; un appui long sur une demande permet de l’accepter ou de la refuser, et une pastille rouge sur l’icône compte les nouveautés. Désactivables dans Réglages → Session.
+- **Notifications** : quand Sono est en arrière-plan (pendant la musique), une notification iOS prévient quand quelqu’un rejoint, demande à rejoindre ou ajoute un titre ; un appui long sur une demande permet de l’accepter ou de la refuser, et une pastille rouge sur l’icône compte les nouveautés. Désactivables dans Réglages → Session ; refusées dans iOS, l’option reste coupée et propose d’ouvrir les Réglages de l’iPhone.
 
 ---
 
@@ -446,7 +447,7 @@ Le script :
 La première fois prend quelques minutes, les suivantes sont plus rapides. En cas d’erreur, le script affiche seulement
 les lignes `error:` de la compilation.
 
-La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.7.9**). Elle n’a **aucune
+La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.8.1**). Elle n’a **aucune
 signature** et ne contient aucune information personnelle : elle doit être signée avec votre propre compte Apple
 pour s’installer.
 
@@ -462,7 +463,7 @@ xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
 # 2. L’IPA : le dossier Payload/ compressé
 mkdir -p build/ipa/Payload
 cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.7.9-iPhone-a-signer.ipa Payload)
+(cd build/ipa && zip -qry ../Sono-2.8.1-iPhone-a-signer.ipa Payload)
 ```
 
 </details>

@@ -1,7 +1,7 @@
 // Connexions en temps réel (/ws?session=CODE) : arrivées, prénom, validation, départ, absence de l’hôte.
 use super::deezer;
 use super::logic::*;
-use super::state::{send_one, Client, Meta, Shared};
+use super::state::{Client, Meta, Shared};
 use axum::extract::ws::{Message, Utf8Bytes, WebSocket, WebSocketUpgrade};
 use axum::extract::{Query, State};
 use axum::http::{HeaderMap, StatusCode};
@@ -30,10 +30,9 @@ async fn connection(app: Shared, socket: WebSocket, code: String, tunnel: bool) 
     {
         let mut s = app.lock();
         let meta = Meta { client_id: uuid::Uuid::new_v4().to_string(), name: String::new(), host: false, since: now_iso(), greeted: false, via_tunnel: tunnel, last_sent: Utf8Bytes::from_static("") };
+        // L’état part après le « hello » : avant, on ne sait pas encore qui est au bout de la connexion.
         s.clients.entry(code.clone()).or_default().push(Client { id, tx, meta });
-        send_one(&mut s, &code, id);
     }
-    app.broadcast(&code);
     let writer = tokio::spawn(async move {
         while let Some(message) = rx.recv().await {
             let closing = matches!(message, Message::Close(_));
@@ -148,7 +147,7 @@ fn closed(app: &Shared, code: &str, id: u64) {
         let Some(position) = list.iter().position(|c| c.id == id) else { return };
         list.remove(position).meta
     };
-    app.broadcast(code);
+    if meta.greeted { app.broadcast(code); }
     let grace = app.host_grace;
     if meta.host {
         let app = app.clone();

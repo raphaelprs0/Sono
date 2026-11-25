@@ -134,8 +134,6 @@ export default {
 "En bas à gauche":"Bottom left",
 "En bas":"Bottom",
 "En bas à droite":"Bottom right",
-"Taille de la pochette":"Cover size",
-"Taille du QR code":"QR code size",
 "En attente":"Waiting",
 "En lecture":"Playing",
 "En pause":"Paused",

@@ -110,6 +110,8 @@ final class Store: ObservableObject {
     private var badge = 0
     /// Notifications iOS (arrivées, demandes, titres ajoutés), activées par défaut et désactivables dans les réglages.
     @Published var notificationsOn = UserDefaults.standard.object(forKey: "sono-notifications") as? Bool ?? true
+    /// Faux quand les notifications de Sono sont refusées dans iOS (relu au retour dans l’app).
+    @Published var notificationsAllowed = true
     private var toastTask: Task<Void, Never>?
     private var pollTask: Task<Void, Never>?
     private var syncTask: Task<Void, Never>?
@@ -214,9 +216,9 @@ final class Store: ObservableObject {
         phase = .host
         // Première session hébergée : iOS demande une fois s’il peut afficher les notifications.
         if notificationsOn { UNUserNotificationCenter.current().getNotificationSettings { settings in
-            guard settings.authorizationStatus == .notDetermined else { return }
-            UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
-        } }
+            guard settings.authorizationStatus == .notDetermined else { Task { @MainActor [weak self] in self?.checkNotifications() }; return }
+            Task { @MainActor [weak self] in self?.requestNotificationPermission() }
+        } } else { checkNotifications() }
         driver.follow(code: session.code, token: token)
         updateCarInvite()
         startPolling()
@@ -334,9 +336,23 @@ final class Store: ObservableObject {
 
     private func requestNotificationPermission() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { [weak self] granted, _ in
-            guard !granted else { return }
-            Task { @MainActor in self?.notify(L("Autorisez les notifications de Sono dans les Réglages de l’iPhone."), error: true) }
+            Task { @MainActor in self?.notificationsAllowed = granted }
         }
+    }
+
+    /// Relit l’autorisation d’iOS (elle a pu changer dans les Réglages).
+    func checkNotifications() {
+        UNUserNotificationCenter.current().getNotificationSettings { [weak self] settings in
+            let allowed = settings.authorizationStatus != .denied
+            Task { @MainActor in if self?.notificationsAllowed != allowed { self?.notificationsAllowed = allowed } }
+        }
+    }
+
+    /// Ouvre les réglages de notifications de Sono ; l’option sera active une fois qu’elles y seront autorisées.
+    func openNotificationSettings() {
+        notificationsOn = true
+        defaults.set(true, forKey: "sono-notifications")
+        if let url = URL(string: UIApplication.openNotificationSettingsURLString) { UIApplication.shared.open(url) }
     }
 
     // MARK: Messages
@@ -511,7 +527,7 @@ final class Store: ObservableObject {
     func setForeground(_ active: Bool) {
         if active, badge > 0 { badge = 0; UNUserNotificationCenter.current().setBadgeCount(0) }
         if !active { pollTask?.cancel(); pollTask = nil }
-        else if phase == .host, pollTask == nil { startPolling() }
+        else if phase == .host { driver.wake(); checkNotifications(); if pollTask == nil { startPolling() } }
     }
 
     /// Les apps connectées sur ce téléphone : une seule devient l’app de lecture.
