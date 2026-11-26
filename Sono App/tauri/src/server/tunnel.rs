@@ -1,5 +1,6 @@
 // Lien public (« Internet ») : tunnel cloudflared préparé en arrière-plan puis gardé ouvert.
 // Activer ou désactiver l’accès à distance ne fait qu’ouvrir ou fermer la porte, sans relancer Cloudflare.
+use super::links;
 use super::state::Shared;
 use axum::extract::ws::{CloseFrame, Message};
 use std::process::Stdio;
@@ -161,6 +162,9 @@ pub async fn start(app: &Shared) -> Result<String, String> {
         tokio::time::sleep(Duration::from_millis(500)).await;
     }
     app.lock().public_tunnel_url = url.clone();
+    // Liens courts publiés dès que le tunnel est prêt, en arrière-plan : le passage à « Internet » n’attend plus le service en ligne.
+    let publisher = app.clone();
+    tokio::spawn(async move { links::publish_all(&publisher).await; });
     // Le connecteur s’arrête plus tard (réseau coupé…) : le lien disparaît avec lui.
     let watcher = app.clone();
     let mine = url.clone();

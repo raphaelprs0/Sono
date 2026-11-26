@@ -49,6 +49,8 @@ pub struct State {
     pub host_prefs: Value,
     pub public_link_enabled: bool,
     pub public_tunnel_url: String,
+    /// Adresse du tunnel vers laquelle les liens courts sont déjà publiés (rien à republier au passage à « Internet »).
+    pub links_url: String,
 }
 
 /// Vide le cache du navigateur de la fenêtre Sono (fourni par l’app de bureau) ; renvoie les octets libérés.

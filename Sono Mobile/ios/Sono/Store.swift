@@ -524,8 +524,13 @@ final class Store: ObservableObject {
     }
 
     /// App en arrière-plan : plus de relevé (la position se déduit de l’heure), il reprend au retour.
+    /// App ouverte (lancement ou retour) : la pastille rouge de l’icône disparaît, même après un redémarrage de l’app.
+    func clearBadge() {
+        badge = 0
+        UNUserNotificationCenter.current().setBadgeCount(0)
+    }
+
     func setForeground(_ active: Bool) {
-        if active, badge > 0 { badge = 0; UNUserNotificationCenter.current().setBadgeCount(0) }
         if !active { pollTask?.cancel(); pollTask = nil }
         else if phase == .host { driver.wake(); checkNotifications(); if pollTask == nil { startPolling() } }
     }

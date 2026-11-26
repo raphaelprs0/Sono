@@ -319,8 +319,7 @@ ul, ol { list-style: none; margin: 0; padding: 0; }
 .integration-card h2 { font-size: 17px; }
 .status-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--muted); margin-top: 2px; }
 .status-label i { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); }
-.status-label.connected-label { color: var(--lime-text); }
-.status-label.connected-label i { background: var(--lime); }
+/* Connecté : même point vert que l’app iPhone, texte discret. */ .status-label.connected-label i { background: #7ee08a; }
 .integration-card > p { font-size: 14px; color: var(--muted); margin-top: 14px; line-height: 1.55; }
 .integration-form { border-top: 1px solid var(--line); margin-top: 18px; padding-top: 4px; max-width: 620px; }
 .form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }

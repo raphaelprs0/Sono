@@ -79,6 +79,7 @@ struct RootView: View {
         // Retour dans l’app : l’état de la session est relu (la connexion a pu être coupée en arrière-plan).
         // (Événements UIKit : avec le cycle de vie par scènes, le scenePhase de SwiftUI ne change pas.)
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didEnterBackgroundNotification)) { _ in store.setForeground(false) }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in store.clearBadge() }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
             if store.phase == .host { store.setForeground(true); Task { await store.refresh() } }
         }

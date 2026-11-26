@@ -30,10 +30,11 @@ pub fn ensure(session: &mut Value) {
 pub async fn publish_all(app: &Shared) {
     app.links_ready.store(false, Ordering::SeqCst);
     if SERVICE.is_empty() { return; }
-    let codes: Vec<String> = app.lock().sessions.keys().cloned().collect();
+    let (codes, url): (Vec<String>, String) = { let s = app.lock(); (s.sessions.keys().cloned().collect(), s.public_tunnel_url.clone()) };
     let mut all = true;
     for code in codes { all &= publish(app, &code).await; }
     app.links_ready.store(all, Ordering::SeqCst);
+    if all { app.lock().links_url = url; }
     app.broadcast_all();
 }
 

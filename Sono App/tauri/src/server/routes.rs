@@ -155,7 +155,9 @@ pub async fn public_enable(r: Req) -> Response {
         Ok(url) => {
             { let mut s = r.app.lock(); s.public_link_enabled = true; s.host_prefs["publicUsed"] = json!(true); }
             r.app.persist();
-            links::publish_all(&r.app).await;
+            // Déjà publiés pour ce tunnel pendant sa préparation : rien à attendre.
+            let published = r.app.links_ready.load(std::sync::atomic::Ordering::SeqCst) && r.app.lock().links_url == url;
+            if !published { links::publish_all(&r.app).await; }
             let link_base = r.app.links_ready.load(std::sync::atomic::Ordering::SeqCst);
             ok(json!({ "publicUrl": url, "linkBase": if link_base { json!(links::SERVICE) } else { Value::Null } }))
         }

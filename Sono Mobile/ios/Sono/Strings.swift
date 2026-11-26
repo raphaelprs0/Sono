@@ -214,7 +214,6 @@ private let english: [String: String] = [
     "Scannez ce code avec l’appareil photo de votre téléphone.": "Scan this code with your phone’s camera.",
     "Scannez pour proposer un titre": "Scan to suggest a track",
     "Se connecter avec {0}": "Sign in with {0}",
-    "Session · Activité": "Session · Activity",
     "Son": "Sound",
     "Sources musicales": "Music sources",
     "Stockage": "Storage",

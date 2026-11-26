@@ -97,7 +97,7 @@ struct ActivityScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 ScreenHeader(sheet: $sheet).padding(.top, 14)
-                Eyebrow(text: L("Session · Activité"))
+                Eyebrow(text: L("Activité"))
                 HStack(spacing: 10) {
                     stat("person.2.fill", value: store.session.guests ?? 0, label: (store.session.guests ?? 0) > 1 ? L("invités connectés") : L("invité connecté"), color: store.appearance.accentColor)
                     stat("music.note", value: store.queue.count, label: L("titres à venir"), color: Color(hex: "#ffb38a"))
@@ -107,23 +107,35 @@ struct ActivityScreen: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(L("Fil d’activité")).font(.system(size: 18, weight: .bold)).foregroundStyle(Color.sonoText)
                     if store.activity.isEmpty { Text(L("Aucune activité enregistrée.")).font(.system(size: 14)).foregroundStyle(Color.sonoMuted) }
-                    ForEach(Array(store.activity.enumerated()), id: \.offset) { _, item in
-                        HStack(alignment: .top, spacing: 12) {
-                            Image(systemName: item.icon == "plus" ? "plus" : item.icon == "user" ? "person.fill" : "music.note")
-                                .font(.system(size: 12, weight: .bold)).foregroundStyle(store.appearance.accentText)
-                                .frame(width: 32, height: 32).background(Circle().fill(store.appearance.accentColor.opacity(0.14)))
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(LServer(item.text)).font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoText)
-                                Text(activityTime(item.at)).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
-                            }
-                        }
+                    // Le fil défile dans sa carte (hauteur plafonnée) au lieu d’allonger la page ; court, il garde sa taille.
+                    ViewThatFits(in: .vertical) {
+                        feedRows
+                        ScrollView { feedRows }.scrollIndicators(.visible)
                     }
+                    .frame(maxHeight: 440)
                 }
                 .padding(16).frame(maxWidth: .infinity, alignment: .leading).sonoCard()
             }
             .padding(.horizontal, 20).padding(.bottom, 30)
         }
         .refreshable { await store.refresh() }
+    }
+
+    private var feedRows: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            ForEach(Array(store.activity.enumerated()), id: \.offset) { _, item in
+                HStack(alignment: .top, spacing: 12) {
+                    Image(systemName: item.icon == "plus" ? "plus" : item.icon == "user" ? "person.fill" : "music.note")
+                        .font(.system(size: 12, weight: .bold)).foregroundStyle(store.appearance.accentText)
+                        .frame(width: 32, height: 32).background(Circle().fill(store.appearance.accentColor.opacity(0.14)))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(LServer(item.text)).font(.system(size: 14, weight: .medium)).foregroundStyle(Color.sonoText)
+                        Text(activityTime(item.at)).font(.system(size: 12)).foregroundStyle(Color.sonoMuted)
+                    }
+                    Spacer(minLength: 0)
+                }
+            }
+        }
     }
 
     private func stat(_ symbol: String, value: Int, label: String, color: Color) -> some View {
