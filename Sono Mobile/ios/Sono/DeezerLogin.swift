@@ -105,7 +105,7 @@ enum AccountStore {
            !FileManager.default.fileExists(atPath: file.path) {
             write(old)
         }
-        // Tout ce que l’app a pu laisser dans le trousseau est effacé.
-        SecItemDelete([kSecClass as String: kSecClassGenericPassword] as CFDictionary)
+        // Les éléments que Sono a laissés dans le trousseau (son service) sont effacés.
+        SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: "app.sono.mobile"] as CFDictionary)
     }
 }
