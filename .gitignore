@@ -19,13 +19,6 @@ dist/
 
 # OS / editor
 .DS_Store
-.qodo/
-
-# Données locales de Sono en développement (sessions, journaux)
-Sono App/data/
-
-# Installateurs sauvegardés
-Sauvegarde */
 
 # Compilation Rust (Tauri)
 Sono App/tauri/target/
@@ -34,13 +27,10 @@ Sono App/tauri/target/
 Sono App/tauri/gen/
 Sono App/tauri/icon/Assets.car
 Sono App/packaging/bin/
-Sono Mobile/ios/build/
+Sono Mobile/build/
 xcuserdata/
 Sono App/server/bin/sono-deezer-bridge*
 Sono App/server/bin/win32-x64/
 
 # Réglages personnels de l’app iPhone (équipe Apple)
 Sono Mobile/ios/Local.xcconfig
-
-# Archive du code à distribuer
-Sono-*-source.zip

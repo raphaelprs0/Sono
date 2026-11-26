@@ -359,9 +359,7 @@ Sono/
     ├── engine/                     Go Deezer engine for iPhone (build/: libraries already compiled)
     ├── cloud/                      Cloudflare online service (worker.js, wrangler.jsonc)
     ├── web/                        guest pages, join page and TV screen (Preact)
-    ├── deploy.sh                   deploys the service and saves its address for the app
-    ├── install-iphone.sh           builds and installs the app on the connected iPhone
-    └── fabriquer-ipa.sh            builds the unsigned IPA
+    └── deploy.sh                   deploys the service and saves its address for the app
 ```
 
 ---
@@ -453,46 +451,28 @@ sh packaging/fabriquer-tauri.sh
 
 #### 📱 IPA (iPhone app)
 
-The IPA is built with **a single command**. You only need **Xcode** (with the iOS platform installed: Xcode → Settings
-→ Components); the iPhone Deezer engine is already compiled in `Sono Mobile/engine/build/`.
+The IPA is built with **Xcode** (with the iOS platform installed: Xcode → Settings → Components); the iPhone Deezer
+engine is already compiled in `Sono Mobile/engine/build/`. From the `Sono Mobile` folder:
 
 ```bash
 cd "Sono Mobile"
 ```
 
 ```bash
-./fabriquer-ipa.sh
+xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release -destination "generic/platform=iOS" -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" build
 ```
 
-The script:
+```bash
+mkdir -p build/ipa/Payload && cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/ && (cd build/ipa && zip -qry ../../../Sono-2.8.2.ipa Payload) && rm -rf build
+```
 
-1. checks that Xcode is installed;
-2. compiles the app as a final iPhone build (**Release**), **without signing**;
-3. puts the app in a `Payload/` folder and zips it into an IPA;
-4. prints its location: `Sono-<version>-iPhone-a-signer.ipa`, at the root of the repository.
-
-The first run takes a few minutes, later runs are faster. If something fails, the script prints only the compiler’s
-`error:` lines.
+1. The first command compiles the app as a final iPhone build (**Release**), **without signing** (a few minutes the
+   first time).
+2. The second puts the app in a `Payload/` folder, zips it into an IPA (`Sono-2.8.2.ipa`, at the root of the
+   repository) and removes the build files.
 
 The IPA version is the Xcode project’s (`MARKETING_VERSION`, currently **2.8.2**). It has **no signature** and contains no
 personal information: it must be signed with your own Apple account to be installed.
-
-<details>
-<summary>What the script does, in short</summary>
-
-```bash
-# 1. The app, in Release, unsigned
-xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
-  -destination "generic/platform=iOS" -derivedDataPath build/dd \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" build
-
-# 2. The IPA: the zipped Payload/ folder
-mkdir -p build/ipa/Payload
-cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.8.2-iPhone-a-signer.ipa Payload)
-```
-
-</details>
 
 **Rebuilding the iPhone Deezer engine** (only after changing the Go code, which then requires Go):
 
@@ -507,18 +487,9 @@ cd "Sono Mobile/engine" && ./build-ios.sh ios
    GitHub.
 2. If Xcode rejects the `app.sono.mobile` identifier (already taken by another Apple account), add to the same file:
    `SONO_BUNDLE_ID = com.yourname.sono`.
-3. Connect the iPhone (unlocked, Developer Mode on), then:
-
-```bash
-cd "Sono Mobile"
-```
-
-```bash
-./install-iphone.sh
-```
-
-The script rebuilds the Deezer engine (Go is required), builds the app and installs it. With a free Apple account,
-run it again every 7 days.
+3. Connect the iPhone (unlocked, Developer Mode on) and open `Sono Mobile/ios/Sono.xcodeproj` in Xcode.
+4. Pick your iPhone at the top of the window, then **Product → Run** (⌘R): Xcode builds the app and installs it. With a
+   free Apple account, do it again every 7 days.
 
 > If you choose your team in Xcode (Signing & Capabilities), Xcode writes it into the project: prefer
 > `Local.xcconfig` so it doesn’t end up on GitHub.

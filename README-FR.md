@@ -332,9 +332,7 @@ Sono/
     ├── engine/                     moteur Deezer Go pour iPhone (build/ : bibliothèques déjà compilées)
     ├── cloud/                      service en ligne Cloudflare (worker.js, wrangler.jsonc)
     ├── web/                        pages des invités, page Rejoindre et écran TV (Preact)
-    ├── deploy.sh                   met en ligne le service et note son adresse pour l’app
-    ├── install-iphone.sh           fabrique et installe l’app sur l’iPhone branché
-    └── fabriquer-ipa.sh            fabrique l’IPA sans signature
+    └── deploy.sh                   met en ligne le service et note son adresse pour l’app
 ```
 
 ---
@@ -426,47 +424,29 @@ construite (`npx vite build`) et les programmes de `packaging/bin/`, préparés 
 
 #### 📱 IPA (app iPhone)
 
-L’IPA se fabrique avec **une seule commande**. Il faut seulement **Xcode** (avec la plateforme iOS installée : Xcode →
-Réglages → Composants) ; le moteur Deezer de l’iPhone est déjà compilé dans `Sono Mobile/engine/build/`.
+L’IPA se fabrique avec **Xcode** (avec la plateforme iOS installée : Xcode → Réglages → Composants) ; le moteur
+Deezer de l’iPhone est déjà compilé dans `Sono Mobile/engine/build/`. Depuis le dossier `Sono Mobile` :
 
 ```bash
 cd "Sono Mobile"
 ```
 
 ```bash
-./fabriquer-ipa.sh
+xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release -destination "generic/platform=iOS" -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" build
 ```
 
-Le script :
+```bash
+mkdir -p build/ipa/Payload && cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/ && (cd build/ipa && zip -qry ../../../Sono-2.8.2.ipa Payload) && rm -rf build
+```
 
-1. vérifie que Xcode est installé ;
-2. compile l’app en version finale pour iPhone (**Release**), **sans signature** ;
-3. range l’app dans un dossier `Payload/` et le compresse en IPA ;
-4. affiche son emplacement : `Sono-<version>-iPhone-a-signer.ipa`, à la racine du dépôt.
-
-La première fois prend quelques minutes, les suivantes sont plus rapides. En cas d’erreur, le script affiche seulement
-les lignes `error:` de la compilation.
+1. La première commande compile l’app en version finale pour iPhone (**Release**), **sans signature** (quelques
+   minutes la première fois).
+2. La seconde range l’app dans un dossier `Payload/`, le compresse en IPA (`Sono-2.8.2.ipa`, à la racine du dépôt) et
+   efface les fichiers de compilation.
 
 La version de l’IPA est celle du projet Xcode (`MARKETING_VERSION`, actuellement **2.8.2**). Elle n’a **aucune
 signature** et ne contient aucune information personnelle : elle doit être signée avec votre propre compte Apple
 pour s’installer.
-
-<details>
-<summary>Ce que fait le script, en résumé</summary>
-
-```bash
-# 1. L’app, en Release, sans signature
-xcodebuild -project ios/Sono.xcodeproj -scheme Sono -configuration Release \
-  -destination "generic/platform=iOS" -derivedDataPath build/dd \
-  CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" build
-
-# 2. L’IPA : le dossier Payload/ compressé
-mkdir -p build/ipa/Payload
-cp -R build/dd/Build/Products/Release-iphoneos/Sono.app build/ipa/Payload/
-(cd build/ipa && zip -qry ../Sono-2.8.2-iPhone-a-signer.ipa Payload)
-```
-
-</details>
 
 **Recompiler le moteur Deezer de l’iPhone** (seulement après une modification du code Go, il faut alors Go) :
 
@@ -481,18 +461,9 @@ cd "Sono Mobile/engine" && ./build-ios.sh ios
    jamais envoyé sur GitHub.
 2. Si Xcode refuse l’identifiant `app.sono.mobile` (déjà pris par un autre compte Apple), ajoutez dans le même fichier :
    `SONO_BUNDLE_ID = com.votrenom.sono`.
-3. Branchez l’iPhone (déverrouillé, Mode développeur activé), puis :
-
-```bash
-cd "Sono Mobile"
-```
-
-```bash
-./install-iphone.sh
-```
-
-Le script recompile le moteur Deezer (il faut Go), fabrique l’app et l’installe. Avec un compte Apple gratuit,
-relancez-le tous les 7 jours.
+3. Branchez l’iPhone (déverrouillé, Mode développeur activé) et ouvrez `Sono Mobile/ios/Sono.xcodeproj` dans Xcode.
+4. Choisissez votre iPhone en haut de la fenêtre, puis **Product → Run** (⌘R) : Xcode fabrique l’app et l’installe.
+   Avec un compte Apple gratuit, recommencez tous les 7 jours.
 
 > Si vous choisissez votre équipe dans Xcode (Signing & Capabilities), Xcode l’écrit dans le projet : préférez
 > `Local.xcconfig` pour ne pas l’envoyer sur GitHub.
